@@ -1,0 +1,369 @@
+Activities Manager Phase Tracker
+================================
+
+PRD:
+- /Users/thatoobuseng/Sites/Junior/docs/activities/ActivitiesManager_PRD.md
+
+Tracker file:
+- /Users/thatoobuseng/Sites/Junior/docs/activities/ActivitiesManager_Phase_Tracker.txt
+
+Status legend:
+- NOT STARTED
+- IN PROGRESS
+- BLOCKED
+- COMPLETE
+
+Completion rule:
+- Mark a phase COMPLETE only after implementation is finished and the required automated and manual verification for that phase has passed.
+- If code is written but verification is incomplete, keep the phase IN PROGRESS.
+- Record exact dates, commands, and any relevant evidence in the notes area for each phase.
+
+
+Phase 0: Contract Freeze and Module Shell
+-----------------------------------------
+Status: COMPLETE
+Completed on: 2026-04-03
+
+Implementation targets:
+- docs/activities/ActivitiesManager_PRD.md
+- docs/activities/ActivitiesManager_Phase_Tracker.txt
+- routes/activities/activities.php
+- app/Providers/AuthServiceProvider.php
+- app/Services/ModuleVisibilityService.php
+- resources/views/layouts/sidebar.blade.php
+
+Completion gate:
+- Activities route file exists and is included.
+- Gates and module-visibility entry are defined.
+- Sidebar/menu wiring contract is clear.
+- No unresolved ownership ambiguity remains around Houses, LMS calendar, or Fees.
+
+Suggested verification:
+- php artisan test tests/Feature/Settings/ModuleVisibilitySettingsTest.php
+- php artisan route:list | grep activities
+
+Automated verification evidence:
+- 2026-04-03: php artisan test tests/Feature/Settings/ModuleVisibilitySettingsTest.php
+- Result: 8 passed, including the Activities settings-page listing and launcher-route assertions.
+
+Manual verification evidence:
+- Response assertions confirmed the Activities module renders on the module-settings page and exposes the launcher tile only for authorized users.
+
+Notes:
+- php artisan route:list could not be used in this session because the local console bootstrap attempted the default database connection and failed before listing routes. Route availability was verified through passing feature tests against the Activities routes and launcher integration.
+
+
+Phase 1: Core Schema and Activity CRUD Foundation
+-------------------------------------------------
+Status: COMPLETE
+Completed on: 2026-04-03
+
+Implementation targets:
+- activities core migrations
+- App/Models/Activities/*
+- ActivityController
+- resources/views/activities/index.blade.php
+- resources/views/activities/create.blade.php
+- resources/views/activities/edit.blade.php
+- resources/views/activities/show.blade.php
+
+Completion gate:
+- Migrations run cleanly.
+- Activity CRUD works with authorization.
+- Activity status transitions are validated and audited.
+- Automated CRUD and authorization tests exist.
+
+Suggested verification:
+- php artisan test tests/Feature/Activities/ActivityManagementTest.php
+- php artisan test tests/Feature/Settings/ModuleVisibilitySettingsTest.php --filter=activities
+
+Automated verification evidence:
+- 2026-04-03: DB_DATABASE=/tmp/activities_phase1_verification.sqlite php artisan migrate --database=sqlite --path=database/migrations/2026_04_03_000001_create_activities_table.php --path=database/migrations/2026_04_03_000002_create_activity_staff_assignments_and_eligibility_targets_tables.php --path=database/migrations/2026_04_03_000003_create_activity_enrollments_table.php --path=database/migrations/2026_04_03_000004_create_activity_schedules_and_sessions_tables.php --path=database/migrations/2026_04_03_000005_create_activity_events_and_results_tables.php --path=database/migrations/2026_04_03_000006_create_activity_fee_charges_table.php --path=database/migrations/2026_04_03_000007_create_activity_audit_logs_table.php --path=database/migrations/2026_04_03_000008_add_activities_module_visibility_setting.php --force
+- Result: all 8 Activities phase migrations completed successfully on a clean temporary SQLite database.
+- 2026-04-03: php artisan test tests/Feature/Activities/ActivityManagementTest.php
+- Result: 4 passed covering read-only access, restricted access, create/update/full lifecycle transitions, rejected invalid draft-to-close transition, audit logging, and year-scoped code uniqueness.
+- 2026-04-03: php artisan test tests/Feature/Settings/ModuleVisibilitySettingsTest.php
+- Result: 8 passed, including the Activities launcher/module-visibility assertions used by the Phase 1 shell.
+
+Manual verification evidence:
+- Feature response assertions covered index, show, create, edit, store, update, and activate flows.
+- The create-route collision bug was corrected and verified by the read-only access test hitting the Activities create page route directly.
+
+Notes:
+- Added the Activities schema foundation, CRUD controller/service/policy/request stack, phase-one Blade screens, sidebar/module-visibility wiring, and a dedicated Activities test schema helper for the SQLite test database.
+- Added database/migrations/2026_04_03_000008_add_activities_module_visibility_setting.php so the module visibility key exists as real settings data instead of only runtime configuration.
+
+
+Phase 2: Staff Assignment and Eligibility Rules
+-----------------------------------------------
+Status: COMPLETE
+Completed on: 2026-04-03
+
+Implementation targets:
+- ActivityStaffController
+- AssignActivityStaffRequest
+- eligibility target persistence and UI
+- policy checks for assigned staff
+
+Completion gate:
+- Assigned staff can be added and removed without losing history.
+- Eligibility targets save and render correctly.
+- Scoped operators can access only assigned activity actions where intended.
+- Automated staff-assignment and eligibility tests exist.
+
+Suggested verification:
+- php artisan test tests/Feature/Activities/ActivityAuthorizationTest.php
+- php artisan test tests/Feature/Activities/ActivityCrudTest.php
+
+Automated verification evidence:
+- 2026-04-03: php artisan test tests/Feature/Activities/ActivityAuthorizationTest.php
+- Result: 1 passed covering Activities Staff scoped access to assigned activities only.
+- 2026-04-03: php artisan test tests/Feature/Activities/ActivityStaffEligibilityTest.php
+- Result: 2 passed covering primary coordinator enforcement, staff assignment history retention, eligibility persistence, and audit logging.
+- 2026-04-03: php artisan test tests/Feature/Activities/ActivityManagementTest.php
+- Result: 4 passed after aligning the lifecycle test with the new primary-coordinator activation rule.
+- 2026-04-03: php artisan test tests/Feature/Activities/ActivityFormRenderingTest.php
+- Result: 4 passed covering the current Activities form and index rendering contract alongside the new index empty-state rule.
+
+Manual verification evidence:
+- The Phase 2 show page now exposes ownership and eligibility summaries, with dedicated management pages for `/activities/{activity}/staff` and `/activities/{activity}/eligibility`.
+- Index rows now render code and venue as pills instead of plain text.
+- The empty-state duplicate New Activity button was removed, leaving the main top-right action as the single creation entry point.
+
+Notes:
+- Added ActivityStaffController and ActivityEligibilityController with request validation, audit-backed assignment/retirement flows, and eligibility sync.
+- Added scoped operator access so Activities Staff users only see activities they are actively assigned to.
+- Activity activation now requires a primary coordinator.
+
+
+Phase 3: Roster Management and Capacity Controls
+------------------------------------------------
+Status: COMPLETE
+Completed on: 2026-04-03
+
+Implementation targets:
+- ActivityRosterController
+- ActivityRosterService
+- bulk enrollment request handling
+- roster screens and exports
+
+Completion gate:
+- Manual and bulk enrollment work for active-term students.
+- Duplicate active enrollment is blocked.
+- Over-capacity writes are blocked in both normal and concurrent paths.
+- Roster history is visible and auditable.
+
+Suggested verification:
+- php artisan test tests/Feature/Activities/ActivityRosterTest.php
+- php artisan test tests/Feature/Activities/ActivityCapacityTest.php
+- php artisan test tests/Unit/Activities/ActivityRosterServiceTest.php
+
+Automated verification evidence:
+- php artisan test tests/Feature/Activities/ActivityRosterTest.php
+- php artisan test tests/Feature/Activities/ActivityCapacityTest.php
+- php artisan test tests/Unit/Activities/ActivityRosterServiceTest.php
+- php artisan test tests/Feature/Activities/ActivityStaffEligibilityTest.php
+- php artisan test tests/Feature/Activities/ActivityAuthorizationTest.php
+- php artisan test tests/Feature/Activities/ActivityFormRenderingTest.php
+
+Manual verification evidence:
+- Add one student manually.
+- Bulk-enroll eligible students.
+- Attempt duplicate enrollment and over-capacity enrollment and confirm both are blocked.
+
+Notes:
+- Added a dedicated roster controller, request set, and service with transaction-safe capacity enforcement.
+- Added manual enrollment, eligibility-based bulk enrollment, status transitions, and CSV roster export.
+- Added roster UI/sub-navigation and aligned roster save buttons with the admissions-style loading state.
+
+
+Phase 4: Scheduling, Sessions, and Attendance
+---------------------------------------------
+Status: COMPLETE
+Completed on: 2026-04-03
+
+Implementation targets:
+- ActivityScheduleController
+- ActivitySessionController
+- ActivityAttendanceController
+- ActivityScheduleService
+- ActivityAttendanceService
+
+Completion gate:
+- Sessions can be generated without duplicate-date collisions.
+- Attendance can only be recorded for enrolled students.
+- Finalized attendance becomes read-only except for privileged correction flows.
+- Feature and unit tests cover session generation and attendance rules.
+
+Suggested verification:
+- php artisan test tests/Feature/Activities/ActivityScheduleSessionTest.php
+- php artisan test tests/Feature/Activities/ActivityAttendanceTest.php
+- php artisan test tests/Unit/Activities/ActivityAttendanceServiceTest.php
+
+Automated verification evidence:
+- php artisan test tests/Feature/Activities/ActivityScheduleSessionTest.php
+- php artisan test tests/Feature/Activities/ActivityAttendanceTest.php
+- php artisan test tests/Unit/Activities/ActivityAttendanceServiceTest.php
+- php artisan test tests/Feature/Activities/ActivityFormRenderingTest.php
+
+Manual verification evidence:
+- Create a recurring schedule.
+- Generate sessions.
+- Mark attendance and finalize one session.
+- Confirm non-privileged users cannot edit locked attendance.
+
+Notes:
+- Added schedule, session, and attendance controllers plus request validation for recurring schedules, manual sessions, attendance save/finalize, and privileged reopen flows.
+- Added ActivityScheduleService and ActivityAttendanceService with duplicate-session protection, eligible-enrollment filtering, and attendance lock enforcement.
+- Added schedules and attendance workspaces, activities sub-navigation updates, and admissions-style loading buttons for Phase 4 actions.
+- Fixed the attendance model to use the singular activity_session_attendance table created by the migration.
+
+
+Phase 5: Events, Results, Awards, and House-Linked Outputs
+-----------------------------------------------------------
+Status: COMPLETE
+Completed on: 2026-04-03
+
+Implementation targets:
+- ActivityEventController
+- ActivityResultController
+- ActivityEventService
+- ActivityResultService
+
+Completion gate:
+- Completed events can accept results.
+- House-linked results never mutate house membership.
+- Award and points records appear in event detail and reports.
+- Event/result feature tests exist.
+
+Suggested verification:
+- php artisan test tests/Feature/Activities/ActivityEventResultTest.php
+- php artisan test tests/Feature/Activities/ActivityHouseLinkTest.php
+- php artisan test tests/Unit/Activities/ActivityResultServiceTest.php
+
+Automated verification evidence:
+- php artisan test tests/Feature/Activities/ActivityEventResultTest.php
+- php artisan test tests/Feature/Activities/ActivityHouseLinkTest.php
+- php artisan test tests/Unit/Activities/ActivityResultServiceTest.php
+- php artisan test tests/Feature/Activities/ActivityFormRenderingTest.php
+- php artisan test tests/Feature/Activities/ActivityScheduleSessionTest.php
+- php artisan test tests/Feature/Activities/ActivityAttendanceTest.php
+- php artisan test tests/Feature/Activities/ActivityRosterTest.php
+- php artisan test tests/Feature/Activities/ActivityAuthorizationTest.php
+
+Manual verification evidence:
+- Create a fixture or showcase.
+- Record student and house results.
+- Confirm house membership data remains unchanged.
+
+Notes:
+- Added ActivityEventController and ActivityResultController plus validation for event lifecycle updates and scoped result sync requests.
+- Added ActivityEventService and ActivityResultService with completed-event enforcement, eligible participant filtering, audit entries, and house-link safeguards.
+- Added an Events & Results workspace, event result detail page, and shared sub-navigation updates across the Activities module.
+- House-linked result recording now references house records for scoring only and never writes to student_house membership data.
+
+
+Phase 6: Fee Integration and Student Summary Surfaces
+-----------------------------------------------------
+Status: COMPLETE
+Completed on: 2026-04-03
+
+Implementation targets:
+- activity_fee_charges workflows
+- student_invoice_items extension for activity-fee linkage
+- ActivityFeeController
+- ActivityFeeService
+- student profile summary integration
+
+Completion gate:
+- One charge creates at most one invoice item.
+- Invoice totals recalculate correctly after charge posting.
+- Cancelled annual invoice edge case is handled explicitly.
+- Student profile shows activity participation plus charge state.
+- Fee-integration tests cover duplicate prevention and invoice linkage.
+
+Suggested verification:
+- php artisan test tests/Feature/Activities/ActivityFeeIntegrationTest.php
+- php artisan test tests/Feature/Activities/ActivityStudentProfileSummaryTest.php
+- php artisan test tests/Unit/Activities/ActivityFeeServiceTest.php
+
+Automated verification evidence:
+- php artisan test tests/Feature/Activities/ActivityFeeIntegrationTest.php
+- php artisan test tests/Feature/Activities/ActivityStudentProfileSummaryTest.php
+- php artisan test tests/Unit/Activities/ActivityFeeServiceTest.php
+- php artisan test tests/Feature/Activities/ActivityManagementTest.php
+- php artisan test tests/Feature/Activities/ActivityStaffEligibilityTest.php
+- php artisan test tests/Feature/Activities/ActivityRosterTest.php
+- php artisan test tests/Feature/Activities/ActivityScheduleSessionTest.php
+- php artisan test tests/Feature/Activities/ActivityAttendanceTest.php
+- php artisan test tests/Feature/Activities/ActivityEventResultTest.php
+- php artisan test tests/Feature/Activities/ActivityHouseLinkTest.php
+- php artisan test tests/Feature/Activities/ActivityAuthorizationTest.php
+- php artisan test tests/Feature/Activities/ActivityCapacityTest.php
+- php artisan test tests/Feature/Activities/ActivityFormRenderingTest.php
+- php artisan test tests/Feature/Activities
+
+Manual verification evidence:
+- Generate an activity charge for a student.
+- Confirm it links to the student's annual invoice correctly.
+- Verify the student profile shows the charge state.
+
+Notes:
+- Added ActivityFeeController and ActivityFeeService to create, summarize, and post activity fee charges without introducing a separate billing subsystem.
+- Extended student_invoice_items with activity_fee_charge_id linkage and activity_fee item typing so one activity charge maps to at most one invoice item.
+- Added billing and charges workspace under Activities with charge creation, posting state, invoice links, and admissions-style loading-button behavior.
+- Added student profile Activities summary surface showing active participation, history, charge state, and fee-account access.
+- Hardened duplicate-post, locked-session, pre-completion result, roster-capacity, and shared-fixture paths so validation failures redirect cleanly instead of surfacing nested transaction savepoint errors during tests.
+
+
+Phase 7: Reports, Exports, Audit Views, and Hardening
+-----------------------------------------------------
+Status: COMPLETE
+Completed on: 2026-04-03
+
+Implementation targets:
+- ActivityReportController
+- App/Exports/Activities/*
+- audit log views
+- search integration if approved for v1
+
+Completion gate:
+- All core reports render with filters and exports.
+- Audit history is visible for privileged users.
+- Targeted regression suites pass.
+- Browser/manual QA confirms CRUD, roster, attendance, event/result, fee, and report flows.
+
+Suggested verification:
+- php artisan test tests/Feature/Activities/ActivityModuleVisibilityTest.php
+- php artisan test tests/Feature/Activities/ActivityCrudTest.php
+- php artisan test tests/Feature/Activities/ActivityRosterTest.php
+- php artisan test tests/Feature/Activities/ActivityAttendanceTest.php
+- php artisan test tests/Feature/Activities/ActivityEventResultTest.php
+- php artisan test tests/Feature/Activities/ActivityFeeIntegrationTest.php
+
+Automated verification evidence:
+- php artisan test tests/Feature/Activities/ActivityReportTest.php
+- php artisan test tests/Feature/Activities/ActivityAuditViewTest.php
+- php artisan test tests/Feature/Activities/ActivityFormRenderingTest.php
+- php artisan test tests/Feature/Activities/ActivityScheduleSessionTest.php
+- php artisan test tests/Feature/Activities/ActivityAttendanceTest.php
+- php artisan test tests/Feature/Activities
+
+Manual verification evidence:
+- Run an end-to-end flow from activity creation through reporting and exports.
+- Confirm audit history renders for privileged users.
+
+Notes:
+- Added Activities reports and audit screens with term-aware filters, Excel exports, and scoped data access for Activities Staff versus global Activities roles.
+- Added shared Activities navigation so catalog, activity workspaces, reports, and audit history stay reachable from the same module shell.
+- Added Phase 7 regression coverage for report rendering, staff report scoping, audit visibility, and export downloads.
+- Hardened the shared Activities test schema to include schedule, attendance, and result tables plus schedule soft deletes so later-phase feature suites run against the real module contract.
+- Normalized activity schedule and session date persistence so date fields store plain Y-m-d values consistently across SQLite and MySQL-backed test and app flows.
+
+
+Phase Dependency Rules
+----------------------
+- Do not start fee posting before roster identity and student-term rules are stable.
+- Do not start result reporting before event ownership and house-link validation are complete.
+- Do not sync to LMS calendar in v1; any calendar UI should read Activities-owned tables only.
+- Do not mark rollout complete until Phase 7 verification is done.

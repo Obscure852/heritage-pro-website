@@ -1,0 +1,1552 @@
+================================================================================
+  HERITAGE PRO FOR BASIC EDUCATION
+  School Management System - Development Breakdown & Hours Estimate
+================================================================================
+
+  Product:        Heritage Pro for Basic Education
+  Platform:       Web-based (Laravel 9.x / PHP 8.x)
+  Frontend:       Bootstrap 5, jQuery, Vite, ApexCharts, DataTables
+  Database:       MySQL / MariaDB
+  Architecture:   Modular MVC with Service Layer
+  Total Modules:  25+ Major Modules
+  Codebase:       1,000+ application files, 383 database migrations, 233 models
+
+================================================================================
+  TABLE OF CONTENTS
+================================================================================
+
+  1.  Core Platform & Authentication
+  2.  Dashboard & Analytics
+  3.  Student Management
+  4.  Admissions Module
+  5.  Academic Structure Management
+  6.  Assessment Engine (Multi-School Type)
+  7.  Finals & Graduation Module
+  8.  External Examinations Module
+  9.  Fee Management System
+  10. Attendance Module (Students)
+  11. Staff Attendance & Biometric Integration
+  12. Timetable Generation Engine
+  13. Library Management System
+  14. Learning Management System (LMS)
+  15. Staff Personal Development Plans (PDP)
+  16. Schemes of Work & Lesson Planning
+  17. Leave Management System
+  18. Student Welfare & Counseling
+  19. Document Management System
+  20. Communications Engine (SMS, Email, WhatsApp)
+  21. Notification System
+  22. Contact & Sponsor Management
+  23. Asset Management
+  24. House Management & Analysis
+  25. Reporting & Data Export Engine
+  26. System Administration & Settings
+  27. Multi-School Mode Provisioning
+  28. Student & Sponsor Portals
+  29. Staff Direct Messaging
+
+  GRAND TOTAL SUMMARY
+
+================================================================================
+
+
+================================================================================
+  1. CORE PLATFORM & AUTHENTICATION
+================================================================================
+
+  Description:
+  Foundation of the entire system including user authentication, role-based
+  access control, middleware security layer, and base application scaffolding.
+
+  Key Components:
+  - User model with roles and permissions
+  - Login/Register/Password Reset flows
+  - Student authentication (separate guard)
+  - Sponsor authentication (separate guard)
+  - 23 custom middleware classes (CSRF, rate limiting, geo-blocking,
+    read-only API, resource optimization, profile enforcement, etc.)
+  - Route service provider with modular route loading
+  - 10 service providers
+  - Activity logging system with archival
+
+  Files: ~60 files (controllers, middleware, providers, models, migrations)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  1.1  Project scaffolding & Laravel setup            |      8
+  1.2  User model, migrations & authentication        |     16
+  1.3  Role-based access control (18 policies)        |     40
+  1.4  Custom middleware development (23 classes)      |     48
+  1.5  Student portal authentication guard            |     12
+  1.6  Sponsor portal authentication guard            |     12
+  1.7  Activity logging & audit trail                 |     20
+  1.8  Geo-blocking & security middleware             |     12
+  1.9  Profile enforcement & onboarding flow          |     10
+  1.10 Service provider architecture                  |      8
+  1.11 Testing & QA                                   |     16
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    202 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  2. DASHBOARD & ANALYTICS
+================================================================================
+
+  Description:
+  Central dashboard providing at-a-glance metrics, charts, and quick-access
+  navigation for all system modules. Role-aware views for admins, teachers,
+  and management.
+
+  Key Components:
+  - Dashboard controller with role-based views
+  - ApexCharts integration for data visualization
+  - Cached dashboard queries for performance
+  - Student enrollment statistics
+  - Fee collection summaries
+  - Attendance summaries
+  - Academic performance overviews
+
+  Files: ~15 files (controllers, views, services)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  2.1  Dashboard layout & navigation design           |     16
+  2.2  Admin dashboard with key metrics               |     24
+  2.3  Teacher dashboard view                         |     16
+  2.4  Chart integration (ApexCharts)                 |     20
+  2.5  Data caching layer for performance             |     12
+  2.6  Quick-access widgets & shortcuts               |      8
+  2.7  Testing & QA                                   |     10
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    106 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  3. STUDENT MANAGEMENT
+================================================================================
+
+  Description:
+  Complete student lifecycle management from enrollment to departure,
+  including personal details, medical records, behavioral tracking,
+  class assignments, and comprehensive search.
+
+  Key Components:
+  - Student CRUD with rich profiles
+  - Student model with 15+ relationships
+  - Medical information tracking
+  - Behavioral records
+  - Departure/transfer management
+  - Student status tracking
+  - Student filtering & advanced search
+  - Bulk import/export via Excel
+  - Student custom report builder
+  - Class assignment & transfers
+
+  Files: ~45 files (controllers, models, views, exports, imports)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  3.1  Student model & database schema (12+ tables)   |     24
+  3.2  Student CRUD interface                         |     32
+  3.3  Medical information module                     |     16
+  3.4  Behavioral tracking system                     |     16
+  3.5  Class assignment & transfer logic              |     20
+  3.6  Departure & status management                  |     12
+  3.7  Advanced search & filtering                    |     20
+  3.8  Excel import functionality                     |     24
+  3.9  Excel export & custom reports                  |     24
+  3.10 Student profile views & UI                     |     16
+  3.11 Testing & QA                                   |     16
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    220 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  4. ADMISSIONS MODULE
+================================================================================
+
+  Description:
+  End-to-end admissions pipeline with online application forms, document
+  collection, placement algorithms, status tracking, and bulk processing.
+
+  Key Components:
+  - Online application portal (public-facing)
+  - Admission form with academic history
+  - Health information collection
+  - Senior school admission academics
+  - Status workflow (Applied -> Reviewed -> Accepted -> Enrolled)
+  - Automated placement service
+  - Admission email notifications
+  - Bulk import for admissions
+  - API endpoints for external integration
+  - Admission reporting by status
+
+  Files: ~35 files (controllers, models, views, services, imports, exports)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  4.1  Admission model & database schema              |     20
+  4.2  Online application form (public)               |     32
+  4.3  Academic history collection                    |     16
+  4.4  Health information forms                       |     12
+  4.5  Status workflow & pipeline                     |     24
+  4.6  Automated placement algorithm                  |     28
+  4.7  Admission notification emails                  |     16
+  4.8  Bulk import functionality                      |     20
+  4.9  API endpoints for integration                  |     16
+  4.10 Reporting & status analysis                    |     12
+  4.11 Testing & QA                                   |     16
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    212 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  5. ACADEMIC STRUCTURE MANAGEMENT
+================================================================================
+
+  Description:
+  Configuration and management of the academic hierarchy: grades, classes,
+  subjects (core & optional), terms, and the relationships between them.
+  Supports multiple school types.
+
+  Key Components:
+  - Grade management (Reception through Form 5)
+  - Class (Klass) management with teacher assignment
+  - Subject management (core & optional)
+  - Grade-Subject mapping
+  - Class-Subject mapping
+  - Term management with date ranges
+  - Academic year configuration
+  - Venue management
+  - Year rollover & term rollover services
+  - Rollover reversal capabilities
+
+  Files: ~50 files (controllers, models, services, views, migrations)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  5.1  Grade & class models and schema                |     16
+  5.2  Subject model with core/optional types         |     16
+  5.3  Grade-Subject & Class-Subject mapping          |     20
+  5.4  Term management system                         |     16
+  5.5  Class management UI with teacher assignment    |     20
+  5.6  Optional subject enrollment                    |     24
+  5.7  Venue management                               |      8
+  5.8  Year rollover service                          |     32
+  5.9  Term rollover service                          |     24
+  5.10 Rollover reversal services                     |     20
+  5.11 Multi-school type support                      |     16
+  5.12 Testing & QA                                   |     16
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    228 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  6. ASSESSMENT ENGINE (Multi-School Type)
+================================================================================
+
+  Description:
+  The heart of the academic system. Supports markbook entry, grade
+  calculations, report card generation (screen & PDF), and performance
+  analysis across four school types: Senior, Junior/CJSS, Primary,
+  and Reception/Pre-school. Each school type has unique grading scales,
+  report card formats, and assessment criteria.
+
+  Key Components:
+  - Base assessment controller with shared logic
+  - Senior assessment controller (own grading, report cards)
+  - Junior/CJSS assessment controller
+  - Primary assessment controller with criteria-based testing
+  - Reception assessment controller
+  - Test management (create, edit, weight configuration)
+  - Markbook views with keyboard navigation (Tab, Arrow keys)
+  - Sequential row indexing for accessibility
+  - PDF report card generation (DomPDF)
+  - Email report card distribution
+  - Class report cards (bulk)
+  - Individual student report cards
+  - Grading scales & grade option sets
+  - Comment banks for teacher remarks
+  - Remark generation service
+  - Score comments
+  - Criteria-based assessment system
+  - Performance targets & thresholds
+  - Overall grading matrix
+  - Passing threshold settings
+
+  Files: ~100 files (controllers, models, services, views, helpers)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  6.1  Assessment data model & schema                 |     32
+  6.2  Base assessment controller & shared logic      |     40
+  6.3  Test management (CRUD, weighting)              |     24
+  6.4  Markbook UI with keyboard navigation           |     48
+  6.5  Senior school assessment & grading             |     40
+  6.6  Junior/CJSS assessment & grading               |     36
+  6.7  Primary school assessment                      |     36
+  6.8  Reception/Pre-school assessment                |     28
+  6.9  Criteria-based assessment system               |     32
+  6.10 PDF report card engine (DomPDF)                |     48
+  6.11 Senior report card template                    |     32
+  6.12 Junior report card template                    |     32
+  6.13 Primary report card template                   |     28
+  6.14 Reception report card template                 |     24
+  6.15 Email report card distribution                 |     20
+  6.16 Class bulk report card generation              |     24
+  6.17 Grading scales & option sets                   |     20
+  6.18 Comment banks & remark generation              |     24
+  6.19 Performance targets & thresholds               |     20
+  6.20 Overall grading matrix                         |     16
+  6.21 Testing & QA                                   |     32
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    636 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  7. FINALS & GRADUATION MODULE
+================================================================================
+
+  Description:
+  End-of-year final grade compilation, class rankings, house rankings,
+  graduation tracking, and historical academic records.
+
+  Key Components:
+  - Final student records
+  - Final class management
+  - Final class-subject summaries
+  - Final grade-subject tracking
+  - Final optional subject handling
+  - Final house management
+  - Graduate year overall tracking
+  - Finals module rollover service
+  - Class subject summary reports
+  - Student overall export
+
+  Files: ~30 files (controllers, models, views, exports, services)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  7.1  Finals data model & schema                     |     20
+  7.2  Final grade compilation engine                 |     32
+  7.3  Final class management & rankings              |     24
+  7.4  Final house rankings                           |     16
+  7.5  Optional subject finals handling               |     16
+  7.6  Graduate year tracking                         |     12
+  7.7  Finals rollover service                        |     20
+  7.8  Finals reporting & exports                     |     24
+  7.9  UI for finals management                       |     20
+  7.10 Testing & QA                                   |     12
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    196 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  8. EXTERNAL EXAMINATIONS MODULE
+================================================================================
+
+  Description:
+  Import, analysis, and reporting of external examination results
+  (JCE, PSLE, BGCSE) with subject mapping and performance tracking.
+
+  Key Components:
+  - External exam models (JCE, PSLE, BGCSE)
+  - External exam result tracking
+  - Subject mapping between internal & external
+  - PDF parser services (BEC, JCE formats)
+  - Results import from Excel/PDF
+  - Exam analysis controller
+  - Performance analysis exports
+  - Regional performance reports
+
+  Files: ~25 files (controllers, models, services, imports, exports)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  8.1  External exam data model & schema              |     16
+  8.2  Subject mapping system                         |     16
+  8.3  PDF parser for BEC results                     |     32
+  8.4  PDF parser for JCE results                     |     28
+  8.5  Excel import for external results              |     20
+  8.6  Exam analysis engine                           |     24
+  8.7  Performance analysis reports & exports         |     24
+  8.8  Regional performance reporting                 |     16
+  8.9  UI for exam management                         |     16
+  8.10 Testing & QA                                   |     12
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    204 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  9. FEE MANAGEMENT SYSTEM
+================================================================================
+
+  Description:
+  Comprehensive financial management for school fees including structure
+  setup, invoicing, payment collection, payment plans, discounts, refunds,
+  balance management, aging reports, and full audit trail.
+
+  Key Components:
+  - Fee structure & type configuration
+  - Student invoice generation (auto & manual)
+  - Payment collection with receipt generation
+  - Payment plan management with installments
+  - Discount types & student discount assignment
+  - Fee refund processing
+  - Balance management & carryover
+  - Late fee charges
+  - Student clearance system
+  - Fee audit logging
+  - 13 export reports (aging, collections, debtors, statements, etc.)
+  - Payment sequence tracking
+  - Fee policies (prevent historical modification middleware)
+  - Invoice observer for auto-calculations
+  - Year-end fee procedures
+
+  Files: ~80 files (8 controllers, 15 models, 9 services, 13 exports,
+         8 view directories, 3 policies, jobs, mail classes)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  9.1  Fee data model & schema (15 tables)            |     32
+  9.2  Fee structure & type setup                     |     24
+  9.3  Invoice generation engine                      |     40
+  9.4  Payment collection & receipts                  |     36
+  9.5  Payment plan system with installments          |     32
+  9.6  Discount management                            |     20
+  9.7  Refund processing                              |     20
+  9.8  Balance management & carryover                 |     24
+  9.9  Late fee automation                            |     16
+  9.10 Student clearance workflow                     |     16
+  9.11 Fee audit trail & logging                      |     20
+  9.12 Aging reports                                  |     20
+  9.13 Collection reports & daily summaries           |     20
+  9.14 Debtor lists & outstanding reports             |     16
+  9.15 Student statement generation                   |     24
+  9.16 Payment reminder emails & jobs                 |     20
+  9.17 Historical modification prevention             |     12
+  9.18 Year-end fee procedures                        |     20
+  9.19 UI for all fee modules                         |     40
+  9.20 Testing & QA                                   |     24
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    456 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  10. ATTENDANCE MODULE (Students)
+================================================================================
+
+  Description:
+  Daily student attendance tracking with configurable absence codes,
+  class-based registration, and attendance reporting.
+
+  Key Components:
+  - Attendance model with student-date-term tracking
+  - Configurable attendance codes
+  - Class attendance registration views
+  - Attendance reporting
+  - Term-based attendance summaries
+  - Attendance policy enforcement
+
+  Files: ~20 files (controllers, models, views, policies)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  10.1 Attendance data model & schema                 |     12
+  10.2 Attendance code configuration                  |     10
+  10.3 Class attendance registration UI               |     24
+  10.4 Daily attendance recording logic               |     20
+  10.5 Attendance reporting & summaries               |     20
+  10.6 Term-based attendance views                    |     12
+  10.7 Testing & QA                                   |     10
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    108 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  11. STAFF ATTENDANCE & BIOMETRIC INTEGRATION
+================================================================================
+
+  Description:
+  Staff attendance tracking with biometric device integration, manual
+  register, self-service clock-in/out, and comprehensive reporting.
+
+  Key Components:
+  - 10 controllers for all attendance functions
+  - 9 models (records, devices, biometric mapping, sync logs)
+  - 12 services (processing, sync, reporting, correlation)
+  - Biometric device configuration & sync
+  - Manual attendance register
+  - Self-service clock-in/out
+  - Staff ID to biometric ID mapping
+  - Raw biometric event processing
+  - Attendance code management
+  - Dashboard with real-time status
+  - 6 export reports (daily, monthly, department, hours, punctuality, absenteeism)
+  - Leave-attendance correlation
+  - Sync history & audit logging
+  - Webhook for device events
+
+  Files: ~70 files (controllers, models, services, exports, views, commands)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  11.1  Data model & schema (9 tables)                |     24
+  11.2  Biometric device integration layer            |     40
+  11.3  Device configuration management               |     20
+  11.4  Biometric event processing pipeline           |     32
+  11.5  Staff ID to biometric mapping                 |     16
+  11.6  Manual attendance register                    |     24
+  11.7  Self-service clock-in/out                     |     20
+  11.8  Attendance code management                    |     12
+  11.9  Real-time dashboard                           |     24
+  11.10 Daily attendance reports                      |     16
+  11.11 Monthly & department reports                  |     20
+  11.12 Hours worked & punctuality reports            |     20
+  11.13 Absenteeism analysis                          |     16
+  11.14 Leave-attendance correlation                  |     20
+  11.15 Sync history & webhook handling               |     20
+  11.16 Audit logging                                 |     12
+  11.17 Console commands for automation               |     16
+  11.18 UI for all modules                            |     32
+  11.19 Testing & QA                                  |     20
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    364 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  12. TIMETABLE GENERATION ENGINE
+================================================================================
+
+  Description:
+  Automated timetable generation with constraint management, conflict
+  detection, period configuration, and multiple export formats.
+
+  Key Components:
+  - 7 controllers (timetable, views, constraints, generation,
+    slots, period settings, export)
+  - 8 models (timetable, slots, constraints, versions, settings,
+    block allocations, conflicts, audit log)
+  - 10 services (generation, constraints, validation, publishing,
+    integrity, views, slots, periods, data loader, service)
+  - Constraint-based generation algorithm
+  - Conflict detection & resolution
+  - Period settings per school type
+  - Version management
+  - Block allocation
+  - 3 export formats (class, teacher, master)
+  - Timetable publishing workflow
+  - Repair & fix commands
+
+  Files: ~55 files (controllers, models, services, exports, views, jobs, commands)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  12.1  Data model & schema (8 tables)                |     24
+  12.2  Period settings configuration                 |     16
+  12.3  Constraint definition system                  |     32
+  12.4  Constraint validation engine                  |     28
+  12.5  Timetable generation algorithm                |     60
+  12.6  Conflict detection & resolution               |     32
+  12.7  Slot management                               |     20
+  12.8  Block allocation logic                        |     20
+  12.9  Version management & publishing               |     24
+  12.10 Timetable view (class, teacher, room)         |     28
+  12.11 Export (class, teacher, master)                |     24
+  12.12 Integrity checks & repair tools               |     20
+  12.13 Background generation job                     |     16
+  12.14 UI for all timetable modules                  |     32
+  12.15 Testing & QA                                  |     20
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    396 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  13. LIBRARY MANAGEMENT SYSTEM
+================================================================================
+
+  Description:
+  Full library management with catalog, circulation, reservations,
+  fine management, inventory tracking, and external book lookup.
+
+  Key Components:
+  - 12 controllers covering all library functions
+  - 8 models (transactions, fines, reservations, overdue notices,
+    inventory items/sessions, settings, audit log)
+  - 10 services (circulation, fines, reservations, overdue,
+    inventory, reports, dashboard, notifications, book lookup, copy status)
+  - Book catalog with ISBN lookup
+  - Copy management & status tracking
+  - Circulation (borrow, return, renew)
+  - Reservation & hold system with expiration
+  - Fine assessment & collection
+  - Overdue detection & escalation
+  - Inventory management with sessions
+  - 7 export reports
+  - Notification system (overdue, hold ready, escalation)
+  - Library settings
+  - Console commands for automation
+
+  Files: ~75 files (controllers, models, services, exports, views,
+         notifications, commands)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  13.1  Data model & schema (8+ tables)               |     24
+  13.2  Book catalog & ISBN lookup service             |     28
+  13.3  Copy management & status tracking              |     20
+  13.4  Circulation engine (borrow/return/renew)       |     36
+  13.5  Reservation & hold system                      |     28
+  13.6  Fine assessment & collection                   |     24
+  13.7  Overdue detection & notifications              |     24
+  13.8  Escalation system                              |     16
+  13.9  Inventory management & sessions                |     24
+  13.10 Dashboard & statistics                         |     16
+  13.11 Reports & exports (7 reports)                  |     28
+  13.12 Library settings                               |     10
+  13.13 Automated console commands                     |     16
+  13.14 UI for all library modules                     |     36
+  13.15 Testing & QA                                   |     20
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    350 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  14. LEARNING MANAGEMENT SYSTEM (LMS)
+================================================================================
+
+  Description:
+  Full-featured LMS with courses, modules, content delivery, assignments,
+  quizzes, discussions, gradebook, video management, learning paths,
+  gamification, H5P/SCORM support, LTI integration, and analytics.
+
+  Key Components:
+  - 21 controllers covering all LMS functions
+  - 111 models (the largest module in the system)
+  - Course & module management
+  - Content delivery (documents, videos, H5P, SCORM)
+  - Video management with transcoding & chunked upload
+  - Assignment submission & grading
+  - Quiz engine with question banks
+  - Discussion forums with threading
+  - Gradebook with categories & rubrics
+  - Calendar & scheduling with appointments
+  - Learning paths with milestones & prerequisites
+  - Gamification (badges, achievements, points, leaderboards)
+  - H5P interactive content
+  - SCORM package support
+  - LTI tool integration
+  - Analytics & engagement tracking
+  - Student portal views
+  - Notification preferences
+  - Resource library with collections
+
+  Files: ~180+ files (controllers, models, services, views, exports)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  14.1  LMS data model & schema (111 tables!)         |     80
+  14.2  Course management (CRUD, templates)            |     40
+  14.3  Module & content structure                     |     32
+  14.4  Content delivery engine                        |     36
+  14.5  Video management & transcoding                 |     48
+  14.6  Chunked video upload                           |     24
+  14.7  Assignment system (create, submit, grade)      |     40
+  14.8  Quiz engine & question bank                    |     48
+  14.9  Discussion forums with threading               |     36
+  14.10 Gradebook with categories                      |     36
+  14.11 Rubric system                                  |     28
+  14.12 Calendar & appointment scheduling              |     32
+  14.13 Learning paths & milestones                    |     36
+  14.14 Gamification (badges, achievements, points)    |     40
+  14.15 Leaderboard system                             |     16
+  14.16 H5P interactive content integration            |     32
+  14.17 SCORM package support                          |     36
+  14.18 LTI tool integration                           |     32
+  14.19 Analytics & engagement dashboard               |     32
+  14.20 Student insights & reports                     |     24
+  14.21 Resource library & collections                 |     24
+  14.22 Messaging within LMS                           |     20
+  14.23 Notification system & preferences              |     20
+  14.24 Student portal LMS views                       |     24
+  14.25 LMS settings                                   |     12
+  14.26 UI for all LMS modules                         |     60
+  14.27 Testing & QA                                   |     40
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    968 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  15. STAFF PERSONAL DEVELOPMENT PLANS (PDP)
+================================================================================
+
+  Description:
+  Template-driven PDP system for staff professional growth with plan
+  creation, section entries, reviews, signatures, rollouts, reporting,
+  and PDF generation.
+
+  Key Components:
+  - 12 controllers
+  - 13 models (plans, templates, periods, sections, rows, fields,
+    approval steps, rating schemes, reviews, entries, signatures,
+    rollouts, settings)
+  - 13 services (access, plan, view, review, scoring, section entry,
+    rollout, PDF, reporting, settings, template, blueprints)
+  - Template builder with configurable sections
+  - Plan creation from templates
+  - Section entry management
+  - Review & approval workflow
+  - Digital signature capture
+  - Bulk rollout to staff
+  - PDF generation
+  - Scoring & rating system
+  - PDP reporting & analytics
+
+  Files: ~55 files (controllers, models, services, views)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  15.1  Data model & schema (13 tables)               |     28
+  15.2  Template builder system                        |     36
+  15.3  Template sections & field configuration        |     28
+  15.4  Plan creation from template                    |     24
+  15.5  Section entry management                       |     24
+  15.6  Review & approval workflow                     |     28
+  15.7  Rating & scoring system                        |     20
+  15.8  Digital signature capture                      |     16
+  15.9  Bulk rollout functionality                     |     20
+  15.10 PDF report generation                          |     24
+  15.11 PDP reporting & analytics                      |     20
+  15.12 Settings management                            |     10
+  15.13 UI for all PDP modules                         |     32
+  15.14 Testing & QA                                   |     16
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    326 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  16. SCHEMES OF WORK & LESSON PLANNING
+================================================================================
+
+  Description:
+  Curriculum planning tools including scheme of work creation, standard
+  schemes, syllabus management, lesson planning, and workflow approvals
+  with role-based dashboards (teacher, HOD, supervisor, admin).
+
+  Key Components:
+  - 12 controllers (scheme, standard scheme, syllabus, lesson plan,
+    entries, objectives, topics, workflows, dashboards)
+  - 10 models
+  - 6 services (scheme, standard scheme, lesson plan, syllabus import,
+    syllabus source, coverage)
+  - Scheme of work entry builder
+  - Standard scheme templates
+  - Syllabus management with topics & objectives
+  - Lesson plan creation & tracking
+  - Workflow approval system (submit, review, approve)
+  - Teacher dashboard
+  - HOD dashboard
+  - Supervisor dashboard
+  - Admin dashboard
+  - Coverage tracking service
+
+  Files: ~50 files (controllers, models, services, views)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  16.1  Data model & schema (10 tables)               |     24
+  16.2  Syllabus management (topics & objectives)      |     28
+  16.3  Syllabus import service                        |     20
+  16.4  Scheme of work builder                         |     32
+  16.5  Standard scheme templates                      |     24
+  16.6  Lesson plan creation                           |     28
+  16.7  Workflow approval system                        |     28
+  16.8  Teacher dashboard                              |     16
+  16.9  HOD dashboard                                  |     16
+  16.10 Supervisor & admin dashboards                  |     16
+  16.11 Coverage tracking                              |     16
+  16.12 UI for all scheme modules                      |     28
+  16.13 Testing & QA                                   |     16
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    292 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  17. LEAVE MANAGEMENT SYSTEM
+================================================================================
+
+  Description:
+  Complete leave management with request workflows, policy enforcement,
+  balance tracking, calendar views, and reporting.
+
+  Key Components:
+  - 9 controllers (requests, approvals, balances, types, policies,
+    calendar, reports, settings, public holidays)
+  - 9 models
+  - 11 services (request, approval, balance, calculation, notification,
+    policy, report, statement, type, public holiday, audit)
+  - Leave request workflow (submit, approve, reject, cancel)
+  - Leave type configuration with policies
+  - Balance tracking with adjustments & carryover
+  - Leave calendar view
+  - Public holiday management
+  - 5 export reports (carryover, outstanding, personal history,
+    team summary, utilization)
+  - Leave-attendance correlation
+  - Email notifications (5 mail classes)
+  - Event-driven architecture (4 events, 4 listeners)
+  - Leave statement generation
+
+  Files: ~65 files (controllers, models, services, exports, events,
+         listeners, mail, views)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  17.1  Data model & schema (9 tables)                |     20
+  17.2  Leave type configuration                      |     16
+  17.3  Leave policy engine                           |     24
+  17.4  Leave request workflow                        |     32
+  17.5  Approval process & delegation                 |     24
+  17.6  Balance tracking & carryover                  |     28
+  17.7  Balance adjustments                           |     12
+  17.8  Leave calendar view                           |     20
+  17.9  Public holiday management                     |     12
+  17.10 Email notification system                     |     20
+  17.11 Event-driven processing                       |     16
+  17.12 Leave statement generation                    |     16
+  17.13 Reports & exports (5 reports)                 |     24
+  17.14 Leave settings                                |     10
+  17.15 Audit logging                                 |     12
+  17.16 Console commands (reminders)                  |     12
+  17.17 UI for all leave modules                      |     28
+  17.18 Testing & QA                                  |     16
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    342 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  18. STUDENT WELFARE & COUNSELING
+================================================================================
+
+  Description:
+  Comprehensive student welfare management including case management,
+  counseling sessions, disciplinary records, health incidents,
+  safeguarding concerns, intervention plans, and parent communication.
+
+  Key Components:
+  - 8 controllers
+  - 19 models (cases, notes, attachments, types, counseling sessions,
+    disciplinary records/actions/incident types, health incidents/types,
+    intervention plans/reviews, parent communications, safeguarding
+    concerns/categories, audit logs)
+  - 7 services
+  - 4 policies with authorization
+  - Traits: Auditable, Encryptable, HasTermScope
+  - Welfare case management with notes & attachments
+  - Counseling session tracking
+  - Disciplinary incident recording & actions
+  - Health incident logging
+  - Safeguarding concern management
+  - Intervention plan creation & review
+  - Parent communication logging
+  - Welfare dashboard & reporting
+  - Data encryption for sensitive records
+
+  Files: ~55 files (controllers, models, services, policies, traits, views)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  18.1  Data model & schema (19 tables)               |     32
+  18.2  Welfare case management                       |     28
+  18.3  Case notes & attachments                      |     16
+  18.4  Counseling session tracking                   |     24
+  18.5  Disciplinary incident system                  |     28
+  18.6  Disciplinary actions & outcomes               |     16
+  18.7  Health incident logging                       |     20
+  18.8  Safeguarding concern management               |     24
+  18.9  Intervention plan builder                     |     24
+  18.10 Intervention plan reviews                     |     16
+  18.11 Parent communication logging                  |     16
+  18.12 Data encryption layer                         |     16
+  18.13 Authorization policies                        |     12
+  18.14 Welfare dashboard                             |     20
+  18.15 Audit trail                                   |     12
+  18.16 Reporting                                     |     16
+  18.17 UI for all welfare modules                    |     32
+  18.18 Testing & QA                                  |     16
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    368 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  19. DOCUMENT MANAGEMENT SYSTEM
+================================================================================
+
+  Description:
+  Enterprise-grade document management with folder hierarchy, versioning,
+  sharing, approval workflows, retention policies, audit trails, public
+  links, quotas, and favorites.
+
+  Key Components:
+  - 16 controllers (documents, versions, folders, categories, tags,
+    shares, search, notifications, audit, public links, retention,
+    settings, dashboard, quotas, favorites, workflows)
+  - 15+ models (documents, folders, categories, tags, versions,
+    shares, approvals, audit, favorites, notifications, comments,
+    folder permissions, retention policies, settings)
+  - 12 services (audit, settings, storage, external cache, folder
+    permissions, folder, notification, public link, quota, retention,
+    sharing, workflow)
+  - Folder hierarchy with permissions
+  - Document version control
+  - Sharing with access levels
+  - Approval workflow
+  - Retention policy enforcement
+  - Public link generation
+  - User quota management
+  - Full-text search
+  - Category & tag organization
+  - Favorites system
+  - Audit trail
+  - Document expiration notifications
+  - Mail notifications (8 mail classes)
+
+  Files: ~75 files (controllers, models, services, mail, views)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  19.1  Data model & schema (15+ tables)              |     32
+  19.2  Folder hierarchy & navigation                 |     28
+  19.3  Document CRUD & file storage                  |     24
+  19.4  Version control system                        |     28
+  19.5  Sharing & access control                      |     28
+  19.6  Folder permissions                            |     20
+  19.7  Approval workflow                             |     28
+  19.8  Category & tag organization                   |     16
+  19.9  Full-text search                              |     20
+  19.10 Public link generation                        |     16
+  19.11 Retention policy engine                       |     24
+  19.12 User quota management                         |     16
+  19.13 Favorites system                              |      8
+  19.14 Audit trail                                   |     16
+  19.15 Email notifications (8 templates)             |     24
+  19.16 Document dashboard                            |     16
+  19.17 Settings management                           |     10
+  19.18 Console commands (expiration, purge)           |     12
+  19.19 UI for all document modules                   |     36
+  19.20 Testing & QA                                  |     20
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    442 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  20. COMMUNICATIONS ENGINE (SMS, Email, WhatsApp)
+================================================================================
+
+  Description:
+  Multi-channel communication system supporting SMS, email, and WhatsApp
+  with templates, bulk sending, delivery tracking, webhooks, and
+  recipient management.
+
+  Key Components:
+  - SMS service with balance tracking & cost calculation
+  - SMS templates with placeholder system
+  - Bulk SMS sending with job queue
+  - SMS delivery logging & webhooks
+  - Email service with bulk sending
+  - Email model & tracking
+  - WhatsApp integration via Twilio
+  - WhatsApp templates & sync
+  - WhatsApp webhooks for delivery status
+  - Recipient channel consent management
+  - Communication delivery events
+  - Inbound message handling
+  - Link SMS helper
+  - 11 messaging services
+
+  Files: ~45 files (controllers, models, services, helpers, jobs, views)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  20.1  Communication data model & schema             |     20
+  20.2  SMS service integration                       |     28
+  20.3  SMS template system with placeholders         |     20
+  20.4  Bulk SMS engine with job queue                |     28
+  20.5  SMS delivery tracking & webhooks              |     20
+  20.6  SMS balance & cost management                 |     16
+  20.7  Email service & bulk sending                  |     24
+  20.8  WhatsApp/Twilio integration                   |     36
+  20.9  WhatsApp template sync                        |     16
+  20.10 WhatsApp webhooks & delivery                  |     20
+  20.11 Recipient consent management                  |     16
+  20.12 Inbound message handling                      |     16
+  20.13 Communication UI (compose, history)            |     24
+  20.14 Testing & QA                                  |     16
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    300 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  21. NOTIFICATION SYSTEM
+================================================================================
+
+  Description:
+  Internal notification system with templates, analytics, attachments,
+  comments, sponsor comments, and email delivery.
+
+  Key Components:
+  - Notification controller with CRUD
+  - Notification template management
+  - Notification analytics & tracking
+  - Notification attachments
+  - Internal comments & sponsor comments
+  - Notification service & analytics service
+  - Recipient service
+  - Email processing for notifications
+  - Rate limiting middleware
+  - Cleanup & archival commands
+  - Notification refactoring (3 phases documented)
+
+  Files: ~30 files (controllers, models, services, middleware, commands, views)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  21.1  Notification data model & schema              |     16
+  21.2  Notification CRUD & delivery                  |     24
+  21.3  Template management                           |     20
+  21.4  Attachment handling                           |     12
+  21.5  Comments & sponsor comments                   |     16
+  21.6  Analytics & tracking                          |     20
+  21.7  Email processing integration                  |     16
+  21.8  Rate limiting                                 |      8
+  21.9  Cleanup & archival automation                 |     12
+  21.10 UI for notifications                          |     20
+  21.11 Testing & QA                                  |     12
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    176 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  22. CONTACT & SPONSOR MANAGEMENT
+================================================================================
+
+  Description:
+  Contact person management with tagging system, and sponsor (parent/
+  guardian) management with portal access, filtering, and communication.
+
+  Key Components:
+  - Contact management with CRUD
+  - Contact tagging system
+  - Contact management service & tag service
+  - Sponsor management with CRUD
+  - Sponsor portal with student views
+  - Sponsor authentication (separate guard)
+  - Sponsor filtering
+  - Sponsor import/export
+  - Parent analysis reports & contact lists
+
+  Files: ~30 files (controllers, models, services, views, exports, imports)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  22.1  Contact data model & schema                   |     12
+  22.2  Contact CRUD & management                     |     16
+  22.3  Contact tagging system                        |     12
+  22.4  Sponsor data model & schema                   |     12
+  22.5  Sponsor CRUD & management                     |     20
+  22.6  Sponsor portal development                    |     28
+  22.7  Sponsor authentication                        |     16
+  22.8  Sponsor filtering & search                    |     12
+  22.9  Import/export functionality                   |     16
+  22.10 Parent analysis reports                       |     16
+  22.11 UI for contact & sponsor modules              |     20
+  22.12 Testing & QA                                  |     12
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    192 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  23. ASSET MANAGEMENT
+================================================================================
+
+  Description:
+  Physical asset tracking including procurement, assignment, maintenance,
+  disposal, audits, and vendor management.
+
+  Key Components:
+  - Asset management controller with CRUD
+  - Asset audit controller
+  - Asset disposal controller
+  - Maintenance management controller
+  - Assignment controller
+  - Asset model with categories, images, documents
+  - Asset assignment tracking
+  - Maintenance scheduling & logging
+  - Disposal workflow
+  - Audit system with audit items
+  - Vendor management
+  - Asset import from Excel
+
+  Files: ~35 files (controllers, models, views, imports)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  23.1  Asset data model & schema                     |     20
+  23.2  Asset CRUD with categories                    |     24
+  23.3  Asset images & documents                      |     16
+  23.4  Assignment tracking                           |     20
+  23.5  Maintenance scheduling & logging              |     24
+  23.6  Disposal workflow                             |     16
+  23.7  Audit system with items                       |     24
+  23.8  Vendor management                             |     12
+  23.9  Excel import                                  |     16
+  23.10 Asset reporting                               |     16
+  23.11 UI for all asset modules                      |     24
+  23.12 Testing & QA                                  |     12
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    224 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  24. HOUSE MANAGEMENT & ANALYSIS
+================================================================================
+
+  Description:
+  House system management for inter-house competitions, student allocation,
+  and performance analysis across academic and extracurricular activities.
+
+  Key Components:
+  - House management controller
+  - House model & student assignment
+  - Finals house management
+  - House analysis exports (4 export types)
+  - House performance tracking
+  - House award analysis
+  - 6C tracking system
+  - CA house performance reports
+
+  Files: ~20 files (controllers, models, views, exports)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  24.1  House data model & schema                     |     10
+  24.2  House management CRUD                         |     12
+  24.3  Student-house assignment                      |     12
+  24.4  House performance tracking                    |     20
+  24.5  House analysis reports & exports              |     24
+  24.6  House award tracking                          |     16
+  24.7  6C tracking system                            |     16
+  24.8  UI for house modules                          |     16
+  24.9  Testing & QA                                  |      8
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    134 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  25. REPORTING & DATA EXPORT ENGINE
+================================================================================
+
+  Description:
+  Comprehensive reporting and data export system with 99 export classes
+  covering every module. Includes analysis reports, custom report builders,
+  and Excel generation via Maatwebsite/Excel.
+
+  Key Components:
+  - 99 export classes across all modules
+  - BaseExport with shared functionality
+  - Multi-sheet exports (e.g., student statements)
+  - Import template generation
+  - Class analysis exports (15+ types)
+  - Subject analysis exports (8+ types)
+  - Teacher performance exports
+  - Department analysis exports
+  - Grade distribution exports
+  - Value addition analysis
+  - Student custom report builder
+  - Staff custom report builder
+  - Regional performance reports
+  - PDF to Excel converter service
+
+  Files: ~105 files (exports, services, controllers)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  25.1  Base export framework & configuration         |     16
+  25.2  Class analysis exports (15 types)             |     48
+  25.3  Subject analysis exports (8 types)            |     32
+  25.4  Grade & distribution exports                  |     24
+  25.5  Teacher performance exports                   |     24
+  25.6  Department analysis exports                   |     20
+  25.7  Value addition analysis exports               |     20
+  25.8  House analysis exports                        |     16
+  25.9  Student custom report builder                 |     28
+  25.10 Staff analysis & custom reports               |     24
+  25.11 Fee module exports (13 types)                 |     32
+  25.12 Multi-sheet export support                    |     16
+  25.13 PDF to Excel converter                        |     20
+  25.14 Import template generation                    |     12
+  25.15 Regional performance reports                  |     16
+  25.16 Testing & QA                                  |     20
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    368 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  26. SYSTEM ADMINISTRATION & SETTINGS
+================================================================================
+
+  Description:
+  System-wide administration including school setup, module settings,
+  licensing, data migration tools, user management, and system
+  configuration.
+
+  Key Components:
+  - School setup controller & service
+  - Module settings controller
+  - License management system
+  - Threshold settings (passing grades, performance targets)
+  - Settings service & helper
+  - System resource optimizer
+  - Logging system with archival
+  - User management (CRUD, roles, permissions)
+  - Data migration tools (Junior-Senior, K12, Pre-F3)
+  - Migration code verification
+  - Backup logging
+  - Console commands (38 total across modules)
+
+  Files: ~50 files (controllers, models, services, commands, middleware)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  26.1  School setup & configuration                  |     20
+  26.2  Module settings management                    |     16
+  26.3  License management system                     |     24
+  26.4  Threshold & grading settings                  |     16
+  26.5  User management (CRUD, roles)                 |     28
+  26.6  System resource optimization                  |     16
+  26.7  Logging system & archival                     |     16
+  26.8  Data migration tools (3 types)                |     48
+  26.9  Migration verification & rollback             |     20
+  26.10 Backup management                             |     12
+  26.11 Console command infrastructure                |     20
+  26.12 Settings UI                                   |     20
+  26.13 Testing & QA                                  |     16
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    272 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  27. MULTI-SCHOOL MODE PROVISIONING
+================================================================================
+
+  Description:
+  System to support multiple school types (Senior, Junior/CJSS, Primary,
+  Reception) within a single installation, with mode-specific features,
+  views, and configurations.
+
+  Key Components:
+  - School mode provisioner service
+  - School mode resolver service
+  - Mode-specific route loading
+  - Mode-specific view rendering
+  - Mode-specific assessment configurations
+  - Mode-specific grading scales
+  - Combined school mode support
+  - Provisioning console command
+
+  Files: ~15 files (services, providers, middleware, commands)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  27.1  School mode architecture design               |     16
+  27.2  Mode provisioner service                      |     24
+  27.3  Mode resolver service                         |     16
+  27.4  Mode-specific route loading                   |     20
+  27.5  Mode-specific view rendering                  |     20
+  27.6  Combined school mode support                  |     28
+  27.7  Provisioning command                          |     12
+  27.8  Testing & QA                                  |     16
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    152 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  28. STUDENT & SPONSOR PORTALS
+================================================================================
+
+  Description:
+  Self-service portals for students and sponsors (parents/guardians) with
+  authentication, academic views, LMS access, messaging, and discussion
+  participation.
+
+  Key Components:
+  - Student portal controller
+  - Student LMS controller
+  - Student messaging controller
+  - Student discussion controller
+  - Student authentication (login, forgot/reset password)
+  - Sponsor portal controller
+  - Sponsor authentication (login, forgot/reset password)
+  - Sponsor notification comments
+  - Portal-specific layouts & views
+
+  Files: ~25 files (controllers, views, auth)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  28.1  Student portal authentication                 |     16
+  28.2  Student portal dashboard & views              |     24
+  28.3  Student LMS portal integration                |     20
+  28.4  Student messaging system                      |     16
+  28.5  Student discussion participation              |     16
+  28.6  Sponsor portal authentication                 |     16
+  28.7  Sponsor portal dashboard & views              |     24
+  28.8  Sponsor notification & comment system         |     16
+  28.9  Portal layouts & responsive design            |     20
+  28.10 Testing & QA                                  |     12
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    180 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+  29. STAFF DIRECT MESSAGING
+================================================================================
+
+  Description:
+  Internal messaging system for staff with real-time presence tracking,
+  direct conversations, and feature toggles.
+
+  Key Components:
+  - Staff direct messaging controller
+  - Staff messaging service & feature service
+  - Staff presence service & launcher
+  - Conversation & message models
+  - Presence tracking middleware
+  - Feature toggle middleware
+
+  Files: ~15 files (controllers, models, services, middleware, views)
+
+  Phase Breakdown:
+  -----------------------------------------------------------------------
+  Phase                                              | Estimated Hours
+  -----------------------------------------------------------------------
+  29.1  Messaging data model & schema                 |     12
+  29.2  Conversation management                       |     16
+  29.3  Message sending & receiving                   |     20
+  29.4  Real-time presence tracking                   |     24
+  29.5  Feature toggle system                         |      8
+  29.6  Messaging UI                                  |     24
+  29.7  Testing & QA                                  |     10
+  -----------------------------------------------------------------------
+  SUBTOTAL                                            |    114 hours
+  -----------------------------------------------------------------------
+
+
+================================================================================
+================================================================================
+
+  GRAND TOTAL SUMMARY
+
+================================================================================
+
+  Module                                             | Hours
+  ---------------------------------------------------|----------
+  1.  Core Platform & Authentication                  |      202
+  2.  Dashboard & Analytics                           |      106
+  3.  Student Management                              |      220
+  4.  Admissions Module                               |      212
+  5.  Academic Structure Management                   |      228
+  6.  Assessment Engine (Multi-School Type)            |      636
+  7.  Finals & Graduation Module                      |      196
+  8.  External Examinations Module                    |      204
+  9.  Fee Management System                           |      456
+  10. Attendance Module (Students)                    |      108
+  11. Staff Attendance & Biometric Integration        |      364
+  12. Timetable Generation Engine                     |      396
+  13. Library Management System                       |      350
+  14. Learning Management System (LMS)                |      968
+  15. Staff Personal Development Plans (PDP)          |      326
+  16. Schemes of Work & Lesson Planning               |      292
+  17. Leave Management System                         |      342
+  18. Student Welfare & Counseling                    |      368
+  19. Document Management System                      |      442
+  20. Communications Engine (SMS, Email, WhatsApp)    |      300
+  21. Notification System                             |      176
+  22. Contact & Sponsor Management                    |      192
+  23. Asset Management                                |      224
+  24. House Management & Analysis                     |      134
+  25. Reporting & Data Export Engine                   |      368
+  26. System Administration & Settings                |      272
+  27. Multi-School Mode Provisioning                  |      152
+  28. Student & Sponsor Portals                       |      180
+  29. Staff Direct Messaging                          |      114
+  ---------------------------------------------------|----------
+  TOTAL DEVELOPMENT HOURS                             |    7,728
+  ================================================== |==========
+
+================================================================================
+
+  ADDITIONAL METRICS
+
+================================================================================
+
+  Database Complexity:
+  - 383 migration files
+  - 233 Eloquent models
+  - Estimated 250+ database tables
+
+  Application Scale:
+  - 195 controller classes
+  - 83 service classes
+  - 99 export classes
+  - 8 import classes
+  - 23 middleware classes
+  - 18 authorization policies
+  - 38 console commands
+  - 21 mail classes
+  - 11 background jobs
+  - 7 notification classes
+  - 4 event classes & 7 listeners
+  - 10 helper classes
+  - 53 route files across 20+ feature domains
+  - 40+ view directories with 70+ subdirectories
+
+  Technical Integrations:
+  - Biometric device integration (attendance)
+  - Twilio WhatsApp API
+  - SMS gateway integration
+  - DomPDF report generation
+  - Maatwebsite/Excel for imports/exports
+  - H5P interactive content
+  - SCORM package support
+  - LTI tool integration
+  - ISBN book lookup API
+  - Video transcoding pipeline
+
+  Multi-School Support:
+  - Senior Secondary School
+  - Junior Secondary / CJSS
+  - Primary School
+  - Reception / Pre-school
+  - Combined mode (all types in one installation)
+
+================================================================================
+
+  NOTES
+
+================================================================================
+
+  1. Hour estimates include design, development, and unit testing for
+     each phase. They represent the effort of an experienced Laravel
+     developer working with the full technology stack.
+
+  2. Hours do NOT include:
+     - Project management & coordination overhead
+     - Server infrastructure setup & DevOps
+     - User acceptance testing (UAT) cycles
+     - Training & documentation for end users
+     - Ongoing maintenance & bug fixes
+     - Third-party API subscription setup & negotiation
+
+  3. The system represents approximately 7,728 development hours,
+     equivalent to roughly 3.7 years of full-time solo development
+     or 1.2 years with a team of 3 developers.
+
+  4. At an industry-standard rate of $50-$80/hour for Laravel
+     development, this represents an investment of approximately
+     $386,400 - $618,240 in development costs.
+
+  5. The modular architecture allows for selective deployment -
+     schools can activate only the modules they need while
+     maintaining the option to enable additional features as
+     requirements grow.
+
+================================================================================
+  Document prepared for Heritage Pro for Basic Education
+  System Version: Production
+  Document Date: April 2026
+================================================================================

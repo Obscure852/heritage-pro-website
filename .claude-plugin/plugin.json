@@ -1,0 +1,19 @@
+{
+  "name": "junior-tools",
+  "description": "PRD generation and Ralph autonomous agent tools for Junior School Management System",
+  "author": {
+    "name": "Junior Dev"
+  },
+  "skills": [
+    {
+      "name": "prd",
+      "description": "Generate a Product Requirements Document (PRD) for a new feature",
+      "path": "../commands/prd.md"
+    },
+    {
+      "name": "ralph",
+      "description": "Convert PRDs to prd.json format for Ralph autonomous agent",
+      "path": "../commands/ralph.md"
+    }
+  ]
+}

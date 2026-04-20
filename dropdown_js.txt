@@ -1,0 +1,54 @@
+        // Handle nested dropdowns
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click handlers for dropdown submenus
+            const dropdownSubmenus = document.querySelectorAll('.dropdown-submenu');
+            
+            dropdownSubmenus.forEach(submenu => {
+                // Find the dropdown toggle or link that should activate the submenu
+                const dropdownLink = submenu.querySelector('.dropdown-item');
+                
+                if (dropdownLink) {
+                    // Prevent immediate navigation and keep parent menu open
+                    dropdownLink.addEventListener('click', function(e) {
+                        if (this.nextElementSibling && this.nextElementSibling.classList.contains('dropdown-menu')) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            // Toggle the submenu
+                            const submenu = this.nextElementSibling;
+                            if (submenu.style.display === 'block') {
+                                submenu.style.display = 'none';
+                            } else {
+                                // Close any other open submenus at the same level
+                                const siblingSubmenus = this.closest('.dropdown-menu')
+                                    .querySelectorAll('.dropdown-submenu > .dropdown-menu');
+                                siblingSubmenus.forEach(menu => {
+                                    if (menu !== submenu) {
+                                        menu.style.display = 'none';
+                                    }
+                                });
+                                
+                                submenu.style.display = 'block';
+                            }
+                        }
+                    });
+                    
+                    // Add hover effect for desktop
+                    if (window.innerWidth > 768) {
+                        submenu.addEventListener('mouseenter', function() {
+                            const dropdownMenu = this.querySelector('.dropdown-menu');
+                            if (dropdownMenu) {
+                                dropdownMenu.style.display = 'block';
+                            }
+                        });
+                        
+                        submenu.addEventListener('mouseleave', function() {
+                            const dropdownMenu = this.querySelector('.dropdown-menu');
+                            if (dropdownMenu) {
+                                dropdownMenu.style.display = 'none';
+                            }
+                        });
+                    }
+                }
+            });
+        });

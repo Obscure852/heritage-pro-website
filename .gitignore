@@ -1,0 +1,35 @@
+# Laravel & General Node/PHP
+/node_modules
+/vendor
+
+# Environment & Config
+.env
+.env.*
+.env.backup
+
+# Claude Code worktrees
+.claude/worktrees/
+
+# Build & Deploy
+/public/hot
+/public/storage
+/storage
+*.key
+
+# Laravel Logs & Caches
+.phpunit.result.cache
+*.log
+
+# IDE & System Files
+/.idea
+/.vscode
+.DS_Store
+Thumbs.db
+
+
+# Others
+npm-debug.log
+yarn-error.log
+
+.planning/
+.planning/

@@ -1,0 +1,14 @@
+# Ralph Progress Log
+Started:
+---
+
+## Codebase Patterns
+- Migrations: Check if column exists before adding
+- Controllers: Split by school type (Senior, Junior, Primary, Reception)
+- Routes: Modularized in /routes/ with includes per feature
+- Views: Mirror controller organization in /resources/views/
+- Validation: Use FormRequests, never $request->all()
+- Transactions: Wrap multi-step DB updates in DB::transaction()
+- Eager Loading: Always use with() to prevent N+1 queries
+
+---

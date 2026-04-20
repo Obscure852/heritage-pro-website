@@ -1,0 +1,535 @@
+TIMETABLE SCHEDULING ENGINE — DETAILED DOCUMENTATION
+=====================================================
+
+This document explains how the automated timetable generation system works,
+what each setting on the Advanced Settings page controls, and how the system
+scales across different school sizes.
+
+Last updated: 27 February 2026
+
+
+TABLE OF CONTENTS
+-----------------
+1. Overview
+2. What Are Genes?
+3. How the Genetic Algorithm Works
+4. The Advanced Settings Page — Every Parameter Explained
+5. School Size Profiles
+6. Stagnation — What It Is and Why It Matters
+7. Practical Tips for Tuning
+
+
+==========================================================================
+1. OVERVIEW
+==========================================================================
+
+The scheduling engine uses a Genetic Algorithm (GA) to automatically build
+a timetable. It treats the timetable as a problem to be "evolved":
+
+  - Start with many random timetables (a "population").
+  - Score each one: does it have double-bookings? Does it respect teacher
+    preferences, room availability, subject spread rules?
+  - Keep the best timetables, combine and tweak them, and repeat.
+  - After hundreds or thousands of iterations ("generations"), the best
+    timetable found is returned.
+
+The system respects two categories of rules:
+
+  HARD constraints (must never be violated):
+    - A teacher cannot teach two classes at the same time.
+    - A class cannot be in two rooms at the same time.
+    - A venue cannot be used by two classes at the same time.
+    - An assistant teacher cannot be in two places at the same time.
+    - Double/triple periods must start at valid boundaries (not straddling
+      a break).
+    - Core lessons and elective lessons for the same grade must not overlap.
+
+  SOFT constraints (penalised but not fatal):
+    - Teacher availability preferences (avoid certain days/periods).
+    - Subject spread (e.g. Maths should not appear 3 times on Monday).
+    - Room requirements (Science in a lab, IT in a computer room).
+    - Room capacity (don't put 45 students in a room that seats 30).
+    - Consecutive teaching limits (don't give a teacher 6 periods in a row).
+    - Subject pairing rules (e.g. Maths and Science should/shouldn't be on
+      the same day).
+    - Period restrictions (e.g. PE should not be in period 1).
+
+
+==========================================================================
+2. WHAT ARE GENES?
+==========================================================================
+
+In genetics, a gene is the smallest unit of information. The scheduling
+engine borrows this metaphor:
+
+  A GENE is one teaching block that needs to be placed on the timetable.
+
+Each gene represents a specific teacher teaching a specific subject to a
+specific class for a specific duration (number of consecutive periods).
+
+For example, if Mr. Moagi teaches Maths to Form 1A and the block allocation
+says Form 1A Maths needs:
+  - 3 single periods (duration = 1 each)
+  - 1 double period  (duration = 2)
+
+That produces 4 genes:
+  Gene 1: Mr. Moagi / Maths / Form 1A / 1 period
+  Gene 2: Mr. Moagi / Maths / Form 1A / 1 period
+  Gene 3: Mr. Moagi / Maths / Form 1A / 1 period
+  Gene 4: Mr. Moagi / Maths / Form 1A / 2 periods (double)
+
+Each gene carries these properties:
+  - klassSubjectId  : which class-subject allocation it belongs to
+  - teacherId       : which teacher is assigned
+  - klassId         : which class (e.g. Form 1A)
+  - subjectId       : which subject (e.g. Maths)
+  - duration        : 1 (single), 2 (double), or 3 (triple)
+  - gradeId         : which grade level
+  - dayOfCycle      : which day it is placed on (0 = unassigned)
+  - startPeriod     : which period it starts at (0 = unassigned)
+  - couplingKey     : links genes that must move together (e.g. all Form 1
+                      Science classes at the same time for electives)
+  - venueId         : assigned room
+  - assistantTeacherId : second teacher if team-teaching
+
+A CHROMOSOME is one complete timetable — the full collection of every gene
+with a day and period assigned to each one.
+
+A POPULATION is a set of chromosomes (complete timetable candidates). The
+algorithm evolves this population over many generations until it finds the
+best solution.
+
+GENE COUNT is the total number of genes across every class and subject. It
+is calculated from block allocations:
+
+  Gene Count = SUM of (singles + doubles + triples) for every class-subject
+
+This number determines the complexity of the scheduling problem:
+  -  100 genes = simple school, easy to solve
+  -  500 genes = medium school, moderate difficulty
+  - 1000 genes = large school, computationally demanding
+  - 1500+ genes = very large school, needs careful parameter tuning
+
+
+==========================================================================
+3. HOW THE GENETIC ALGORITHM WORKS
+==========================================================================
+
+Step-by-step, here is what happens when you press "Generate":
+
+  1. INITIALISATION
+     The system creates a population of random timetables. Each one is
+     built using a constraint-aware heuristic: the hardest-to-place genes
+     (those with the fewest valid slots) are placed first, and each
+     candidate slot is scored for quality. This is much better than pure
+     random placement.
+
+  2. FITNESS EVALUATION
+     Each timetable (chromosome) receives a fitness score from 0.0 to 1.0:
+       - 1.0 = perfect, no violations whatsoever
+       - 0.0 = catastrophically bad
+     Hard constraint violations reduce the score drastically. Soft
+     constraint violations reduce it mildly.
+
+  3. SELECTION
+     Parents are chosen using "tournament selection": pick a small random
+     group from the population, and the fittest one wins. Larger tournament
+     sizes mean stronger selection pressure (the best timetables dominate
+     more quickly, but diversity drops).
+
+  4. CROSSOVER
+     Two parent timetables are combined to produce children. For each
+     teaching block, the child randomly inherits the day/period assignment
+     from one parent or the other. This lets good placements from both
+     parents mix together.
+
+  5. MUTATION
+     Random changes are applied. A small percentage of genes are moved to
+     new day/period positions. Conflicted genes (those currently causing
+     violations) are prioritised for mutation — they are more likely to be
+     moved than well-placed genes.
+
+  6. REPAIR
+     The elite timetables (the top few) undergo local repair: the system
+     tries a number of targeted moves to fix remaining hard violations.
+     This is a "memetic" step that accelerates convergence.
+
+  7. REPLACEMENT
+     The new generation replaces the old one. The top N timetables (the
+     "elite") are always preserved unchanged, ensuring the best solution
+     found so far is never lost.
+
+  8. REPEAT
+     Steps 2-7 repeat for up to max_generations iterations. The algorithm
+     stops early if:
+       - A perfect solution is found (fitness = 1.0)
+       - The user requests cancellation
+
+  9. POST-PROCESSING
+     After the main GA loop, a final venue conflict resolution pass
+     reassigns rooms where double-bookings remain. The final timetable
+     is then saved to the database.
+
+
+==========================================================================
+4. THE ADVANCED SETTINGS PAGE — EVERY PARAMETER EXPLAINED
+==========================================================================
+
+The Advanced Settings page (accessible from the sidebar under Timetable >
+Advanced Settings) lets you control the genetic algorithm's behaviour.
+
+Here is every parameter, what it does, and the effect of changing it:
+
+
+POPULATION SIZE (default: 100, range: 10–500)
+----------------------------------------------
+How many timetable candidates exist at once.
+
+  Higher value (e.g. 200):
+    + More diverse solutions explored
+    + Better chance of finding a good timetable
+    - Each generation takes longer (more evaluations)
+    - Uses more memory
+
+  Lower value (e.g. 40):
+    + Faster generations
+    + Less memory
+    - Less diversity, may get stuck in poor solutions
+
+  Rule of thumb: For large schools (500+ genes), use a SMALLER population
+  (40-60) combined with more generations. This is because each evaluation
+  is expensive when there are many genes, so fewer evaluations per
+  generation but more generations overall is more efficient.
+
+
+MAX GENERATIONS (default: 500, range: 50–5000)
+------------------------------------------------
+The maximum number of evolutionary cycles before stopping.
+
+  Higher value (e.g. 1500):
+    + Algorithm has more time to improve
+    + Better results for complex problems
+    - Takes longer to complete
+
+  Lower value (e.g. 200):
+    + Finishes faster
+    - May return a suboptimal timetable
+
+  Rule of thumb: Larger schools need more generations. A school with 1000+
+  genes should use at least 1000-1500 generations.
+
+
+STAGNATION LIMIT (default: 30, range: 5–500)
+----------------------------------------------
+The number of consecutive generations without any improvement before the
+algorithm adapts. See Section 6 below for a full explanation.
+
+  Higher value (e.g. 80):
+    + More patient — gives the algorithm more time to find improvements
+      through normal crossover and mutation before intervening
+    + Better for large, complex problems where progress is naturally slow
+
+  Lower value (e.g. 15):
+    + Reacts quickly to getting stuck
+    + Good for small problems where progress should be steady
+    - May increase mutation too aggressively on hard problems
+
+
+REPAIR MOVES (default: 6, range: 1–30)
+----------------------------------------
+The number of targeted local repair attempts applied to elite timetables
+each generation. Each repair move tries to fix one hard violation by
+relocating a conflicted gene to a valid slot.
+
+  Higher value (e.g. 10):
+    + Faster elimination of hard violations (double-bookings)
+    + Especially valuable for large schools with many potential conflicts
+    - Slightly slower per generation
+
+  Lower value (e.g. 3):
+    + Faster per generation
+    - Hard violations may persist longer
+
+  Rule of thumb: For large schools, use 8-10 repair moves. For small
+  schools, 3-4 is sufficient.
+
+
+MUTATION RATE (default: 0.05, range: 0.01–0.50)
+-------------------------------------------------
+The probability that each gene will be randomly repositioned each
+generation. A rate of 0.05 means roughly 5% of genes are moved.
+
+  Higher value (e.g. 0.15):
+    + More exploration, breaks out of local optima
+    + Useful for very large problems that are hard to optimise
+    - Can be destructive — too much mutation undoes good placements
+
+  Lower value (e.g. 0.02):
+    + Preserves good placements
+    + Fine-tunes existing solutions
+    - May get stuck if the population converges too early
+
+  Note: When stagnation occurs, the mutation rate is automatically
+  increased (up to the max mutation rate of 0.3) to introduce fresh
+  variation. It resets once improvement is found.
+
+
+CROSSOVER RATE (default: 0.8, range: 0.10–1.00)
+--------------------------------------------------
+The probability that two parents will be combined to produce children
+(rather than simply copied unchanged).
+
+  Higher value (e.g. 0.95):
+    + More recombination of good placements from different parents
+    + Generally recommended — crossover is the main way the GA discovers
+      new good solutions
+
+  Lower value (e.g. 0.3):
+    + Less mixing, relies more on mutation for change
+    - Slower convergence in most cases
+
+  Rule of thumb: Keep this at 0.7-0.9 for best results.
+
+
+TOURNAMENT SIZE (default: 5, range: 2–20)
+-------------------------------------------
+How many random timetables compete in each selection round. The fittest
+one is chosen as a parent.
+
+  Higher value (e.g. 10):
+    + Stronger selection pressure — only the best timetables reproduce
+    + Faster convergence
+    - Reduces diversity, risk of premature convergence
+
+  Lower value (e.g. 2):
+    + Weaker selection pressure — even mediocre timetables get a chance
+    + Maintains diversity longer
+    - Slower convergence
+
+  Rule of thumb: 3-5 for small/medium schools, 5-7 for large schools.
+
+
+ELITE COUNT (default: 2, range: 1–20)
+---------------------------------------
+How many of the best timetables are preserved unchanged into the next
+generation (elitism).
+
+  Higher value (e.g. 5):
+    + Guarantees more top solutions survive
+    + Reduces risk of losing the best solution found so far
+    - Reduces how many new solutions are explored each generation
+
+  Lower value (e.g. 1):
+    + Only the absolute best survives
+    + More slots available for new offspring
+    - Slightly higher risk of good solutions being lost
+
+  Rule of thumb: 2-3 for most schools.
+
+
+==========================================================================
+5. SCHOOL SIZE PROFILES
+==========================================================================
+
+The system provides 4 pre-configured profiles. The "Auto-Scaling Profile"
+section on the Advanced Settings page recommends one based on your school's
+gene count. You can apply a profile with one click, or customise
+individual values.
+
+Here is each profile with its rationale:
+
+
+SMALL SCHOOL — Up to 200 genes (< 40 teachers)
+-------------------------------------------------
+  Population Size  :  80
+  Max Generations  : 400
+  Stagnation Limit :  25
+  Elite Count      :   2
+  Repair Moves     :   4
+
+  Rationale: Small problems have a compact search space. A modest
+  population and fewer generations are sufficient. Each evaluation is
+  fast (few genes to check), so the algorithm completes quickly.
+  Stagnation limit is low because the algorithm should find improvements
+  steadily on small problems.
+
+  Typical schools: Small primary schools, single-stream junior schools,
+  schools with 10-35 teachers.
+
+  Expected generation time: 30 seconds to 2 minutes.
+
+
+MEDIUM SCHOOL — 200-500 genes (40-80 teachers)
+-------------------------------------------------
+  Population Size  : 100
+  Max Generations  : 600
+  Stagnation Limit :  40
+  Elite Count      :   3
+  Repair Moves     :   6
+
+  Rationale: A balanced profile. The population is large enough for good
+  diversity, and 600 generations gives the algorithm room to optimise.
+  Three elites are preserved for safety. Repair moves are moderate.
+
+  Typical schools: Double or triple-stream CJSS schools, mid-size
+  secondary schools with 40-80 teachers.
+
+  Expected generation time: 2-8 minutes.
+
+
+LARGE SCHOOL — 500-1000 genes (80-150 teachers)
+--------------------------------------------------
+  Population Size  :  60
+  Max Generations  : 1000
+  Stagnation Limit :  60
+  Elite Count      :   3
+  Mutation Rate    :   0.08 (higher than default 0.05)
+  Repair Moves     :   8
+  Heuristic Top-K  :   3
+
+  Rationale: For large schools, each fitness evaluation is expensive
+  (many genes to check for conflicts). So the population is REDUCED to
+  60 — fewer timetables per generation, but each one gets more attention.
+  To compensate, max generations is increased to 1000, giving the
+  algorithm more evolutionary cycles.
+
+  The mutation rate is raised to 0.08 because larger problems have a
+  rougher fitness landscape — more random variation helps escape local
+  optima. Repair moves are increased to 8 because there are more
+  potential conflicts to fix.
+
+  Heuristic Top-K is reduced to 3 (from 5), meaning the initial
+  placement heuristic considers fewer candidate slots per gene. This
+  speeds up population initialisation without significantly hurting
+  quality.
+
+  Typical schools: Large secondary schools, multi-stream schools with
+  80-150 teachers.
+
+  Expected generation time: 8-25 minutes.
+
+
+VERY LARGE SCHOOL — 1000+ genes (150+ teachers)
+--------------------------------------------------
+  Population Size  :  40
+  Max Generations  : 1500
+  Stagnation Limit :  80
+  Elite Count      :   2
+  Mutation Rate    :   0.10 (double the default)
+  Repair Moves     :  10
+  Heuristic Top-K  :   3
+
+  Rationale: These are the most computationally demanding problems.
+  Population is kept small (40) to make each generation feasible, while
+  max generations is pushed to 1500 to allow enough evolutionary time.
+
+  The high mutation rate (0.10) and 10 repair moves aggressively search
+  for and fix conflicts. The stagnation limit of 80 is patient — at this
+  scale, the algorithm may go many generations between improvements, and
+  that is normal. Triggering adaptive mutation too early would be
+  counterproductive.
+
+  Typical schools: Very large multi-stream schools, combined
+  junior/senior campuses with 150+ teachers sharing venues.
+
+  Expected generation time: 20-60 minutes.
+
+
+==========================================================================
+6. STAGNATION — WHAT IT IS AND WHY IT MATTERS
+==========================================================================
+
+WHAT IS STAGNATION?
+--------------------
+Stagnation occurs when the best fitness score in the population has not
+improved for a consecutive number of generations. For example, if the
+stagnation limit is 30, and the best timetable's fitness has been 0.847
+for 30 generations in a row, the algorithm is considered "stagnant".
+
+WHY DOES IT HAPPEN?
+--------------------
+The genetic algorithm can get "stuck" when:
+
+  1. PREMATURE CONVERGENCE: All timetables in the population become very
+     similar. Crossover produces children nearly identical to their
+     parents, and small mutations are not enough to discover better
+     arrangements. This is like an entire population of zebras — there is
+     no genetic diversity to produce meaningful change.
+
+  2. LOCAL OPTIMA: The algorithm has found a timetable that is good but
+     not perfect. Any small change makes it worse. Imagine a timetable
+     where Mr. Moagi's Maths clashes with Mrs. Patel's Science — to fix
+     it, you would need to move 5 different lessons simultaneously, but
+     the algorithm only moves 1-2 at a time. The solution is trapped in a
+     "valley" surrounded by worse solutions.
+
+  3. HARD CONSTRAINT DENSITY: When many constraints interact (e.g. shared
+     teachers between classes, limited venues, coupling groups), there
+     may be very few valid configurations. Finding them requires extensive
+     search.
+
+WHAT HAPPENS WHEN STAGNATION IS DETECTED?
+-------------------------------------------
+When the stagnation counter exceeds the stagnation limit:
+
+  1. The effective mutation rate is DOUBLED (multiplied by the adaptive
+     mutation multiplier of 2.0).
+  2. The stagnation counter resets to 0.
+  3. If stagnation occurs again, the mutation rate doubles again, up to
+     a maximum of 0.3 (30%).
+
+This "adaptive mutation" injects fresh variation into the population,
+breaking the convergence trap. Once the algorithm finds a better solution,
+the mutation rate resets back to its original value.
+
+EXAMPLE:
+  - Mutation rate starts at 0.05 (5% of genes mutated per generation)
+  - After 30 generations of no improvement: rate jumps to 0.10
+  - After another 30 generations of no improvement: rate jumps to 0.20
+  - After another 30: rate jumps to 0.30 (capped at max)
+  - The moment a better timetable is found: rate resets to 0.05
+
+This mechanism is crucial for large schools where the fitness landscape
+is complex and the algorithm frequently gets temporarily stuck.
+
+
+==========================================================================
+7. PRACTICAL TIPS FOR TUNING
+==========================================================================
+
+FOR MOST SCHOOLS:
+  Just use the recommended profile. The system analyses your block
+  allocations and suggests the best profile automatically.
+
+IF GENERATION TAKES TOO LONG:
+  - Reduce population size (e.g. from 100 to 60)
+  - Reduce max generations
+  - These trade quality for speed
+
+IF THE RESULT HAS MANY VIOLATIONS:
+  - Increase max generations (give the algorithm more time)
+  - Increase repair moves (more targeted fixing per generation)
+  - Increase mutation rate slightly (e.g. 0.05 to 0.08) for more
+    exploration
+
+IF THE RESULT IS DECENT BUT NOT QUITE RIGHT:
+  - Increase stagnation limit (be more patient)
+  - Keep mutation rate low (preserve good placements)
+  - Increase elite count to 3-4 (protect more top solutions)
+  - Run generation again — because the algorithm uses randomness, each
+    run may produce a slightly different result
+
+IF YOU HAVE A VERY CONSTRAINED TIMETABLE:
+  (Many shared teachers, limited rooms, many coupling groups)
+  - Use the "Large School" or "Very Large School" profile even if your
+    gene count is lower
+  - The extra generations and higher mutation rate help navigate the
+    dense constraint landscape
+
+GENERAL RULES:
+  - Larger population + fewer generations = broader but shallower search
+  - Smaller population + more generations = narrower but deeper search
+  - For large schools, prefer the latter (deep search)
+  - For small schools, either approach works
+  - When in doubt, increase max_generations — it is the safest way to
+    improve results at the cost of time

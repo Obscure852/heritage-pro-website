@@ -1,0 +1,1267 @@
+================================================================================
+                    BIOMETRIC DEVICE INTEGRATION GUIDE
+                    Cloud-Based Staff Attendance System
+================================================================================
+
+Complete Setup Instructions for Push Mode and Agent Mode
+
+Document Version: 2.0
+Generated: January 30, 2026
+
+Since your system is cloud-based, pull mode will NOT work. This guide covers
+the two modes that work with cloud deployments:
+
+- PUSH MODE: For Hikvision devices (real-time, recommended)
+- AGENT MODE: For ZKTeco devices (or as alternative for Hikvision)
+
+================================================================================
+                            TABLE OF CONTENTS
+================================================================================
+
+1. Understanding the Modes
+   1.1 Push Mode Overview
+   1.2 Agent Mode Overview
+   1.3 Which Mode for Which Device?
+
+2. Push Mode Setup (Hikvision Only)
+   2.1 How Push Mode Works
+   2.2 Step 1: Add Device in School System
+   2.3 Step 2: Get Your Webhook URL
+   2.4 Step 3: Configure Hikvision Device
+   2.5 Step 4: Configure Event Subscription
+   2.6 Step 5: Enroll Staff on Device
+   2.7 Step 6: Test Push Mode
+   2.8 Troubleshooting Push Mode
+
+3. Agent Mode Setup (ZKTeco and Hikvision)
+   3.1 How Agent Mode Works
+   3.2 What You Need at the School
+   3.3 Step 1: Add Device in School System
+   3.4 Step 2: Get API Credentials
+   3.5 Step 3: Create the Sync Agent
+   3.6 Step 4: Install Dependencies
+   3.7 Step 5: Run the Agent
+   3.8 Step 6: Enroll Staff on Devices
+   3.9 Step 7: Test Agent Mode
+
+4. Setup Checklists
+
+5. Quick Reference
+
+
+================================================================================
+                      1. UNDERSTANDING THE MODES
+================================================================================
+
+--------------------------------------------------------------------------------
+1.1 Push Mode Overview
+--------------------------------------------------------------------------------
+
+Push mode only works with HIKVISION devices because ZKTeco devices don't
+support HTTP webhooks.
+
+    Staff clocks in
+          |
+          v
+    Hikvision device detects authentication
+          |
+          v
+    Device sends HTTP POST to your cloud webhook URL
+          |
+          v
+    Cloud server receives event at /api/attendance/webhook/hikvision/{id}
+          |
+          v
+    Event stored in biometric_raw_events table
+          |
+          v
+    Scheduled job processes into attendance records
+
+PROS:
+- Real-time (events arrive instantly)
+- No additional hardware needed at school
+- Simpler setup once configured
+
+CONS:
+- Only works with Hikvision
+- Device must reach internet
+- Requires valid SSL certificate on cloud server
+
+--------------------------------------------------------------------------------
+1.2 Agent Mode Overview
+--------------------------------------------------------------------------------
+
+Agent mode works with BOTH device types. It's the only cloud option for ZKTeco.
+
+    Staff clocks in
+          |
+          v
+    Device stores event locally
+          |
+          v
+    Agent (running on school PC) polls device every X minutes
+          |
+          v
+    Agent collects new events
+          |
+          v
+    Agent sends HTTP POST to cloud API
+          |
+          v
+    Cloud server receives at /api/attendance/webhook/agent/{id}
+          |
+          v
+    Event stored and processed
+
+PROS:
+- Works with ALL device types
+- Devices don't need internet access
+- More control over sync timing
+
+CONS:
+- Requires a computer at the school
+- Not real-time (depends on sync interval)
+- Additional setup and maintenance
+
+--------------------------------------------------------------------------------
+1.3 Which Mode for Which Device?
+--------------------------------------------------------------------------------
+
++-------------+------------------+----------------------------------------------+
+| Device      | Recommended Mode | Reason                                       |
++-------------+------------------+----------------------------------------------+
+| Hikvision   | Push             | Real-time, no agent needed, simpler setup    |
++-------------+------------------+----------------------------------------------+
+| ZKTeco      | Agent            | Only option - ZKTeco can't push to webhooks  |
++-------------+------------------+----------------------------------------------+
+| Mixed       | Agent for all    | Single agent handles everything              |
++-------------+------------------+----------------------------------------------+
+
+
+================================================================================
+                  2. PUSH MODE SETUP (HIKVISION ONLY)
+================================================================================
+
+--------------------------------------------------------------------------------
+2.1 How Push Mode Works
+--------------------------------------------------------------------------------
+
+    +-------------------+                      +-------------------+
+    |                   |   HTTPS POST         |                   |
+    |  Hikvision Device |  =================>  |   Cloud Server    |
+    |  (at school)      |   Event Data         |   (your system)   |
+    |                   |                      |                   |
+    +-------------------+                      +-------------------+
+
+The DEVICE initiates the connection TO your server. Your server just listens
+for incoming events.
+
+REQUIREMENTS:
+- Hikvision device with ISAPI and HTTP Listening support
+- Device network must have outbound internet access
+- Your cloud server must have a valid SSL certificate (HTTPS)
+- Your cloud server must be publicly accessible
+
+--------------------------------------------------------------------------------
+2.2 Step 1: Add Device in School System
+--------------------------------------------------------------------------------
+
+1. Log in as administrator
+
+2. Go to: Staff Attendance > Settings > Devices
+
+3. Click "Add Device"
+
+4. Fill in the form:
+
+   +---------------------+------------------------------------------+
+   | Field               | Value                                    |
+   +---------------------+------------------------------------------+
+   | Device Name         | e.g., "Main Gate Hikvision"              |
+   +---------------------+------------------------------------------+
+   | Device Type         | Hikvision                                |
+   +---------------------+------------------------------------------+
+   | Connectivity Mode   | Push    <-- IMPORTANT                    |
+   +---------------------+------------------------------------------+
+   | IP Address          | Optional (just for your reference)       |
+   +---------------------+------------------------------------------+
+   | Port                | Optional                                 |
+   +---------------------+------------------------------------------+
+   | Timezone            | Africa/Gaborone                          |
+   +---------------------+------------------------------------------+
+   | Active              | Checked                                  |
+   +---------------------+------------------------------------------+
+
+5. Click "Save"
+
+--------------------------------------------------------------------------------
+2.3 Step 2: Get Your Webhook URL
+--------------------------------------------------------------------------------
+
+After saving, click "Edit" on the device you just created.
+
+You will see a section showing:
+
+    Webhook URL: https://your-school-domain.com/api/attendance/webhook/hikvision/1
+
+    Webhook Secret: a8f2k9x...long-random-string...m3n7p
+
+>>> COPY THE WEBHOOK URL - you will need it for the device configuration.
+
+The URL format is:
+    https://[your-domain]/api/attendance/webhook/hikvision/[device-id]
+
+--------------------------------------------------------------------------------
+2.4 Step 3: Configure Hikvision Device
+--------------------------------------------------------------------------------
+
+Access your Hikvision device web interface:
+- Connect to the school network (or VPN)
+- Open browser and go to: http://[device-ip]
+- Log in with admin credentials
+
+
+OPTION A: HTTP Listening (Simpler Method)
+-----------------------------------------
+
+1. Navigate to:
+   Configuration > Network > Advanced Settings > HTTP Listening
+
+2. Click "Add" to add a new listener
+
+3. Fill in:
+   - Destination IP/Host: your-school-domain.com
+   - URL: /api/attendance/webhook/hikvision/1
+   - Port: 443
+   - Protocol: HTTPS
+
+4. Click "Save"
+
+5. Click "Test" to verify the connection works
+
+
+OPTION B: ISUP / Platform Access (More Reliable)
+------------------------------------------------
+
+1. Navigate to:
+   Configuration > Network > Advanced Settings > Platform Access
+
+2. Enable "Platform Access"
+
+3. Fill in:
+   +---------------------+------------------------------------------+
+   | Field               | Value                                    |
+   +---------------------+------------------------------------------+
+   | Access Mode         | ISUP                                     |
+   +---------------------+------------------------------------------+
+   | Server Address      | your-school-domain.com                   |
+   +---------------------+------------------------------------------+
+   | Server Port         | 443                                      |
+   +---------------------+------------------------------------------+
+   | Protocol            | HTTPS                                    |
+   +---------------------+------------------------------------------+
+   | Path                | /api/attendance/webhook/hikvision/1      |
+   +---------------------+------------------------------------------+
+
+4. Click "Save"
+
+--------------------------------------------------------------------------------
+2.5 Step 4: Configure Event Subscription
+--------------------------------------------------------------------------------
+
+The device needs to know WHICH events to push to your server.
+
+1. Navigate to:
+   Configuration > Event > Basic Event
+   (or Configuration > Event > Access Control Event)
+
+2. Find "Access Control Event" or "Authentication Event"
+
+3. Enable the event type
+
+4. Under "Linkage Method", enable:
+   [x] Notify Surveillance Center
+
+   This tells the device to send events to the HTTP listener you configured.
+
+5. Click "Save"
+
+--------------------------------------------------------------------------------
+2.6 Step 5: Enroll Staff on Device
+--------------------------------------------------------------------------------
+
+Each staff member must be enrolled on the device with their Employee Number
+matching their ID Number in the school system.
+
+1. In device web interface, go to: Person Management
+
+2. Click "Add" to add a new person
+
+3. Fill in:
+   +---------------------+------------------------------------------+
+   | Field               | Value                                    |
+   +---------------------+------------------------------------------+
+   | Employee No.        | MUST match staff ID number in system     |
+   |                     | e.g., if ID is "12345", enter "12345"    |
+   +---------------------+------------------------------------------+
+   | Name                | Staff member's full name                 |
+   +---------------------+------------------------------------------+
+   | Card No.            | Optional - if using access cards         |
+   +---------------------+------------------------------------------+
+
+4. Add credentials:
+   - Click "Add Face" to enroll face recognition
+   - Click "Add Fingerprint" to enroll fingerprint
+   - Follow device prompts to capture biometric data
+
+5. Click "OK" to save
+
+6. Repeat for ALL staff members
+
+*** CRITICAL ***
+The Employee No. on the device MUST EXACTLY MATCH the staff's ID Number
+in the school system. If they don't match, attendance won't be linked.
+
+--------------------------------------------------------------------------------
+2.7 Step 6: Test Push Mode
+--------------------------------------------------------------------------------
+
+1. Have a test staff member clock in on the Hikvision device
+
+2. The event should arrive at your cloud server IMMEDIATELY
+
+3. Verify in your system:
+
+   Option A: Check via command line
+
+       php artisan tinker
+       >>> \App\Models\StaffAttendance\BiometricRawEvent::latest()->first()
+
+   You should see the event with:
+   - employee_number matching the staff's ID
+   - event_timestamp of when they clocked in
+   - device_id matching your Hikvision device
+
+   Option B: Check the database directly
+
+       SELECT * FROM biometric_raw_events ORDER BY id DESC LIMIT 5;
+
+4. If the event appears, push mode is working!
+
+--------------------------------------------------------------------------------
+2.8 Troubleshooting Push Mode
+--------------------------------------------------------------------------------
+
+PROBLEM: Events not arriving at server
+--------------------------------------
+Possible causes and solutions:
+
+1. Device cannot reach internet
+   - From device network, try: ping google.com
+   - Check firewall allows outbound HTTPS (port 443)
+   - Check if proxy is required
+
+2. SSL certificate invalid
+   - Your cloud server MUST have a valid SSL certificate
+   - Self-signed certificates will NOT work
+   - Test: open https://your-domain.com in browser - no warnings?
+
+3. Webhook URL incorrect
+   - Double-check the URL in device matches exactly
+   - Check for typos in domain name
+   - Ensure device ID in URL matches
+
+4. Event subscription not enabled
+   - Go back to Configuration > Event
+   - Ensure "Notify Surveillance Center" is checked
+
+5. Wrong event type configured
+   - Device might be sending different event types
+   - Check device logs for what's being sent
+
+
+PROBLEM: Getting 404 errors
+---------------------------
+- The webhook URL path is wrong
+- Check: /api/attendance/webhook/hikvision/{device_id}
+- Ensure {device_id} matches the ID in your system
+
+
+PROBLEM: Getting 401 errors
+---------------------------
+- Webhook signature verification failing
+- Check if webhook secret is configured
+- For testing, you can temporarily disable signature verification
+
+
+PROBLEM: Events arrive but staff not matched
+--------------------------------------------
+- Employee number doesn't match ID number in system
+- Go to: Staff Attendance > Settings > ID Mappings
+- Check for unmapped IDs and manually link them
+
+
+================================================================================
+                3. AGENT MODE SETUP (ZKTECO AND HIKVISION)
+================================================================================
+
+--------------------------------------------------------------------------------
+3.1 How Agent Mode Works
+--------------------------------------------------------------------------------
+
+    +----------+          +----------+          +----------+
+    |          |  Local   |          |  HTTPS   |          |
+    |  Device  | <------> |  Agent   | -------> |  Cloud   |
+    |          |  Network |   (PC)   |  POST    |  Server  |
+    +----------+          +----------+          +----------+
+     At school             At school             Your system
+
+The AGENT is a program running on a computer at the school. It:
+1. Connects to devices on the local network
+2. Fetches attendance events
+3. Sends them to your cloud server
+
+REQUIREMENTS:
+- A computer at the school that stays ON (Windows PC, Mac, Linux, Raspberry Pi)
+- Computer on same network as biometric devices
+- Computer has internet access
+- PHP 8.0+ installed on the computer
+
+--------------------------------------------------------------------------------
+3.2 What You Need at the School
+--------------------------------------------------------------------------------
+
+HARDWARE:
+- Any computer that can stay on:
+  - Old Windows PC (most common)
+  - Raspberry Pi (low power, recommended)
+  - Mac Mini
+  - Linux server
+
+SOFTWARE:
+- PHP 8.0 or higher
+- Composer (PHP package manager)
+- Internet connection
+
+NETWORK:
+- Computer must be able to reach biometric devices (same LAN)
+- Computer must be able to reach internet (for cloud API)
+
+--------------------------------------------------------------------------------
+3.3 Step 1: Add Device in School System
+--------------------------------------------------------------------------------
+
+1. Log in as administrator
+
+2. Go to: Staff Attendance > Settings > Devices
+
+3. Click "Add Device"
+
+4. Fill in the form:
+
+   FOR ZKTECO:
+   +---------------------+------------------------------------------+
+   | Field               | Value                                    |
+   +---------------------+------------------------------------------+
+   | Device Name         | e.g., "Staff Room ZKTeco"                |
+   +---------------------+------------------------------------------+
+   | Device Type         | ZKTeco                                   |
+   +---------------------+------------------------------------------+
+   | Connectivity Mode   | Agent    <-- IMPORTANT                   |
+   +---------------------+------------------------------------------+
+   | IP Address          | Device's local IP (e.g., 192.168.1.201)  |
+   +---------------------+------------------------------------------+
+   | Port                | 4370                                     |
+   +---------------------+------------------------------------------+
+   | Username            | Leave empty (ZKTeco doesn't use this)    |
+   +---------------------+------------------------------------------+
+   | Password            | Leave empty (ZKTeco doesn't use this)    |
+   +---------------------+------------------------------------------+
+   | Timezone            | Africa/Gaborone                          |
+   +---------------------+------------------------------------------+
+
+   FOR HIKVISION:
+   +---------------------+------------------------------------------+
+   | Field               | Value                                    |
+   +---------------------+------------------------------------------+
+   | Device Name         | e.g., "Main Gate Hikvision"              |
+   +---------------------+------------------------------------------+
+   | Device Type         | Hikvision                                |
+   +---------------------+------------------------------------------+
+   | Connectivity Mode   | Agent    <-- IMPORTANT                   |
+   +---------------------+------------------------------------------+
+   | IP Address          | Device's local IP (e.g., 192.168.1.202)  |
+   +---------------------+------------------------------------------+
+   | Port                | 80                                       |
+   +---------------------+------------------------------------------+
+   | Username            | admin (device admin username)            |
+   +---------------------+------------------------------------------+
+   | Password            | Device admin password                    |
+   +---------------------+------------------------------------------+
+   | Timezone            | Africa/Gaborone                          |
+   +---------------------+------------------------------------------+
+
+5. Click "Save"
+
+6. Note the device ID (shown in the list, e.g., #1, #2)
+
+--------------------------------------------------------------------------------
+3.4 Step 2: Get API Credentials
+--------------------------------------------------------------------------------
+
+The agent needs an API token to authenticate with your cloud server.
+
+GETTING THE AGENT API URL:
+1. Edit the device you just created
+2. You'll see: Agent API URL: https://your-domain.com/api/attendance/webhook/agent/1
+3. Copy this URL
+
+GENERATING AN API TOKEN:
+1. You need to create a Sanctum API token
+2. Run this command on your cloud server:
+
+   php artisan tinker
+   >>> $user = \App\Models\User::find(1);  // Admin user
+   >>> $token = $user->createToken('biometric-agent')->plainTextToken;
+   >>> echo $token;
+
+3. Copy the token that's displayed (you won't see it again!)
+
+   Example token: 1|abc123def456ghi789jkl012mno345pqr678stu901vwx
+
+--------------------------------------------------------------------------------
+3.5 Step 3: Create the Sync Agent
+--------------------------------------------------------------------------------
+
+On the school computer:
+
+1. Create a folder for the agent:
+   - Windows: C:\BiometricAgent\
+   - Linux/Mac: /opt/biometric-agent/
+
+2. Create the configuration file: config.json
+
+--------------------------------------------------------------------------------
+FILE: config.json
+--------------------------------------------------------------------------------
+
+{
+    "cloud_api_url": "https://your-school-domain.com/api/attendance/webhook/agent",
+    "api_token": "1|your-sanctum-token-here",
+    "sync_interval_seconds": 300,
+    "devices": [
+        {
+            "id": 1,
+            "name": "Main Entrance ZKTeco",
+            "type": "zkteco",
+            "ip": "192.168.1.201",
+            "port": 4370
+        },
+        {
+            "id": 2,
+            "name": "Staff Room Hikvision",
+            "type": "hikvision",
+            "ip": "192.168.1.202",
+            "port": 80,
+            "username": "admin",
+            "password": "your-device-password"
+        }
+    ]
+}
+
+--------------------------------------------------------------------------------
+
+CONFIGURATION EXPLAINED:
+
+- cloud_api_url: Your cloud server's agent webhook endpoint (without device ID)
+- api_token: The Sanctum token you generated
+- sync_interval_seconds: How often to sync (300 = 5 minutes)
+- devices: Array of all devices the agent should poll
+  - id: Must match the device ID in your cloud system
+  - name: Friendly name (for logging)
+  - type: "zkteco" or "hikvision"
+  - ip: Device's IP address on local network
+  - port: 4370 for ZKTeco, 80 for Hikvision
+  - username/password: Only needed for Hikvision
+
+
+3. Create the agent script: agent.php
+
+--------------------------------------------------------------------------------
+FILE: agent.php
+--------------------------------------------------------------------------------
+
+<?php
+/**
+ * Biometric Sync Agent
+ *
+ * Runs on a local PC at the school to sync attendance from devices to cloud.
+ *
+ * Usage: php agent.php
+ */
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+use Rats\Zkteco\Lib\ZKTeco;
+
+class BiometricSyncAgent
+{
+    private array $config;
+    private string $lastSyncFile;
+
+    public function __construct()
+    {
+        $this->config = json_decode(file_get_contents(__DIR__ . '/config.json'), true);
+        $this->lastSyncFile = __DIR__ . '/last_sync.json';
+
+        if (!$this->config) {
+            die("ERROR: Could not read config.json\n");
+        }
+    }
+
+    public function run(): void
+    {
+        echo "=====================================\n";
+        echo "   Biometric Sync Agent Started\n";
+        echo "=====================================\n";
+        echo "Cloud API: {$this->config['cloud_api_url']}\n";
+        echo "Sync interval: {$this->config['sync_interval_seconds']} seconds\n";
+        echo "Devices configured: " . count($this->config['devices']) . "\n";
+        echo "=====================================\n\n";
+
+        while (true) {
+            $this->syncAllDevices();
+            echo "\n--- Sleeping for {$this->config['sync_interval_seconds']} seconds ---\n\n";
+            sleep($this->config['sync_interval_seconds']);
+        }
+    }
+
+    private function syncAllDevices(): void
+    {
+        foreach ($this->config['devices'] as $device) {
+            $timestamp = date('Y-m-d H:i:s');
+            echo "[{$timestamp}] Syncing: {$device['name']} ({$device['type']})\n";
+
+            try {
+                $events = $this->fetchEventsFromDevice($device);
+
+                if (empty($events)) {
+                    echo "  -> No new events\n";
+                    continue;
+                }
+
+                echo "  -> Found " . count($events) . " new events\n";
+                $this->pushToCloud($device['id'], $events);
+
+            } catch (Exception $e) {
+                echo "  -> ERROR: " . $e->getMessage() . "\n";
+                $this->logError($device, $e->getMessage());
+            }
+        }
+    }
+
+    private function fetchEventsFromDevice(array $device): array
+    {
+        $lastSync = $this->getLastSyncTime($device['id']);
+
+        if ($device['type'] === 'zkteco') {
+            return $this->fetchFromZKTeco($device, $lastSync);
+        } elseif ($device['type'] === 'hikvision') {
+            return $this->fetchFromHikvision($device, $lastSync);
+        }
+
+        throw new Exception("Unknown device type: {$device['type']}");
+    }
+
+    private function fetchFromZKTeco(array $device, ?string $lastSync): array
+    {
+        $zk = new ZKTeco($device['ip'], $device['port']);
+
+        $zk->setTimeout(10);
+
+        if (!$zk->connect()) {
+            throw new Exception("Cannot connect to {$device['ip']}:{$device['port']}");
+        }
+
+        try {
+            $attendance = $zk->getAttendance();
+        } finally {
+            $zk->disconnect();
+        }
+
+        if (!is_array($attendance)) {
+            return [];
+        }
+
+        $events = [];
+        $lastSyncTime = $lastSync ? strtotime($lastSync) : 0;
+
+        foreach ($attendance as $record) {
+            if (!isset($record['timestamp'])) {
+                continue;
+            }
+
+            $timestamp = strtotime($record['timestamp']);
+
+            // Only get events after last sync
+            if ($timestamp <= $lastSyncTime) {
+                continue;
+            }
+
+            $events[] = [
+                'employee_number' => (string) ($record['id'] ?? $record['uid'] ?? ''),
+                'event_timestamp' => date('Y-m-d H:i:s', $timestamp),
+                'event_type' => $this->mapZKTecoState($record['state'] ?? 0),
+                'raw_payload' => $record
+            ];
+        }
+
+        return $events;
+    }
+
+    private function fetchFromHikvision(array $device, ?string $lastSync): array
+    {
+        $startTime = $lastSync
+            ? date('Y-m-d\TH:i:s', strtotime($lastSync))
+            : date('Y-m-d\TH:i:s', strtotime('-1 hour'));
+        $endTime = date('Y-m-d\TH:i:s');
+
+        $url = "http://{$device['ip']}:{$device['port']}/ISAPI/AccessControl/AcsEvent?format=json";
+
+        $postData = json_encode([
+            'AcsEventCond' => [
+                'searchID' => uniqid(),
+                'searchResultPosition' => 0,
+                'maxResults' => 1000,
+                'major' => 5,
+                'minor' => 75,
+                'startTime' => $startTime . '+02:00',
+                'endTime' => $endTime . '+02:00',
+            ]
+        ]);
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $postData,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPAUTH => CURLAUTH_DIGEST,
+            CURLOPT_USERPWD => "{$device['username']}:{$device['password']}",
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_TIMEOUT => 30,
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($error) {
+            throw new Exception("CURL error: $error");
+        }
+
+        if ($httpCode !== 200) {
+            throw new Exception("HTTP $httpCode from device");
+        }
+
+        $data = json_decode($response, true);
+        $events = [];
+
+        if (isset($data['AcsEvent']['InfoList'])) {
+            foreach ($data['AcsEvent']['InfoList'] as $record) {
+                $employeeNo = $record['employeeNoString'] ?? $record['employeeNo'] ?? null;
+
+                if (empty($employeeNo)) {
+                    continue;
+                }
+
+                $events[] = [
+                    'employee_number' => (string) $employeeNo,
+                    'event_timestamp' => date('Y-m-d H:i:s', strtotime($record['time'])),
+                    'event_type' => $this->mapHikvisionStatus($record['attendanceStatus'] ?? null),
+                    'raw_payload' => $record
+                ];
+            }
+        }
+
+        return $events;
+    }
+
+    private function pushToCloud(int $deviceId, array $events): void
+    {
+        $url = "{$this->config['cloud_api_url']}/{$deviceId}";
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode(['events' => $events]),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Accept: application/json',
+                'Authorization: Bearer ' . $this->config['api_token'],
+            ],
+            CURLOPT_TIMEOUT => 30,
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($error) {
+            throw new Exception("CURL error: $error");
+        }
+
+        if ($httpCode !== 200) {
+            throw new Exception("Cloud API returned HTTP $httpCode: $response");
+        }
+
+        $result = json_decode($response, true);
+        echo "  -> Pushed to cloud: {$result['processed']} OK, {$result['failed']} failed\n";
+
+        // Update last sync time
+        $this->setLastSyncTime($deviceId, date('Y-m-d H:i:s'));
+    }
+
+    private function mapZKTecoState(int $state): string
+    {
+        return match($state) {
+            0, 2 => 'clock_in',
+            1, 3 => 'clock_out',
+            4 => 'break_start',
+            5 => 'break_end',
+            default => 'clock_in'
+        };
+    }
+
+    private function mapHikvisionStatus(?string $status): string
+    {
+        return match($status) {
+            'checkIn' => 'clock_in',
+            'checkOut' => 'clock_out',
+            'breakOut' => 'break_start',
+            'breakIn' => 'break_end',
+            default => 'clock_in'
+        };
+    }
+
+    private function getLastSyncTime(int $deviceId): ?string
+    {
+        if (!file_exists($this->lastSyncFile)) {
+            return null;
+        }
+
+        $data = json_decode(file_get_contents($this->lastSyncFile), true);
+        return $data[$deviceId] ?? null;
+    }
+
+    private function setLastSyncTime(int $deviceId, string $time): void
+    {
+        $data = [];
+
+        if (file_exists($this->lastSyncFile)) {
+            $data = json_decode(file_get_contents($this->lastSyncFile), true) ?? [];
+        }
+
+        $data[$deviceId] = $time;
+        file_put_contents($this->lastSyncFile, json_encode($data, JSON_PRETTY_PRINT));
+    }
+
+    private function logError(array $device, string $message): void
+    {
+        $logFile = __DIR__ . '/error.log';
+        $timestamp = date('Y-m-d H:i:s');
+        $entry = "[{$timestamp}] Device: {$device['name']} - Error: {$message}\n";
+        file_put_contents($logFile, $entry, FILE_APPEND);
+    }
+}
+
+// Run the agent
+$agent = new BiometricSyncAgent();
+$agent->run();
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+3.6 Step 4: Install Dependencies
+--------------------------------------------------------------------------------
+
+On the school computer, open Command Prompt (Windows) or Terminal (Mac/Linux).
+
+1. Navigate to the agent folder:
+
+   Windows:
+       cd C:\BiometricAgent
+
+   Linux/Mac:
+       cd /opt/biometric-agent
+
+2. Initialize Composer:
+
+       composer init -n
+
+3. Install ZKTeco library:
+
+       composer require jmrashed/zkteco
+
+4. Verify installation:
+
+       php -v                    # Should show PHP 8.0+
+       php agent.php --help      # Should start without errors
+
+--------------------------------------------------------------------------------
+3.7 Step 5: Run the Agent
+--------------------------------------------------------------------------------
+
+MANUAL RUN (for testing):
+-------------------------
+
+    php agent.php
+
+You should see:
+    =====================================
+       Biometric Sync Agent Started
+    =====================================
+    Cloud API: https://your-domain.com/api/attendance/webhook/agent
+    Sync interval: 300 seconds
+    Devices configured: 2
+    =====================================
+
+    [2026-01-30 10:15:00] Syncing: Main Entrance ZKTeco (zkteco)
+      -> Found 3 new events
+      -> Pushed to cloud: 3 OK, 0 failed
+    [2026-01-30 10:15:02] Syncing: Staff Room Hikvision (hikvision)
+      -> No new events
+
+    --- Sleeping for 300 seconds ---
+
+Press Ctrl+C to stop.
+
+
+RUNNING AS WINDOWS SERVICE (production):
+----------------------------------------
+
+Option A: Using NSSM (Recommended)
+
+1. Download NSSM from: https://nssm.cc/download
+2. Extract nssm.exe to C:\BiometricAgent\
+3. Open Command Prompt as Administrator
+4. Run:
+
+       cd C:\BiometricAgent
+       nssm install BiometricAgent
+
+5. In the dialog that opens:
+   - Path: C:\php\php.exe (your PHP installation)
+   - Startup directory: C:\BiometricAgent
+   - Arguments: agent.php
+
+6. Click "Install service"
+
+7. Start the service:
+
+       nssm start BiometricAgent
+
+8. The agent now runs in the background and starts automatically on boot.
+
+To manage the service:
+    nssm status BiometricAgent    # Check status
+    nssm stop BiometricAgent      # Stop
+    nssm start BiometricAgent     # Start
+    nssm restart BiometricAgent   # Restart
+    nssm remove BiometricAgent    # Uninstall
+
+
+Option B: Using Task Scheduler
+
+1. Open Task Scheduler (search in Start menu)
+
+2. Click "Create Basic Task"
+
+3. Name: "Biometric Sync Agent"
+
+4. Trigger: "When the computer starts"
+
+5. Action: "Start a program"
+   - Program/script: C:\php\php.exe
+   - Arguments: agent.php
+   - Start in: C:\BiometricAgent
+
+6. Check "Open the Properties dialog" and click Finish
+
+7. In Properties:
+   - Check "Run whether user is logged on or not"
+   - Check "Run with highest privileges"
+   - Configure for: Windows 10/11
+
+8. Click OK and enter your password
+
+
+RUNNING ON LINUX (production):
+------------------------------
+
+Option A: Using systemd
+
+1. Create service file:
+
+       sudo nano /etc/systemd/system/biometric-agent.service
+
+2. Add content:
+
+       [Unit]
+       Description=Biometric Sync Agent
+       After=network.target
+
+       [Service]
+       Type=simple
+       User=www-data
+       WorkingDirectory=/opt/biometric-agent
+       ExecStart=/usr/bin/php /opt/biometric-agent/agent.php
+       Restart=always
+       RestartSec=10
+
+       [Install]
+       WantedBy=multi-user.target
+
+3. Enable and start:
+
+       sudo systemctl daemon-reload
+       sudo systemctl enable biometric-agent
+       sudo systemctl start biometric-agent
+
+4. Check status:
+
+       sudo systemctl status biometric-agent
+
+--------------------------------------------------------------------------------
+3.8 Step 6: Enroll Staff on Devices
+--------------------------------------------------------------------------------
+
+FOR ZKTECO DEVICES:
+
+1. On the device, press MENU
+
+2. Go to: User Mgt > New User
+
+3. Enter:
+   - User ID: Staff's ID number from school system (MUST MATCH EXACTLY)
+   - Name: Staff member's name
+
+4. Enroll fingerprint:
+   - Select "Fingerprint"
+   - Follow prompts to scan finger 3 times
+
+5. Save the user
+
+6. Repeat for all staff
+
+
+FOR HIKVISION DEVICES:
+
+1. Access device web interface: http://device-ip
+
+2. Go to: Person Management
+
+3. Click "Add"
+
+4. Enter:
+   - Employee No.: Staff's ID number (MUST MATCH EXACTLY)
+   - Name: Staff member's name
+
+5. Add credentials:
+   - Click relevant tab (Face, Fingerprint, Card)
+   - Follow prompts to enroll
+
+6. Click "OK" to save
+
+7. Repeat for all staff
+
+--------------------------------------------------------------------------------
+3.9 Step 7: Test Agent Mode
+--------------------------------------------------------------------------------
+
+1. Start the agent manually:
+
+       php agent.php
+
+2. Have a staff member clock in on a device
+
+3. Wait for the next sync cycle (or restart agent to sync immediately)
+
+4. Watch the agent output - you should see:
+
+       [2026-01-30 10:20:00] Syncing: Main Entrance ZKTeco (zkteco)
+         -> Found 1 new events
+         -> Pushed to cloud: 1 OK, 0 failed
+
+5. Verify in your cloud system:
+
+       php artisan tinker
+       >>> \App\Models\StaffAttendance\BiometricRawEvent::latest()->first()
+
+6. If the event appears, agent mode is working!
+
+
+================================================================================
+                          4. SETUP CHECKLISTS
+================================================================================
+
+--------------------------------------------------------------------------------
+PUSH MODE CHECKLIST (Hikvision)
+--------------------------------------------------------------------------------
+
+CLOUD SYSTEM:
+[ ] Device added with Connectivity Mode = Push
+[ ] Webhook URL copied
+[ ] Valid SSL certificate on server
+
+HIKVISION DEVICE:
+[ ] Static IP assigned
+[ ] ISAPI enabled
+[ ] HTTP Listening configured with webhook URL
+[ ] Event subscription enabled (Notify Surveillance Center)
+[ ] Test connection successful
+
+STAFF ENROLLMENT:
+[ ] All staff enrolled on device
+[ ] Employee numbers match ID numbers in school system
+
+TESTING:
+[ ] Test clock-in performed
+[ ] Event received in biometric_raw_events table
+[ ] Processing job converts to attendance record
+
+--------------------------------------------------------------------------------
+AGENT MODE CHECKLIST (ZKTeco / Hikvision)
+--------------------------------------------------------------------------------
+
+CLOUD SYSTEM:
+[ ] Device(s) added with Connectivity Mode = Agent
+[ ] API token generated
+[ ] Agent API URL noted
+
+SCHOOL COMPUTER:
+[ ] Computer identified (stays on, on network)
+[ ] PHP 8.0+ installed
+[ ] Composer installed
+[ ] Agent folder created
+[ ] config.json created with correct values
+[ ] agent.php created
+[ ] Dependencies installed (composer require jmrashed/zkteco)
+
+DEVICES:
+[ ] Each device has static IP
+[ ] Agent can ping each device
+[ ] ZKTeco: Port 4370 accessible
+[ ] Hikvision: Port 80 accessible, ISAPI enabled
+
+STAFF ENROLLMENT:
+[ ] All staff enrolled on devices
+[ ] Employee numbers match ID numbers in school system
+
+TESTING:
+[ ] Agent runs without errors
+[ ] Agent connects to all devices
+[ ] Test clock-in performed
+[ ] Event synced to cloud
+[ ] Event appears in biometric_raw_events table
+
+
+================================================================================
+                          5. QUICK REFERENCE
+================================================================================
+
+--------------------------------------------------------------------------------
+API Endpoints
+--------------------------------------------------------------------------------
+
++------------------+--------------------------------------------------------+
+| Mode             | Endpoint                                               |
++------------------+--------------------------------------------------------+
+| Hikvision Push   | POST /api/attendance/webhook/hikvision/{device_id}     |
++------------------+--------------------------------------------------------+
+| Agent            | POST /api/attendance/webhook/agent/{device_id}         |
+|                  | (Requires: Authorization: Bearer {token})              |
++------------------+--------------------------------------------------------+
+
+--------------------------------------------------------------------------------
+Default Ports
+--------------------------------------------------------------------------------
+
++------------------+------------------+------------------+
+| Device           | Protocol         | Port             |
++------------------+------------------+------------------+
+| ZKTeco           | UDP              | 4370             |
++------------------+------------------+------------------+
+| Hikvision        | HTTP             | 80               |
++------------------+------------------+------------------+
+| Hikvision        | HTTPS            | 443              |
++------------------+------------------+------------------+
+
+--------------------------------------------------------------------------------
+Event Types
+--------------------------------------------------------------------------------
+
++------------------+------------------+
+| Type             | Meaning          |
++------------------+------------------+
+| clock_in         | Arrival          |
++------------------+------------------+
+| clock_out        | Departure        |
++------------------+------------------+
+| break_start      | Break begins     |
++------------------+------------------+
+| break_end        | Break ends       |
++------------------+------------------+
+
+--------------------------------------------------------------------------------
+Artisan Commands (Cloud Server)
+--------------------------------------------------------------------------------
+
+# Process raw events into attendance records
+php artisan attendance:process-events
+
+# View latest raw events
+php artisan tinker
+>>> BiometricRawEvent::latest()->take(10)->get()
+
+# Check unmapped employee numbers
+>>> UnmappedBiometricId::all()
+
+--------------------------------------------------------------------------------
+Agent Commands (School Computer)
+--------------------------------------------------------------------------------
+
+# Run agent manually
+php agent.php
+
+# Run agent in background (Linux)
+nohup php agent.php > agent.log 2>&1 &
+
+# Check agent log
+tail -f agent.log
+
+# Check error log
+tail -f error.log
+
+--------------------------------------------------------------------------------
+Troubleshooting Commands
+--------------------------------------------------------------------------------
+
+# Test if device is reachable (from agent computer)
+ping 192.168.1.201
+
+# Test ZKTeco port (from agent computer)
+nc -zvu 192.168.1.201 4370
+
+# Test Hikvision port (from agent computer)
+curl -I http://192.168.1.202/ISAPI/System/deviceInfo
+
+# Check cloud API is accessible (from agent computer)
+curl -I https://your-domain.com/api/health
+
+
+================================================================================
+                            END OF DOCUMENT
+================================================================================
