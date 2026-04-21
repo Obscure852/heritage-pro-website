@@ -4,9 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Contact extends Model
@@ -15,86 +13,33 @@ class Contact extends Model
     use SoftDeletes;
 
     protected $fillable = [
+        'owner_id',
+        'lead_id',
+        'customer_id',
         'name',
+        'job_title',
         'email',
         'phone',
-        'address',
+        'is_primary',
         'notes',
-        'is_active',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
+        'is_primary' => 'boolean',
     ];
 
-    public function people(): HasMany
+    public function owner(): BelongsTo
     {
-        return $this->hasMany(ContactPerson::class)->orderByDesc('is_primary')->orderBy('sort_order')->orderBy('id');
+        return $this->belongsTo(User::class, 'owner_id');
     }
 
-    public function primaryPerson(): HasOne
+    public function lead(): BelongsTo
     {
-        return $this->hasOne(ContactPerson::class)->where('is_primary', true)->orderBy('sort_order')->orderBy('id');
+        return $this->belongsTo(Lead::class);
     }
 
-    public function tags(): BelongsToMany
+    public function customer(): BelongsTo
     {
-        return $this->belongsToMany(ContactTag::class, 'contact_contact_tag')
-            ->withTimestamps()
-            ->orderBy('sort_order')
-            ->orderBy('name');
-    }
-
-    public function assets(): HasMany
-    {
-        return $this->hasMany(Asset::class, 'contact_id');
-    }
-
-    public function maintenances(): HasMany
-    {
-        return $this->hasMany(AssetMaintenance::class, 'contact_id');
-    }
-
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
-
-    public function scopeEligibleForAssets($query)
-    {
-        return $query->active()->whereHas('tags', function ($tagQuery) {
-            $tagQuery->where('is_active', true)->where('usable_in_assets', true);
-        });
-    }
-
-    public function scopeEligibleForMaintenance($query)
-    {
-        return $query->active()->whereHas('tags', function ($tagQuery) {
-            $tagQuery->where('is_active', true)->where('usable_in_maintenance', true);
-        });
-    }
-
-    public function getContactPersonAttribute(): ?string
-    {
-        if ($this->relationLoaded('primaryPerson')) {
-            return $this->primaryPerson?->name;
-        }
-
-        return $this->primaryPerson()->value('name');
-    }
-
-    public function getPrimaryPersonLabelAttribute(): ?string
-    {
-        $person = $this->relationLoaded('primaryPerson')
-            ? $this->primaryPerson
-            : $this->primaryPerson()->first();
-
-        if (!$person) {
-            return null;
-        }
-
-        $parts = array_filter([$person->name, $person->title]);
-
-        return implode(' - ', $parts);
+        return $this->belongsTo(Customer::class);
     }
 }

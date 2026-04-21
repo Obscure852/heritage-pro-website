@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class CrmUserPresence extends Model
+{
+    use HasFactory;
+
+    protected $table = 'crm_user_presence';
+
+    protected $fillable = [
+        'user_id',
+        'last_seen_at',
+        'last_path',
+    ];
+
+    protected $casts = [
+        'last_seen_at' => 'datetime',
+    ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+}

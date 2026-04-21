@@ -1,0 +1,17 @@
+@extends('layouts.website-master')
+
+@section('content')
+    @include('website.partials.nav')
+    @include('website.partials.hero', ['hero' => $pageConfig['hero']])
+    @include('website.partials.logo-strip')
+    @include('website.partials.products-grid')
+    @include('website.partials.stats')
+    @include('website.partials.home-features')
+    @include('website.partials.testimonials')
+    @include('website.partials.customer-cases')
+    @include('website.partials.pricing')
+    @include('website.partials.faq')
+    @include('website.partials.blog')
+    @include('website.partials.contact')
+    @include('website.partials.footer')
+@endsection

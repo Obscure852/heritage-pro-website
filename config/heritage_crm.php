@@ -1,0 +1,183 @@
+<?php
+
+return [
+    'roles' => [
+        'admin' => 'Administrator',
+        'manager' => 'Manager',
+        'rep' => 'Sales Representative',
+    ],
+    'modules' => [
+        'dashboard' => [
+            'label' => 'Dashboard',
+            'caption' => 'CRM overview',
+            'icon' => 'bx bxs-grid-alt',
+            'route' => 'crm.dashboard',
+            'match' => ['crm.dashboard'],
+            'roles' => ['admin', 'manager', 'rep'],
+        ],
+        'customers' => [
+            'label' => 'Customers',
+            'caption' => 'Leads and clients',
+            'icon' => 'bx bxs-school',
+            'route' => 'crm.leads.index',
+            'match' => ['crm.leads.*', 'crm.customers.*'],
+            'roles' => ['admin', 'manager', 'rep'],
+            'children' => [
+                [
+                    'label' => 'Leads',
+                    'route' => 'crm.leads.index',
+                    'match' => ['crm.leads.*'],
+                ],
+                [
+                    'label' => 'Customers',
+                    'route' => 'crm.customers.index',
+                    'match' => ['crm.customers.*'],
+                ],
+            ],
+        ],
+        'contacts' => [
+            'label' => 'Contacts',
+            'caption' => 'Decision makers',
+            'icon' => 'bx bx-user-pin',
+            'route' => 'crm.contacts.index',
+            'match' => ['crm.contacts.*'],
+            'roles' => ['admin', 'manager', 'rep'],
+        ],
+        'requests' => [
+            'label' => 'Requests',
+            'caption' => 'Sales and support',
+            'icon' => 'bx bx-headphone',
+            'route' => 'crm.requests.index',
+            'match' => ['crm.requests.*'],
+            'roles' => ['admin', 'manager', 'rep'],
+        ],
+        'dev' => [
+            'label' => 'Dev',
+            'caption' => 'Requested improvements',
+            'icon' => 'bx bx-code-block',
+            'route' => 'crm.dev.index',
+            'match' => ['crm.dev.*'],
+            'roles' => ['admin', 'manager', 'rep'],
+        ],
+        'discussions' => [
+            'label' => 'Discussions',
+            'caption' => 'Internal communication',
+            'icon' => 'bx bx-chat',
+            'route' => 'crm.discussions.index',
+            'match' => ['crm.discussions.*'],
+            'roles' => ['admin', 'manager', 'rep'],
+        ],
+        'integrations' => [
+            'label' => 'Integrations',
+            'caption' => 'School API links',
+            'icon' => 'bx bx-plug',
+            'route' => 'crm.integrations.index',
+            'match' => ['crm.integrations.*'],
+            'roles' => ['admin', 'manager', 'rep'],
+        ],
+        'users' => [
+            'label' => 'Users',
+            'caption' => 'Internal access',
+            'icon' => 'bx bx-group',
+            'route' => 'crm.users.index',
+            'match' => ['crm.users.*'],
+            'roles' => ['admin'],
+        ],
+        'settings' => [
+            'label' => 'Settings',
+            'caption' => 'Pipeline rules',
+            'icon' => 'bx bx-cog',
+            'route' => 'crm.settings.index',
+            'match' => ['crm.settings.*'],
+            'roles' => ['admin'],
+            'children' => [
+                [
+                    'label' => 'Overview',
+                    'route' => 'crm.settings.index',
+                    'match' => ['crm.settings.index'],
+                ],
+                [
+                    'label' => 'Sales stages',
+                    'route' => 'crm.settings.sales-stages',
+                    'match' => ['crm.settings.sales-stages*'],
+                ],
+            ],
+        ],
+    ],
+    'search' => [
+        'limit_per_group' => 5,
+        'min_query_length' => 2,
+    ],
+    'presence' => [
+        'online_window_minutes' => 3,
+        'launcher_poll_seconds' => 45,
+        'launcher_limit' => 8,
+    ],
+    'lead_statuses' => [
+        'active' => 'Active',
+        'qualified' => 'Qualified',
+        'converted' => 'Converted',
+        'lost' => 'Lost',
+    ],
+    'customer_statuses' => [
+        'active' => 'Active',
+        'onboarding' => 'Onboarding',
+        'inactive' => 'Inactive',
+    ],
+    'request_types' => [
+        'sales' => 'Sales',
+        'support' => 'Support',
+    ],
+    'support_statuses' => [
+        'open' => 'Open',
+        'in_progress' => 'In Progress',
+        'resolved' => 'Resolved',
+        'closed' => 'Closed',
+    ],
+    'request_outcomes' => [
+        'pending' => 'Pending',
+        'won' => 'Won',
+        'lost' => 'Lost',
+    ],
+    'activity_types' => [
+        'call' => 'Call',
+        'email' => 'Email',
+        'meeting' => 'Meeting',
+        'note' => 'Note',
+    ],
+    'development_statuses' => [
+        'backlog' => 'Backlog',
+        'planned' => 'Planned',
+        'in_progress' => 'In Progress',
+        'shipped' => 'Shipped',
+        'declined' => 'Declined',
+    ],
+    'development_priorities' => [
+        'low' => 'Low',
+        'medium' => 'Medium',
+        'high' => 'High',
+        'critical' => 'Critical',
+    ],
+    'discussion_channels' => [
+        'app' => 'In-app message',
+        'email' => 'Email',
+        'whatsapp' => 'WhatsApp',
+    ],
+    'discussion_delivery_statuses' => [
+        'sent' => 'Sent',
+        'queued' => 'Queued',
+        'pending_integration' => 'Pending integration',
+        'failed' => 'Failed',
+    ],
+    'integration_kinds' => [
+        'school_api' => 'School API',
+        'email' => 'Email provider',
+        'whatsapp' => 'WhatsApp provider',
+        'webhook' => 'Webhook',
+    ],
+    'integration_statuses' => [
+        'active' => 'Active',
+        'inactive' => 'Inactive',
+        'testing' => 'Testing',
+    ],
+];

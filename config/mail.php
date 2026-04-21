@@ -88,6 +88,11 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Heritage School Management System'),
     ],
 
+    'demo_recipient' => [
+        'address' => env('BOOK_DEMO_TO_ADDRESS', env('MAIL_FROM_ADDRESS', 'obscure852@gmail.com')),
+        'name' => env('BOOK_DEMO_TO_NAME', env('MAIL_FROM_NAME', 'Heritage School Management System')),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Markdown Mail Settings

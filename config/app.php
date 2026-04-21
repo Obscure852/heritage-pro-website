@@ -1,6 +1,5 @@
 <?php
 
-use App\Providers\InternetServiceProvider;
 
 return [
 
@@ -163,15 +162,6 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
-        App\Providers\SystemOptimizationProvider::class,
-        App\Providers\LicenseServiceProvider::class,
-        
-
-        /*
-         * Package Service Providers...
-         */
-        Barryvdh\DomPDF\ServiceProvider::class,
-
         /*
          * Application Service Providers...
          */
@@ -180,8 +170,6 @@ return [
         App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
-        App\Providers\InternetServiceProvider::class,
-        App\Providers\BiometricServiceProvider::class,
 
     ],
 

@@ -1,71 +1,47 @@
 <?php
 
+use App\Http\Controllers\Auth\QuickCrmAccessController;
+use App\Http\Controllers\PublicWebsiteController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AdminController;
-use App\Http\Controllers\Auth\IdleSessionController;
-use App\Http\Controllers\Api\ExternalAuthController;
 
-Route::get('/admin/migrate', [AdminController::class, 'migrate'])->middleware('verify.migration.auth');
-
-Route::get('/', function() {
-  return redirect()->route('login');
+Route::controller(PublicWebsiteController::class)->group(function () {
+    Route::get('/', 'home')->name('website.home');
+    Route::get('/sign-in', QuickCrmAccessController::class)->name('website.sign-in');
+    Route::get('/products', 'page')->defaults('page', 'products')->name('website.products');
+    Route::get('/features', 'page')->defaults('page', 'features')->name('website.features');
+    Route::get('/customers', 'page')->defaults('page', 'customers')->name('website.customers');
+    Route::get('/pricing', 'page')->defaults('page', 'pricing')->name('website.pricing');
+    Route::get('/about', 'page')->defaults('page', 'about')->name('website.about');
+    Route::get('/team', 'page')->defaults('page', 'team')->name('website.team');
+    Route::get('/faq', 'page')->defaults('page', 'faq')->name('website.faq');
+    Route::post('/book-demo', 'bookDemo')->name('website.book-demo');
 });
 
-Route::get('/auth/auto-login',[ExternalAuthController::class, 'autoLogin'])->name('auth.auto-login');
-Auth::routes();
-Route::middleware('auth')->post('/auth/activity', [IdleSessionController::class, 'touchWeb'])->name('auth.activity');
+Auth::routes(['register' => false]);
 
-include __DIR__.'/dashboard/dashboard.php';
-include __DIR__.'/students/students.php';
-include __DIR__.'/admissions/admissions.php';
-include __DIR__.'/staff/users.php';
-include __DIR__.'/online/application.php';
-include __DIR__.'/sponsor-auth/sponsor.php';
-include __DIR__.'/student-auth/student.php';
-include __DIR__.'/sponsors/sponsors.php';
-include __DIR__.'/attendance/attendance.php';
-include __DIR__.'/academic/academic.php';
-include __DIR__.'/subjects/subjects.php';
-include __DIR__.'/optional/optional.php';
-include __DIR__.'/contacts.php';
-include __DIR__.'/activities/activities.php';
+Route::middleware(['auth', 'crm.access'])->group(function () {
+    Route::get('/dashboard', function () {
+        return redirect()->route('crm.dashboard');
+    })->name('dashboard');
 
-include __DIR__.'/assessment/tests.php';
-include __DIR__.'/assessment/assessment.php';
-include __DIR__.'/assessment/senior-assessment.php';
-include __DIR__.'/assessment/junior-assessment.php';
-include __DIR__.'/assessment/primary-assessment.php';
-include __DIR__.'/assessment/reception-assessment.php';
+    Route::get('/home', function () {
+        return redirect()->route('crm.dashboard');
+    })->name('home');
+});
 
-include __DIR__.'/finals/context.php';
-include __DIR__.'/finals/senior.php';
-include __DIR__.'/finals/finals.php';
-include __DIR__.'/finals/classes.php';
-include __DIR__.'/finals/houses.php';
-include __DIR__.'/finals/core.php';
-include __DIR__.'/finals/external_exam_analysis.php';
-include __DIR__.'/finals/external_exam_import.php';
-include __DIR__.'/finals/optionals.php';
-include __DIR__.'/finals/subjects.php';
-include __DIR__.'/houses/houses.php';
-include __DIR__.'/invigilation/invigilation.php';
-include __DIR__.'/assets/assets.php';
-include __DIR__.'/assets/maintenance.php';
-include __DIR__.'/assets/disposals.php';
-include __DIR__.'/assets/assignments.php';
-include __DIR__.'/assets/audits.php';
-include __DIR__.'/welfare.php';
-include __DIR__.'/notifications/notifications.php';
-include __DIR__.'/settings/setup.php';
-include __DIR__.'/logs/logs.php';
-include __DIR__.'/license/licensing.php';
-include __DIR__.'/lms/lms.php';
-include __DIR__.'/fees/fees.php';
-include __DIR__.'/leave.php';
-include __DIR__.'/staff-attendance.php';
-include __DIR__.'/library.php';
-include __DIR__.'/timetable.php';
-include __DIR__.'/documents/documents.php';
-include __DIR__.'/schemes/schemes.php';
-include __DIR__.'/staff/pdp.php';
+Route::prefix('crm')
+    ->middleware(['auth', 'crm.access'])
+    ->name('crm.')
+    ->group(function () {
+        require base_path('routes/crm/dashboard.php');
+        require base_path('routes/crm/workspace.php');
+        require base_path('routes/crm/customers.php');
+        require base_path('routes/crm/contacts.php');
+        require base_path('routes/crm/requests.php');
+        require base_path('routes/crm/dev.php');
+        require base_path('routes/crm/discussions.php');
+        require base_path('routes/crm/integrations.php');
+        require base_path('routes/crm/users.php');
+        require base_path('routes/crm/settings.php');
+    });
