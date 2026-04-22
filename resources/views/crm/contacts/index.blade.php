@@ -4,14 +4,22 @@
 @section('crm_heading', 'Contacts')
 @section('crm_subheading', 'Keep decision-makers, finance contacts, and institutional stakeholders linked to the right lead or customer account.')
 
-@section('crm_actions')
-    <a href="{{ route('crm.contacts.create') }}" class="btn btn-primary">
-        <i class="bx bx-user-plus"></i> New contact
-    </a>
+@section('crm_header_stats')
+    @foreach ($contactStats as $stat)
+        @include('crm.partials.header-stat', [
+            'value' => number_format($stat['value']),
+            'label' => $stat['label'],
+        ])
+    @endforeach
 @endsection
 
 @section('content')
     <div class="crm-stack">
+        @include('crm.partials.helper-text', [
+            'title' => 'Contact Directory',
+            'content' => 'Search by person, owner, account type, or primary status, then open the contact record when you need full account context.',
+        ])
+
         <section class="crm-card crm-filter-card">
             <div class="crm-card-title">
                 <div>
@@ -56,6 +64,9 @@
                 <div class="form-actions">
                     <a href="{{ route('crm.contacts.index') }}" class="btn btn-light crm-btn-light"><i class="bx bx-reset"></i> Reset</a>
                     <button type="submit" class="btn btn-primary"><i class="bx bx-filter-alt"></i> Apply filters</button>
+                    <a href="{{ route('crm.contacts.create') }}" class="btn btn-primary">
+                        <i class="bx bx-user-plus"></i> New contact
+                    </a>
                 </div>
             </form>
         </section>
@@ -100,13 +111,18 @@
                                     </td>
                                     <td class="crm-table-actions">
                                         <div class="crm-action-row">
-                                            <a href="{{ route('crm.contacts.edit', $contact) }}" class="btn btn-secondary">
-                                                <i class="fas fa-edit"></i> Edit
+                                            @include('crm.partials.view-button', [
+                                                'url' => route('crm.contacts.show', $contact),
+                                                'label' => 'View contact',
+                                            ])
+                                            <a href="{{ route('crm.contacts.edit', $contact) }}" class="btn crm-icon-action" title="Edit contact" aria-label="Edit contact">
+                                                <i class="fas fa-edit"></i>
                                             </a>
                                             @include('crm.partials.delete-button', [
                                                 'action' => route('crm.contacts.destroy', $contact),
                                                 'message' => 'Are you sure you want to permanently delete this contact?',
-                                                'label' => 'Delete',
+                                                'label' => 'Delete contact',
+                                                'iconOnly' => true,
                                             ])
                                         </div>
                                     </td>

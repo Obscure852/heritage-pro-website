@@ -14,6 +14,7 @@ return new class extends Migration {
         Schema::create('contacts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('owner_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('import_reference', 160)->nullable();
             $table->foreignId('lead_id')->nullable()->constrained('leads')->cascadeOnDelete();
             $table->foreignId('customer_id')->nullable()->constrained('customers')->cascadeOnDelete();
             $table->string('name');
@@ -27,6 +28,7 @@ return new class extends Migration {
 
             $table->index(['lead_id', 'customer_id']);
             $table->index('owner_id');
+            $table->unique('import_reference', 'contacts_import_reference_unique');
         });
     }
 

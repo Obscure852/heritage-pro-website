@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Crm;
 
 use App\Http\Requests\Crm\CustomerUpsertRequest;
 use App\Models\Customer;
+use App\Models\Lead;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 
 class CustomerController extends CrmController
 {
@@ -16,6 +18,14 @@ class CustomerController extends CrmController
             'q' => trim((string) $request->query('q', '')),
             'owner_id' => (string) $request->query('owner_id', ''),
             'status' => (string) $request->query('status', ''),
+        ];
+
+        $customerStatsQuery = $this->scopeOwned(Customer::query());
+        $customerStats = [
+            ['label' => 'Total', 'value' => (clone $customerStatsQuery)->count()],
+            ['label' => 'Active', 'value' => (clone $customerStatsQuery)->where('status', 'active')->count()],
+            ['label' => 'Onboarding', 'value' => (clone $customerStatsQuery)->where('status', 'onboarding')->count()],
+            ['label' => 'Inactive', 'value' => (clone $customerStatsQuery)->where('status', 'inactive')->count()],
         ];
 
         $customers = $this->scopeOwned(
@@ -45,24 +55,59 @@ class CustomerController extends CrmController
             'owners' => $this->owners(),
             'customerStatuses' => config('heritage_crm.customer_statuses'),
             'filters' => $filters,
+            'canOnboardCustomer' => $this->crmUser()->isAdmin(),
+            'customerStats' => $customerStats,
         ]);
     }
 
-    public function create(): View
+    public function onboardingCreate(): View
     {
-        return view('crm.customers.create', $this->formData());
+        $this->authorizeCrmAdmin();
+
+        return view('crm.customers.onboarding-create', $this->formData());
     }
 
-    public function store(CustomerUpsertRequest $request): RedirectResponse
+    public function onboardingStore(CustomerUpsertRequest $request): RedirectResponse
     {
-        $data = $request->validated();
-        $data['owner_id'] = $this->normalizeOwnerId($data['owner_id'] ?? null);
+        $this->authorizeCrmAdmin();
 
-        $customer = Customer::query()->create($data);
+        $data = $request->validated();
+        $ownerId = $this->normalizeOwnerId($data['owner_id'] ?? null);
+
+        $customer = DB::transaction(function () use ($data, $ownerId) {
+            $convertedAt = $data['purchased_at'] ?? now();
+
+            $lead = Lead::query()->create([
+                'owner_id' => $ownerId,
+                'company_name' => $data['company_name'],
+                'industry' => $data['industry'] ?? null,
+                'website' => $data['website'] ?? null,
+                'email' => $data['email'] ?? null,
+                'phone' => $data['phone'] ?? null,
+                'country' => $data['country'] ?? null,
+                'status' => 'converted',
+                'converted_at' => $convertedAt,
+                'notes' => $data['notes'] ?? null,
+            ]);
+
+            return Customer::query()->create([
+                'owner_id' => $ownerId,
+                'lead_id' => $lead->id,
+                'company_name' => $data['company_name'],
+                'industry' => $data['industry'] ?? null,
+                'website' => $data['website'] ?? null,
+                'email' => $data['email'] ?? null,
+                'phone' => $data['phone'] ?? null,
+                'country' => $data['country'] ?? null,
+                'status' => $data['status'],
+                'purchased_at' => $data['purchased_at'] ?? null,
+                'notes' => $data['notes'] ?? null,
+            ]);
+        });
 
         return redirect()
             ->route('crm.customers.show', $customer)
-            ->with('crm_success', 'Customer created successfully.');
+            ->with('crm_success', 'Customer imported and linked to a source lead successfully.');
     }
 
     public function show(Customer $customer): View
@@ -76,11 +121,23 @@ class CustomerController extends CrmController
             'requests.owner',
             'requests.salesStage:id,name',
             'requests.contact:id,name',
+            'quotes' => fn ($query) => $query
+                ->with(['contact:id,name', 'request:id,title'])
+                ->withCount('items')
+                ->latest('quote_date')
+                ->latest('id'),
+            'invoices' => fn ($query) => $query
+                ->with(['contact:id,name', 'request:id,title'])
+                ->withCount('items')
+                ->latest('invoice_date')
+                ->latest('id'),
         ]);
 
         return view('crm.customers.show', [
             'customer' => $customer,
             'customerStatuses' => config('heritage_crm.customer_statuses'),
+            'quoteStatuses' => config('heritage_crm.quote_statuses'),
+            'invoiceStatuses' => config('heritage_crm.invoice_statuses'),
         ]);
     }
 
@@ -99,6 +156,7 @@ class CustomerController extends CrmController
 
         $data = $request->validated();
         $data['owner_id'] = $this->normalizeOwnerId($data['owner_id'] ?? $customer->owner_id);
+        $data['lead_id'] = $customer->lead_id;
 
         $customer->update($data);
 

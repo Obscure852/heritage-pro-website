@@ -14,7 +14,21 @@ class DiscussionMessageStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'body' => ['required', 'string', 'max:8000'],
+            'body' => ['nullable', 'string', 'max:8000'],
+            'attachments' => ['nullable', 'array', 'max:10'],
+            'attachments.*' => ['file', 'max:15360', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp'],
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator): void {
+            $attachments = $this->file('attachments', []);
+            $hasFiles = is_array($attachments) && count($attachments) > 0;
+
+            if (blank($this->input('body')) && ! $hasFiles) {
+                $validator->errors()->add('body', 'Write a message or attach at least one file.');
+            }
+        });
     }
 }

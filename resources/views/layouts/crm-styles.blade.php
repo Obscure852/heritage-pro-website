@@ -54,14 +54,14 @@ a {
 
 .crm-brand-copy strong {
     display: block;
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 700;
 }
 
 .crm-brand-copy span {
     display: block;
     margin-top: 2px;
-    font-size: 12px;
+    font-size: 11px;
     color: rgba(255, 255, 255, 0.62);
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -74,7 +74,7 @@ a {
 .crm-sidebar-label {
     margin-bottom: 10px;
     color: rgba(255, 255, 255, 0.48);
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
 }
@@ -104,7 +104,7 @@ a {
 
 .crm-sidebar-link small {
     color: rgba(255, 255, 255, 0.45);
-    font-size: 11px;
+    font-size: 10px;
 }
 
 .crm-sidebar-footer {
@@ -117,13 +117,13 @@ a {
 
 .crm-sidebar-footer h3 {
     margin: 0 0 8px;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .crm-sidebar-footer p {
     margin: 0;
     color: rgba(255, 255, 255, 0.62);
-    font-size: 13px;
+    font-size: 12px;
     line-height: 1.6;
 }
 
@@ -144,7 +144,7 @@ a {
 .crm-heading-wrap h1 {
     margin: 0;
     font-family: var(--font-display);
-    font-size: clamp(28px, 4vw, 38px);
+    font-size: clamp(27px, 4vw, 37px);
     line-height: 1;
     letter-spacing: -0.04em;
 }
@@ -183,19 +183,19 @@ a {
     justify-content: center;
     background: linear-gradient(135deg, #4e73df 0%, #36b9cc 100%);
     color: #fff;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
 }
 
 .crm-user-chip strong {
     display: block;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .crm-user-chip span {
     display: block;
     color: var(--fg-3);
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .crm-utility-links {
@@ -260,7 +260,7 @@ a {
 .crm-card-title h2,
 .crm-card-title h3 {
     margin: 0;
-    font-size: 20px;
+    font-size: 19px;
     font-family: var(--font-display);
     letter-spacing: -0.03em;
 }
@@ -268,7 +268,7 @@ a {
 .crm-card-title p {
     margin: 8px 0 0;
     color: var(--fg-3);
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .crm-metric {
@@ -278,7 +278,7 @@ a {
 .crm-metric span {
     display: block;
     color: var(--fg-3);
-    font-size: 12px;
+    font-size: 11px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
 }
@@ -286,7 +286,7 @@ a {
 .crm-metric strong {
     display: block;
     margin-top: 12px;
-    font-size: 36px;
+    font-size: 35px;
     line-height: 1;
     font-family: var(--font-display);
     letter-spacing: -0.05em;
@@ -303,7 +303,7 @@ a {
 .crm-tab {
     padding: 10px 16px;
     border-radius: 12px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--fg-3);
 }
@@ -335,7 +335,7 @@ a {
 }
 
 .crm-field label {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--fg-2);
 }
@@ -370,7 +370,7 @@ a {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    font-size: 14px;
+    font-size: 13px;
     color: var(--fg-2);
 }
 
@@ -385,7 +385,7 @@ a {
     background: rgba(78, 115, 223, 0.08);
     border-left: 4px solid #4e73df;
     color: var(--fg-2);
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.6;
 }
 
@@ -412,12 +412,12 @@ a {
     border-bottom: 1px solid rgba(148, 163, 184, 0.16);
     text-align: left;
     vertical-align: top;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .crm-table th {
     color: var(--fg-3);
-    font-size: 12px;
+    font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
 }
@@ -438,7 +438,7 @@ a {
     align-items: center;
     padding: 6px 10px;
     border-radius: 999px;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -472,7 +472,7 @@ a {
 .crm-kicker {
     margin: 0 0 8px;
     color: var(--brand-indigo-500);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -499,11 +499,11 @@ a {
 
 .crm-meta-row span {
     color: var(--fg-3);
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .crm-meta-row strong {
-    font-size: 14px;
+    font-size: 13px;
     text-align: right;
 }
 
@@ -521,13 +521,13 @@ a {
 
 .crm-list-item h4 {
     margin: 0 0 6px;
-    font-size: 16px;
+    font-size: 15px;
 }
 
 .crm-list-item p {
     margin: 0;
     color: var(--fg-3);
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.6;
 }
 
@@ -560,7 +560,7 @@ a {
 .crm-alert {
     padding: 14px 18px;
     border-radius: 16px;
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.6;
 }
 
@@ -589,7 +589,7 @@ a {
 
 .crm-timeline-time {
     color: var(--fg-3);
-    font-size: 12px;
+    font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
 }
@@ -603,13 +603,13 @@ a {
 
 .crm-timeline-card h4 {
     margin: 0 0 6px;
-    font-size: 15px;
+    font-size: 14px;
 }
 
 .crm-timeline-card p {
     margin: 0;
     color: var(--fg-3);
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.6;
 }
 
@@ -628,7 +628,7 @@ a {
 
 .crm-pagination a,
 .crm-pagination span {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--fg-2);
 }
 
@@ -647,7 +647,7 @@ a {
 
 .crm-stage-card strong {
     display: block;
-    font-size: 28px;
+    font-size: 27px;
     line-height: 1;
     margin-top: 10px;
     font-family: var(--font-display);
@@ -655,7 +655,7 @@ a {
 
 .crm-muted-copy {
     color: var(--fg-3);
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .btn {
@@ -667,7 +667,7 @@ a {
     padding: 11px 18px;
     border-radius: 14px;
     border: 1px solid transparent;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;

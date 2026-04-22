@@ -15,16 +15,16 @@
             'label' => 'Delete lead',
         ])
     </div>
-    @if ($lead->converted_at === null)
+    @if ($customer)
+        <a href="{{ route('crm.customers.show', $customer) }}" class="btn btn-primary"><i class="fas fa-external-link-alt"></i> Open converted customer</a>
+    @else
         <form method="POST" action="{{ route('crm.leads.convert', $lead) }}">
             @csrf
             <button type="submit" class="btn btn-primary btn-loading">
-                <span class="btn-text"><i class="bx bx-transfer-alt"></i> Convert to customer</span>
-                <span class="btn-spinner d-none"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Converting...</span>
+                <span class="btn-text"><i class="bx bx-transfer-alt"></i> {{ $lead->converted_at ? 'Recreate customer' : 'Convert to customer' }}</span>
+                <span class="btn-spinner d-none"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>{{ $lead->converted_at ? 'Recreating...' : 'Converting...' }}</span>
             </button>
         </form>
-    @elseif ($customer)
-        <a href="{{ route('crm.customers.show', $customer) }}" class="btn btn-primary"><i class="fas fa-external-link-alt"></i> Open converted customer</a>
     @endif
 @endsection
 
@@ -151,6 +151,15 @@
                         </div>
                     @endif
                 </section>
+
+                @include('crm.products._related_documents', [
+                    'quotes' => $lead->quotes,
+                    'invoices' => $lead->invoices,
+                    'quoteStatuses' => $quoteStatuses,
+                    'invoiceStatuses' => $invoiceStatuses,
+                    'title' => 'Related quotes and invoices',
+                    'subtitle' => 'Commercial documents linked directly to this lead.',
+                ])
             </div>
         </div>
     </div>

@@ -14,6 +14,7 @@ return new class extends Migration {
         Schema::create('leads', function (Blueprint $table) {
             $table->id();
             $table->foreignId('owner_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('import_reference', 160)->nullable();
             $table->string('company_name');
             $table->string('industry')->nullable();
             $table->string('website')->nullable();
@@ -28,6 +29,7 @@ return new class extends Migration {
 
             $table->index(['owner_id', 'status']);
             $table->index('company_name');
+            $table->unique('import_reference', 'leads_import_reference_unique');
         });
     }
 

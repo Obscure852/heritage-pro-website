@@ -11,8 +11,14 @@ use Illuminate\Support\Str;
 
 class SettingController extends CrmController
 {
-    public function index(Request $request): View
+    public function index(Request $request): View|RedirectResponse
     {
+        if (! $this->crmUser()->canManageCrmSettings()) {
+            $this->authorizeCommercialSettings();
+
+            return redirect()->route('crm.settings.commercial');
+        }
+
         return $this->renderIndex($request, 'overview');
     }
 

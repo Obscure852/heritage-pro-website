@@ -50,4 +50,14 @@ class Customer extends Model
     {
         return $this->hasMany(CrmRequest::class);
     }
+
+    public function quotes(): HasMany
+    {
+        return $this->hasMany(CrmQuote::class);
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(CrmInvoice::class);
+    }
 }

@@ -3,6 +3,9 @@
 namespace App\Services\Crm;
 
 use App\Models\Contact;
+use App\Models\CrmInvoice;
+use App\Models\CrmProduct;
+use App\Models\CrmQuote;
 use App\Models\CrmRequest;
 use App\Models\Customer;
 use App\Models\DevelopmentRequest;
@@ -16,6 +19,11 @@ use Illuminate\Support\Facades\Schema;
 
 class CrmGlobalSearchService
 {
+    public function __construct(
+        private readonly DiscussionDeliveryService $discussionDeliveryService
+    ) {
+    }
+
     public function search(User $user, string $query): array
     {
         $query = trim($query);
@@ -29,10 +37,13 @@ class CrmGlobalSearchService
             $this->leadResults($user, $query),
             $this->customerResults($user, $query),
             $this->contactResults($user, $query),
+            $this->productResults($user, $query),
+            $this->quoteResults($user, $query),
+            $this->invoiceResults($user, $query),
             $this->requestResults($user, $query),
             $this->developmentResults($user, $query),
             $this->discussionResults($user, $query),
-            $this->integrationResults($query),
+            $this->integrationResults($user, $query),
             $this->userResults($user, $query),
         ];
 
@@ -41,6 +52,10 @@ class CrmGlobalSearchService
 
     private function leadResults(User $user, string $query): ?array
     {
+        if (! $user->canAccessCrmModule('customers', 'view')) {
+            return null;
+        }
+
         $records = $this->scopeOwned($user, Lead::query())
             ->select(['id', 'company_name', 'country', 'status', 'owner_id'])
             ->where(function (Builder $builder) use ($query) {
@@ -68,6 +83,10 @@ class CrmGlobalSearchService
 
     private function customerResults(User $user, string $query): ?array
     {
+        if (! $user->canAccessCrmModule('customers', 'view')) {
+            return null;
+        }
+
         $records = $this->scopeOwned($user, Customer::query())
             ->select(['id', 'company_name', 'country', 'status', 'owner_id'])
             ->where(function (Builder $builder) use ($query) {
@@ -95,6 +114,10 @@ class CrmGlobalSearchService
 
     private function contactResults(User $user, string $query): ?array
     {
+        if (! $user->canAccessCrmModule('contacts', 'view')) {
+            return null;
+        }
+
         $records = $this->scopeOwned($user, Contact::query())
             ->with([
                 'lead:id,company_name',
@@ -124,8 +147,131 @@ class CrmGlobalSearchService
         });
     }
 
+    private function productResults(User $user, string $query): ?array
+    {
+        if (! $user->canAccessCrmModule('products', 'view')) {
+            return null;
+        }
+
+        $records = CrmProduct::query()
+            ->select(['id', 'code', 'name', 'type', 'billing_frequency', 'active'])
+            ->where(function (Builder $builder) use ($query) {
+                $builder->where('name', 'like', "%{$query}%")
+                    ->orWhere('code', 'like', "%{$query}%")
+                    ->orWhere('description', 'like', "%{$query}%")
+                    ->orWhere('type', 'like', "%{$query}%")
+                    ->orWhere('billing_frequency', 'like', "%{$query}%");
+            })
+            ->orderByDesc('active')
+            ->orderBy('name')
+            ->limit($this->limit())
+            ->get();
+
+        return $this->section('Products', 'bx bx-package', $records, function (CrmProduct $product) {
+            return [
+                'label' => $product->name,
+                'secondary' => trim(implode(' • ', array_filter([
+                    $product->code,
+                    $product->type ? ucfirst(str_replace('_', ' ', $product->type)) : null,
+                    $product->billing_frequency ? ucfirst(str_replace('_', ' ', $product->billing_frequency)) : null,
+                    $product->active ? 'Active' : 'Inactive',
+                ]))),
+                'icon' => 'bx bx-package',
+                'url' => route('crm.products.catalog.show', $product),
+            ];
+        });
+    }
+
+    private function quoteResults(User $user, string $query): ?array
+    {
+        if (! $user->canAccessCrmModule('products', 'view')) {
+            return null;
+        }
+
+        $records = CrmQuote::query()
+            ->with([
+                'lead:id,company_name',
+                'customer:id,company_name',
+                'contact:id,name',
+            ])
+            ->select(['id', 'quote_number', 'subject', 'status', 'lead_id', 'customer_id', 'contact_id', 'owner_id'])
+            ->when($user->isRep(), function (Builder $builder) use ($user) {
+                $builder->where('owner_id', $user->id);
+            })
+            ->where(function (Builder $builder) use ($query) {
+                $builder->where('quote_number', 'like', "%{$query}%")
+                    ->orWhere('subject', 'like', "%{$query}%")
+                    ->orWhereHas('lead', fn (Builder $leadQuery) => $leadQuery->where('company_name', 'like', "%{$query}%"))
+                    ->orWhereHas('customer', fn (Builder $customerQuery) => $customerQuery->where('company_name', 'like', "%{$query}%"))
+                    ->orWhereHas('contact', fn (Builder $contactQuery) => $contactQuery->where('name', 'like', "%{$query}%"));
+            })
+            ->latest('quote_date')
+            ->latest('id')
+            ->limit($this->limit())
+            ->get();
+
+        return $this->section('Quotes', 'bx bx-receipt', $records, function (CrmQuote $quote) {
+            return [
+                'label' => $quote->quote_number,
+                'secondary' => trim(implode(' • ', array_filter([
+                    config('heritage_crm.quote_statuses.' . $quote->status, ucfirst($quote->status)),
+                    $quote->customer?->company_name ?: $quote->lead?->company_name,
+                    $quote->contact?->name,
+                ]))),
+                'icon' => 'bx bx-receipt',
+                'url' => route('crm.products.quotes.show', $quote),
+            ];
+        });
+    }
+
+    private function invoiceResults(User $user, string $query): ?array
+    {
+        if (! $user->canAccessCrmModule('products', 'view')) {
+            return null;
+        }
+
+        $records = CrmInvoice::query()
+            ->with([
+                'lead:id,company_name',
+                'customer:id,company_name',
+                'contact:id,name',
+            ])
+            ->select(['id', 'invoice_number', 'subject', 'status', 'lead_id', 'customer_id', 'contact_id', 'owner_id'])
+            ->when($user->isRep(), function (Builder $builder) use ($user) {
+                $builder->where('owner_id', $user->id);
+            })
+            ->where(function (Builder $builder) use ($query) {
+                $builder->where('invoice_number', 'like', "%{$query}%")
+                    ->orWhere('subject', 'like', "%{$query}%")
+                    ->orWhereHas('lead', fn (Builder $leadQuery) => $leadQuery->where('company_name', 'like', "%{$query}%"))
+                    ->orWhereHas('customer', fn (Builder $customerQuery) => $customerQuery->where('company_name', 'like', "%{$query}%"))
+                    ->orWhereHas('contact', fn (Builder $contactQuery) => $contactQuery->where('name', 'like', "%{$query}%"));
+            })
+            ->latest('invoice_date')
+            ->latest('id')
+            ->limit($this->limit())
+            ->get();
+
+        return $this->section('Invoices', 'bx bx-file', $records, function (CrmInvoice $invoice) {
+            return [
+                'label' => $invoice->invoice_number,
+                'secondary' => trim(implode(' • ', array_filter([
+                    config('heritage_crm.invoice_statuses.' . $invoice->status, ucfirst($invoice->status)),
+                    $invoice->customer?->company_name ?: $invoice->lead?->company_name,
+                    $invoice->contact?->name,
+                ]))),
+                'icon' => 'bx bx-file',
+                'url' => route('crm.products.invoices.show', $invoice),
+            ];
+        });
+    }
+
     private function requestResults(User $user, string $query): ?array
     {
+        if (! $user->canAccessCrmModule('requests', 'view')) {
+            return null;
+        }
+
         $records = $this->scopeOwned($user, CrmRequest::query())
             ->with([
                 'lead:id,company_name',
@@ -156,6 +302,10 @@ class CrmGlobalSearchService
 
     private function developmentResults(User $user, string $query): ?array
     {
+        if (! $user->canAccessCrmModule('dev', 'view')) {
+            return null;
+        }
+
         $records = $this->scopeOwned($user, DevelopmentRequest::query())
             ->select(['id', 'title', 'priority', 'status', 'owner_id'])
             ->where(function (Builder $builder) use ($query) {
@@ -183,19 +333,17 @@ class CrmGlobalSearchService
 
     private function discussionResults(User $user, string $query): ?array
     {
-        $records = DiscussionThread::query()
+        if (! $user->canAccessCrmModule('discussions', 'view')) {
+            return null;
+        }
+
+        $records = $this->discussionDeliveryService->threadQueryFor($user)
             ->with([
                 'initiatedBy',
                 'recipientUser',
+                'participants.user',
             ])
-            ->when($user->isRep(), function (Builder $builder) use ($user) {
-                $builder->where(function (Builder $threadQuery) use ($user) {
-                    $threadQuery->where('initiated_by_id', $user->id)
-                        ->orWhere('recipient_user_id', $user->id)
-                        ->orWhere('owner_id', $user->id);
-                });
-            })
-            ->select(['id', 'subject', 'channel', 'delivery_status', 'owner_id', 'initiated_by_id', 'recipient_user_id'])
+            ->select(['id', 'subject', 'channel', 'kind', 'delivery_status', 'status', 'owner_id', 'initiated_by_id', 'recipient_user_id'])
             ->where(function (Builder $builder) use ($query) {
                 $builder->where('subject', 'like', "%{$query}%")
                     ->orWhere('recipient_email', 'like', "%{$query}%")
@@ -206,21 +354,33 @@ class CrmGlobalSearchService
             ->limit($this->limit())
             ->get();
 
-        return $this->section('Discussions', 'bx bx-chat', $records, function (DiscussionThread $thread) {
+        return $this->section('Discussions', 'bx bx-chat', $records, function (DiscussionThread $thread) use ($user) {
+            $secondaryLabel = null;
+
+            if ($thread->channel === 'app' && $thread->kind === 'direct') {
+                $secondaryLabel = $thread->counterpartFor($user)?->name;
+            } elseif ($thread->channel === 'app' && $thread->kind === 'group') {
+                $secondaryLabel = $thread->subject;
+            }
+
             return [
                 'label' => $thread->subject,
                 'secondary' => trim(implode(' • ', array_filter([
                     config('heritage_crm.discussion_channels.' . $thread->channel, ucfirst($thread->channel)),
-                    $thread->recipientUser?->name ?: $thread->recipient_email ?: $thread->recipient_phone,
+                    $secondaryLabel ?: $thread->recipientUser?->name ?: $thread->recipient_email ?: $thread->recipient_phone,
                 ]))),
                 'icon' => 'bx bx-chat',
-                'url' => route('crm.discussions.show', $thread),
+                'url' => $this->discussionDeliveryService->threadRoute($thread),
             ];
         });
     }
 
-    private function integrationResults(string $query): ?array
+    private function integrationResults(User $user, string $query): ?array
     {
+        if (! $user->canAccessCrmModule('integrations', 'view')) {
+            return null;
+        }
+
         $records = Integration::query()
             ->select(['id', 'name', 'kind', 'status'])
             ->where(function (Builder $builder) use ($query) {
@@ -247,7 +407,7 @@ class CrmGlobalSearchService
 
     private function userResults(User $user, string $query): ?array
     {
-        if (! $user->canManageCrmUsers()) {
+        if (! $user->canAccessCrmModule('users', 'view')) {
             return null;
         }
 
@@ -271,6 +431,12 @@ class CrmGlobalSearchService
 
                 if (Schema::hasColumn('users', 'username')) {
                     $columns[] = 'username';
+                }
+
+                foreach (['phone', 'id_number', 'personal_payroll_number', 'nationality'] as $column) {
+                    if (Schema::hasColumn('users', $column)) {
+                        $columns[] = $column;
+                    }
                 }
 
                 $columns[] = 'email';

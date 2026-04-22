@@ -4,12 +4,19 @@ namespace App\Http\Controllers\Crm;
 
 use App\Http\Requests\Crm\ContactUpsertRequest;
 use App\Models\Contact;
+use App\Services\Crm\ContactPrimaryAssignmentService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 
 class ContactController extends CrmController
 {
+    public function __construct(
+        private readonly ContactPrimaryAssignmentService $contactPrimaryAssignmentService
+    ) {
+    }
+
     public function index(Request $request): View
     {
         $filters = [
@@ -17,6 +24,19 @@ class ContactController extends CrmController
             'owner_id' => (string) $request->query('owner_id', ''),
             'linked_to' => (string) $request->query('linked_to', ''),
             'primary' => (string) $request->query('primary', ''),
+        ];
+
+        $contactStatsQuery = $this->scopeOwned(
+            Contact::query()->where(function ($query) {
+                $query->whereNotNull('lead_id')
+                    ->orWhereNotNull('customer_id');
+            })
+        );
+        $contactStats = [
+            ['label' => 'Total', 'value' => (clone $contactStatsQuery)->count()],
+            ['label' => 'Primary', 'value' => (clone $contactStatsQuery)->where('is_primary', true)->count()],
+            ['label' => 'Lead Linked', 'value' => (clone $contactStatsQuery)->whereNotNull('lead_id')->count()],
+            ['label' => 'Customer Linked', 'value' => (clone $contactStatsQuery)->whereNotNull('customer_id')->count()],
         ];
 
         $contacts = $this->scopeOwned(
@@ -54,6 +74,7 @@ class ContactController extends CrmController
             'contacts' => $contacts,
             'owners' => $this->owners(),
             'filters' => $filters,
+            'contactStats' => $contactStats,
         ]);
     }
 
@@ -73,8 +94,12 @@ class ContactController extends CrmController
         $data['owner_id'] = $this->syncedOwnerId($lead, $customer, $data['owner_id'] ?? null);
         $data['is_primary'] = $request->boolean('is_primary');
 
-        $contact = Contact::query()->create($data);
-        $this->syncPrimaryFlag($contact);
+        $contact = DB::transaction(function () use ($data) {
+            $contact = Contact::query()->create($data);
+            $this->contactPrimaryAssignmentService->sync($contact);
+
+            return $contact;
+        });
 
         return redirect()
             ->route('crm.contacts.show', $contact)
@@ -118,8 +143,10 @@ class ContactController extends CrmController
         $data['owner_id'] = $this->syncedOwnerId($lead, $customer, $data['owner_id'] ?? $contact->owner_id);
         $data['is_primary'] = $request->boolean('is_primary');
 
-        $contact->update($data);
-        $this->syncPrimaryFlag($contact);
+        DB::transaction(function () use ($contact, $data) {
+            $contact->update($data);
+            $this->contactPrimaryAssignmentService->sync($contact);
+        });
 
         return redirect()
             ->route('crm.contacts.edit', $contact)
@@ -135,25 +162,6 @@ class ContactController extends CrmController
         return redirect()
             ->route('crm.contacts.index')
             ->with('crm_success', 'Contact deleted permanently.');
-    }
-
-    private function syncPrimaryFlag(Contact $contact): void
-    {
-        if (! $contact->is_primary) {
-            return;
-        }
-
-        $query = Contact::query()->whereKeyNot($contact->id);
-
-        if ($contact->lead_id !== null) {
-            $query->where('lead_id', $contact->lead_id);
-        }
-
-        if ($contact->customer_id !== null) {
-            $query->where('customer_id', $contact->customer_id);
-        }
-
-        $query->update(['is_primary' => false]);
     }
 
     private function formData(): array

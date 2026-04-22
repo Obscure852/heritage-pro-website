@@ -8,13 +8,16 @@
         <div id="sidebar-menu">
             <ul class="metismenu list-unstyled" id="side-menu">
                 @foreach ($moduleGroups['workspace'] as $module)
-                    @php($children = $moduleRegistry->childrenFor($module))
+                    @php($children = $moduleRegistry->childrenFor($crmUser, $module))
                     @php($isActive = request()->routeIs(...$moduleRegistry->matchPatterns($module)))
                     @if ($children->isNotEmpty())
                         <li class="{{ $isActive ? 'mm-active' : '' }}">
                             <a href="javascript:void(0);" class="has-arrow {{ $isActive ? 'active' : '' }}">
                                 <i class="{{ $module['icon'] }}"></i>
                                 <span>{{ $module['label'] }}</span>
+                                @if (($module['key'] ?? null) === 'discussions')
+                                    <span class="crm-sidebar-badge is-alert" id="crm-sidebar-discussions-badge" hidden>0</span>
+                                @endif
                             </a>
                             <ul class="sub-menu {{ $isActive ? 'mm-show' : '' }}" aria-expanded="{{ $isActive ? 'true' : 'false' }}">
                                 @foreach ($children as $child)
@@ -31,6 +34,9 @@
                             <a href="{{ route($module['route']) }}" class="{{ $isActive ? 'active' : '' }}">
                                 <i class="{{ $module['icon'] }}"></i>
                                 <span>{{ $module['label'] }}</span>
+                                @if (($module['key'] ?? null) === 'discussions')
+                                    <span class="crm-sidebar-badge is-alert" id="crm-sidebar-discussions-badge" hidden>0</span>
+                                @endif
                             </a>
                         </li>
                     @endif
@@ -42,13 +48,16 @@
                     </li>
 
                     @foreach ($moduleGroups['administration'] as $module)
-                        @php($children = $moduleRegistry->childrenFor($module))
+                        @php($children = $moduleRegistry->childrenFor($crmUser, $module))
                         @php($isActive = request()->routeIs(...$moduleRegistry->matchPatterns($module)))
                         @if ($children->isNotEmpty())
                             <li class="{{ $isActive ? 'mm-active' : '' }}">
                                 <a href="javascript:void(0);" class="has-arrow {{ $isActive ? 'active' : '' }}">
                                     <i class="{{ $module['icon'] }}"></i>
                                     <span>{{ $module['label'] }}</span>
+                                    @if (($module['key'] ?? null) === 'discussions')
+                                        <span class="crm-sidebar-badge is-alert" id="crm-sidebar-discussions-badge" hidden>0</span>
+                                    @endif
                                 </a>
                                 <ul class="sub-menu {{ $isActive ? 'mm-show' : '' }}" aria-expanded="{{ $isActive ? 'true' : 'false' }}">
                                     @foreach ($children as $child)
@@ -65,6 +74,9 @@
                                 <a href="{{ route($module['route']) }}" class="{{ $isActive ? 'active' : '' }}">
                                     <i class="{{ $module['icon'] }}"></i>
                                     <span>{{ $module['label'] }}</span>
+                                    @if (($module['key'] ?? null) === 'discussions')
+                                        <span class="crm-sidebar-badge is-alert" id="crm-sidebar-discussions-badge" hidden>0</span>
+                                    @endif
                                 </a>
                             </li>
                         @endif

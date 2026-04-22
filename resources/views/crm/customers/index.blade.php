@@ -4,15 +4,23 @@
 @section('crm_heading', 'Customers Workspace')
 @section('crm_subheading', 'Manage converted institutions, track onboarding state, and keep customer records tied to their originating lead history.')
 
-@section('crm_actions')
-    <a href="{{ route('crm.customers.create') }}" class="btn btn-primary">
-        <i class="bx bx-plus-circle"></i> New customer
-    </a>
+@section('crm_header_stats')
+    @foreach ($customerStats as $stat)
+        @include('crm.partials.header-stat', [
+            'value' => number_format($stat['value']),
+            'label' => $stat['label'],
+        ])
+    @endforeach
 @endsection
 
 @section('content')
     <div class="crm-stack">
         @include('crm.partials.customer-workspace-tabs')
+
+        @include('crm.partials.helper-text', [
+            'title' => 'Customer Directory',
+            'content' => 'Use the filters below to find the account you need, then open it to review onboarding, linked activity, and related commercial records.',
+        ])
 
         <section class="crm-card crm-filter-card">
             <div class="crm-card-title">
@@ -51,6 +59,11 @@
                 <div class="form-actions">
                     <a href="{{ route('crm.customers.index') }}" class="btn btn-light crm-btn-light"><i class="bx bx-reset"></i> Reset</a>
                     <button type="submit" class="btn btn-primary"><i class="bx bx-filter-alt"></i> Apply filters</button>
+                    @if ($canOnboardCustomer)
+                        <a href="{{ route('crm.customers.onboarding.create') }}" class="btn btn-primary">
+                            <i class="bx bx-import"></i> Import customer
+                        </a>
+                    @endif
                 </div>
             </form>
         </section>
@@ -83,7 +96,7 @@
                                 <tr>
                                     <td>
                                         <strong><a href="{{ route('crm.customers.show', $customer) }}">{{ $customer->company_name }}</a></strong>
-                                        <span class="crm-muted">{{ $customer->lead?->company_name ? 'Converted from ' . $customer->lead->company_name : 'Direct customer record' }}</span>
+                                        <span class="crm-muted">{{ $customer->lead?->company_name ? 'Source lead: ' . $customer->lead->company_name : 'Source lead unavailable' }}</span>
                                     </td>
                                     <td>{{ $customer->owner?->name ?: 'Unassigned' }}</td>
                                     <td><span class="crm-pill {{ $customer->status === 'active' ? 'success' : ($customer->status === 'onboarding' ? 'primary' : 'muted') }}">{{ $customerStatuses[$customer->status] ?? ucfirst($customer->status) }}</span></td>
@@ -91,13 +104,18 @@
                                     <td>{{ $customer->requests_count }}</td>
                                     <td class="crm-table-actions">
                                         <div class="crm-action-row">
-                                            <a href="{{ route('crm.customers.edit', $customer) }}" class="btn btn-secondary">
-                                                <i class="fas fa-edit"></i> Edit
+                                            @include('crm.partials.view-button', [
+                                                'url' => route('crm.customers.show', $customer),
+                                                'label' => 'View customer',
+                                            ])
+                                            <a href="{{ route('crm.customers.edit', $customer) }}" class="btn crm-icon-action" title="Edit customer" aria-label="Edit customer">
+                                                <i class="fas fa-edit"></i>
                                             </a>
                                             @include('crm.partials.delete-button', [
                                                 'action' => route('crm.customers.destroy', $customer),
                                                 'message' => 'Are you sure you want to permanently delete this customer?',
-                                                'label' => 'Delete',
+                                                'label' => 'Delete customer',
+                                                'iconOnly' => true,
                                             ])
                                         </div>
                                     </td>

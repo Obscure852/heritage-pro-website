@@ -12,6 +12,17 @@ class CrmRequestUpsertRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->routeIs('crm.requests.sales.store')) {
+            $this->merge(['type' => 'sales']);
+        }
+
+        if ($this->routeIs('crm.requests.support.store')) {
+            $this->merge(['type' => 'support']);
+        }
+    }
+
     public function rules(): array
     {
         return [
@@ -29,6 +40,8 @@ class CrmRequestUpsertRequest extends FormRequest
             'next_action_at' => ['nullable', 'date'],
             'last_contact_at' => ['nullable', 'date'],
             'closed_at' => ['nullable', 'date'],
+            'attachments' => ['nullable', 'array', 'max:10'],
+            'attachments.*' => ['file', 'max:15360', 'mimes:pdf,doc,docx'],
         ];
     }
 
@@ -37,16 +50,20 @@ class CrmRequestUpsertRequest extends FormRequest
         $validator->after(function ($validator) {
             $type = $this->input('type');
 
-            if (blank($this->input('lead_id')) && blank($this->input('customer_id'))) {
-                $validator->errors()->add('lead_id', 'A request must belong to a lead or a customer.');
-            }
-
             if ($type === 'sales' && blank($this->input('sales_stage_id'))) {
                 $validator->errors()->add('sales_stage_id', 'Sales requests require a sales stage.');
             }
 
+            if ($type === 'sales' && blank($this->input('lead_id'))) {
+                $validator->errors()->add('lead_id', 'Sales requests must be linked to a lead.');
+            }
+
             if ($type === 'support' && blank($this->input('support_status'))) {
                 $validator->errors()->add('support_status', 'Support requests require a support status.');
+            }
+
+            if ($type === 'support' && blank($this->input('customer_id'))) {
+                $validator->errors()->add('customer_id', 'Support requests must be linked to a customer.');
             }
         });
     }

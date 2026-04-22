@@ -4,6 +4,7 @@ namespace Tests\Feature\Crm;
 
 use App\Models\Lead;
 use App\Models\User;
+use App\Services\Crm\CrmModulePermissionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -88,12 +89,16 @@ class CrmAccessTest extends TestCase
 
     private function createUser(array $attributes = []): User
     {
-        return User::query()->create(array_merge([
+        $user = User::query()->create(array_merge([
             'name' => 'CRM User',
             'email' => 'user-' . uniqid() . '@example.com',
             'password' => Hash::make('password123'),
             'role' => 'admin',
             'active' => true,
         ], $attributes));
+
+        app(CrmModulePermissionService::class)->syncDefaultsForRole($user);
+
+        return $user->fresh();
     }
 }

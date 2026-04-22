@@ -67,4 +67,19 @@ class CrmRequest extends Model
     {
         return $this->hasMany(RequestActivity::class, 'request_id')->orderByDesc('occurred_at');
     }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(RequestAttachment::class, 'request_id')->latest();
+    }
+
+    public function quotes(): HasMany
+    {
+        return $this->hasMany(CrmQuote::class, 'request_id')->latest();
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(CrmInvoice::class, 'request_id')->latest();
+    }
 }

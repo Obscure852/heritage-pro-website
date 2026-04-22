@@ -37,14 +37,22 @@
                 @endforeach
             </select>
         </div>
-        <div class="crm-field">
-            <label for="lead_status">Status</label>
-            <select id="lead_status" name="status">
-                @foreach ($leadStatuses as $value => $label)
-                    <option value="{{ $value }}" @selected(old('status', $lead->status ?? 'active') === $value)>{{ $label }}</option>
-                @endforeach
-            </select>
-        </div>
+        @if (($lead->converted_at ?? null) !== null || ($lead->status ?? null) === 'converted')
+            <div class="crm-field">
+                <label for="lead_status_locked">Status</label>
+                <input id="lead_status_locked" value="Converted" placeholder="Converted" disabled>
+                <input type="hidden" name="status" value="converted">
+            </div>
+        @else
+            <div class="crm-field">
+                <label for="lead_status">Status</label>
+                <select id="lead_status" name="status">
+                    @foreach ($leadStatuses as $value => $label)
+                        <option value="{{ $value }}" @selected(old('status', $lead->status ?? 'active') === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+        @endif
         <div class="crm-field full">
             <label for="notes">Notes</label>
             <textarea id="notes" name="notes" placeholder="Add lead notes, call context, or qualification details">{{ old('notes', $lead->notes ?? '') }}</textarea>

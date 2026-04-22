@@ -3,6 +3,9 @@
 namespace Tests\Feature\Crm;
 
 use App\Models\CrmUserPresence;
+use App\Models\DiscussionMessage;
+use App\Models\DiscussionThread;
+use App\Models\DiscussionThreadParticipant;
 use App\Models\Lead;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -25,6 +28,8 @@ class CrmShellUtilitiesTest extends TestCase
             ->assertOk()
             ->assertSee('Global Search...')
             ->assertSee('Online CRM Users')
+            ->assertSee('crm-presence-unread-badge', false)
+            ->assertSee('crm-sidebar-discussions-badge', false)
             ->assertSee('Modules')
             ->assertSee('Public site');
 
@@ -134,6 +139,68 @@ class CrmShellUtilitiesTest extends TestCase
         $this->assertDatabaseHas('crm_user_presence', [
             'user_id' => $manager->id,
         ]);
+    }
+
+    public function test_presence_unread_endpoint_returns_in_app_threads_for_the_current_user(): void
+    {
+        $admin = $this->createUser([
+            'email' => 'unread-admin@example.com',
+            'role' => 'admin',
+            'name' => 'Unread Admin',
+        ]);
+
+        $otherUser = $this->createUser([
+            'email' => 'unread-other@example.com',
+            'role' => 'manager',
+            'name' => 'Unread Manager',
+        ]);
+
+        $thread = DiscussionThread::query()->create([
+            'owner_id' => $admin->id,
+            'initiated_by_id' => $otherUser->id,
+            'recipient_user_id' => $admin->id,
+            'direct_participant_key' => collect([$admin->id, $otherUser->id])->sort()->implode(':'),
+            'subject' => 'Unread direct thread',
+            'channel' => 'app',
+            'kind' => 'direct',
+            'delivery_status' => 'sent',
+            'status' => 'sent',
+            'last_message_at' => now(),
+        ]);
+
+        DiscussionThreadParticipant::query()->create([
+            'thread_id' => $thread->id,
+            'user_id' => $admin->id,
+            'role' => 'member',
+            'last_read_at' => null,
+        ]);
+
+        DiscussionThreadParticipant::query()->create([
+            'thread_id' => $thread->id,
+            'user_id' => $otherUser->id,
+            'role' => 'owner',
+            'last_read_at' => now(),
+        ]);
+
+        DiscussionMessage::query()->create([
+            'thread_id' => $thread->id,
+            'user_id' => $otherUser->id,
+            'direction' => 'outbound',
+            'channel' => 'app',
+            'body' => 'Please check this update.',
+            'delivery_status' => 'sent',
+            'sent_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->getJson(route('crm.presence.unread-count'))
+            ->assertOk()
+            ->assertJsonFragment(['count' => 1])
+            ->assertJsonFragment([
+                'id' => $thread->id,
+                'label' => 'Unread Manager',
+                'url' => route('crm.discussions.app.threads.show', $thread),
+            ]);
     }
 
     private function createUser(array $attributes = []): User

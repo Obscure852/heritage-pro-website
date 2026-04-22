@@ -4,14 +4,21 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\Crm\CrmUserLoginEventService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class QuickCrmAccessController extends Controller
 {
-    public function __invoke(): RedirectResponse
+    public function __construct(
+        private readonly CrmUserLoginEventService $loginEventService
+    ) {
+    }
+
+    public function __invoke(Request $request): RedirectResponse
     {
         if (Auth::check()) {
             return redirect()->route('crm.dashboard');
@@ -39,6 +46,7 @@ class QuickCrmAccessController extends Controller
         }
 
         Auth::login($user, true);
+        $this->loginEventService->record($user, 'quick_access_login', $request);
 
         return redirect()
             ->route('crm.dashboard')

@@ -10,19 +10,15 @@ class CrmQuickAccessTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_sign_in_button_route_creates_and_logs_in_an_admin_in_debug_mode(): void
+    public function test_sign_in_button_route_redirects_to_login_even_in_debug_mode(): void
     {
         config(['app.debug' => true]);
 
         $this->get(route('website.sign-in'))
-            ->assertRedirect(route('crm.dashboard'));
+            ->assertRedirect(route('login'));
 
-        $this->assertAuthenticated();
-        $this->assertDatabaseHas('users', [
-            'name' => 'Heritage CRM Admin',
-            'role' => 'admin',
-            'active' => true,
-        ]);
+        $this->assertGuest();
+        $this->assertSame(0, User::query()->count());
     }
 
     public function test_sign_in_button_route_falls_back_to_standard_login_when_quick_access_is_disabled(): void

@@ -21,6 +21,14 @@ class LeadController extends CrmController
             'status' => (string) $request->query('status', ''),
         ];
 
+        $leadStatsQuery = $this->scopeOwned(Lead::query());
+        $leadStats = [
+            ['label' => 'Total', 'value' => (clone $leadStatsQuery)->count()],
+            ['label' => 'Active', 'value' => (clone $leadStatsQuery)->where('status', 'active')->count()],
+            ['label' => 'Qualified', 'value' => (clone $leadStatsQuery)->where('status', 'qualified')->count()],
+            ['label' => 'Converted', 'value' => (clone $leadStatsQuery)->where('status', 'converted')->count()],
+        ];
+
         $leads = $this->scopeOwned(
             Lead::query()
                 ->with(['owner'])
@@ -49,6 +57,7 @@ class LeadController extends CrmController
             'owners' => $this->owners(),
             'leadStatuses' => config('heritage_crm.lead_statuses'),
             'filters' => $filters,
+            'leadStats' => $leadStats,
         ]);
     }
 
@@ -79,6 +88,16 @@ class LeadController extends CrmController
             'requests.owner',
             'requests.salesStage:id,name',
             'requests.contact:id,name',
+            'quotes' => fn ($query) => $query
+                ->with(['contact:id,name', 'request:id,title'])
+                ->withCount('items')
+                ->latest('quote_date')
+                ->latest('id'),
+            'invoices' => fn ($query) => $query
+                ->with(['contact:id,name', 'request:id,title'])
+                ->withCount('items')
+                ->latest('invoice_date')
+                ->latest('id'),
         ]);
 
         $customer = Customer::query()
@@ -90,6 +109,8 @@ class LeadController extends CrmController
             'lead' => $lead,
             'customer' => $customer,
             'leadStatuses' => config('heritage_crm.lead_statuses'),
+            'quoteStatuses' => config('heritage_crm.quote_statuses'),
+            'invoiceStatuses' => config('heritage_crm.invoice_statuses'),
         ]);
     }
 
@@ -108,9 +129,13 @@ class LeadController extends CrmController
 
         $data = $request->validated();
         $data['owner_id'] = $this->normalizeOwnerId($data['owner_id'] ?? $lead->owner_id);
-        $data['converted_at'] = ($data['status'] ?? $lead->status) === 'converted'
-            ? ($lead->converted_at ?: now())
-            : null;
+
+        if ($lead->converted_at !== null || $lead->status === 'converted') {
+            $data['status'] = 'converted';
+            $data['converted_at'] = $lead->converted_at ?: now();
+        } else {
+            $data['converted_at'] = null;
+        }
 
         $lead->update($data);
 
@@ -123,6 +148,12 @@ class LeadController extends CrmController
     {
         $this->authorizeRecordAccess($lead->owner_id);
 
+        if ($lead->customers()->exists()) {
+            return redirect()
+                ->route('crm.leads.show', $lead)
+                ->with('crm_error', 'Converted leads with an active customer record cannot be deleted.');
+        }
+
         $lead->forceDelete();
 
         return redirect()
@@ -134,18 +165,20 @@ class LeadController extends CrmController
     {
         $this->authorizeRecordAccess($lead->owner_id);
 
-        if ($lead->converted_at !== null) {
-            $existingCustomer = Customer::query()
-                ->where('lead_id', $lead->id)
-                ->latest('id')
-                ->first();
+        $existingCustomer = Customer::query()
+            ->where('lead_id', $lead->id)
+            ->latest('id')
+            ->first();
 
+        if ($existingCustomer !== null) {
             return redirect()
                 ->route('crm.customers.show', $existingCustomer)
                 ->with('crm_success', 'This lead was already converted.');
         }
 
         $customer = DB::transaction(function () use ($lead) {
+            $convertedAt = $lead->converted_at ?: now();
+
             $customer = Customer::query()->create([
                 'owner_id' => $lead->owner_id,
                 'lead_id' => $lead->id,
@@ -156,7 +189,7 @@ class LeadController extends CrmController
                 'phone' => $lead->phone,
                 'country' => $lead->country,
                 'status' => 'active',
-                'purchased_at' => now(),
+                'purchased_at' => $convertedAt,
                 'notes' => $lead->notes,
             ]);
 
@@ -171,7 +204,7 @@ class LeadController extends CrmController
 
             $lead->update([
                 'status' => 'converted',
-                'converted_at' => now(),
+                'converted_at' => $convertedAt,
             ]);
 
             return $customer;
@@ -186,7 +219,9 @@ class LeadController extends CrmController
     {
         return [
             'owners' => $this->owners(),
-            'leadStatuses' => config('heritage_crm.lead_statuses'),
+            'leadStatuses' => collect(config('heritage_crm.lead_statuses'))
+                ->except(['converted'])
+                ->all(),
         ];
     }
 }

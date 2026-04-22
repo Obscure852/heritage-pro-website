@@ -3,9 +3,16 @@
 return [
     'roles' => [
         'admin' => 'Administrator',
+        'finance' => 'Finance',
         'manager' => 'Manager',
         'rep' => 'Sales Representative',
     ],
+    'permission_levels' => [
+        'view' => 'View',
+        'edit' => 'Edit',
+        'admin' => 'Admin',
+    ],
+    'owner_roles' => ['admin', 'manager', 'rep'],
     'modules' => [
         'dashboard' => [
             'label' => 'Dashboard',
@@ -13,7 +20,12 @@ return [
             'icon' => 'bx bxs-grid-alt',
             'route' => 'crm.dashboard',
             'match' => ['crm.dashboard'],
-            'roles' => ['admin', 'manager', 'rep'],
+            'default_permissions' => [
+                'admin' => 'admin',
+                'finance' => 'view',
+                'manager' => 'view',
+                'rep' => 'view',
+            ],
         ],
         'customers' => [
             'label' => 'Customers',
@@ -21,7 +33,11 @@ return [
             'icon' => 'bx bxs-school',
             'route' => 'crm.leads.index',
             'match' => ['crm.leads.*', 'crm.customers.*'],
-            'roles' => ['admin', 'manager', 'rep'],
+            'default_permissions' => [
+                'admin' => 'admin',
+                'manager' => 'edit',
+                'rep' => 'edit',
+            ],
             'children' => [
                 [
                     'label' => 'Leads',
@@ -41,15 +57,81 @@ return [
             'icon' => 'bx bx-user-pin',
             'route' => 'crm.contacts.index',
             'match' => ['crm.contacts.*'],
-            'roles' => ['admin', 'manager', 'rep'],
+            'default_permissions' => [
+                'admin' => 'admin',
+                'manager' => 'edit',
+                'rep' => 'edit',
+            ],
+        ],
+        'calendar' => [
+            'label' => 'Calendar',
+            'caption' => 'Meetings and follow-ups',
+            'icon' => 'bx bx-calendar',
+            'route' => 'crm.calendar.index',
+            'match' => ['crm.calendar.*'],
+            'default_permissions' => [
+                'admin' => 'admin',
+                'finance' => 'edit',
+                'manager' => 'edit',
+                'rep' => 'edit',
+            ],
+        ],
+        'products' => [
+            'label' => 'Products',
+            'caption' => 'Catalog, quotes, and invoices',
+            'icon' => 'bx bx-package',
+            'route' => 'crm.products.catalog.index',
+            'match' => ['crm.products.*'],
+            'default_permissions' => [
+                'admin' => 'admin',
+                'finance' => 'admin',
+                'manager' => 'edit',
+                'rep' => 'edit',
+            ],
+            'children' => [
+                [
+                    'label' => 'Catalog',
+                    'route' => 'crm.products.catalog.index',
+                    'match' => ['crm.products.catalog.*'],
+                    'roles' => ['admin', 'finance', 'manager', 'rep'],
+                ],
+                [
+                    'label' => 'Quotes',
+                    'route' => 'crm.products.quotes.index',
+                    'match' => ['crm.products.quotes.*'],
+                    'roles' => ['admin', 'finance', 'manager', 'rep'],
+                ],
+                [
+                    'label' => 'Invoices',
+                    'route' => 'crm.products.invoices.index',
+                    'match' => ['crm.products.invoices.*'],
+                    'roles' => ['admin', 'finance', 'manager', 'rep'],
+                ],
+            ],
         ],
         'requests' => [
             'label' => 'Requests',
             'caption' => 'Sales and support',
             'icon' => 'bx bx-headphone',
-            'route' => 'crm.requests.index',
+            'route' => 'crm.requests.sales.index',
             'match' => ['crm.requests.*'],
-            'roles' => ['admin', 'manager', 'rep'],
+            'default_permissions' => [
+                'admin' => 'admin',
+                'manager' => 'edit',
+                'rep' => 'edit',
+            ],
+            'children' => [
+                [
+                    'label' => 'Sales Calls',
+                    'route' => 'crm.requests.sales.index',
+                    'match' => ['crm.requests.sales.*'],
+                ],
+                [
+                    'label' => 'Support Requests',
+                    'route' => 'crm.requests.support.index',
+                    'match' => ['crm.requests.support.*'],
+                ],
+            ],
         ],
         'dev' => [
             'label' => 'Dev',
@@ -57,7 +139,11 @@ return [
             'icon' => 'bx bx-code-block',
             'route' => 'crm.dev.index',
             'match' => ['crm.dev.*'],
-            'roles' => ['admin', 'manager', 'rep'],
+            'default_permissions' => [
+                'admin' => 'admin',
+                'manager' => 'edit',
+                'rep' => 'edit',
+            ],
         ],
         'discussions' => [
             'label' => 'Discussions',
@@ -65,7 +151,11 @@ return [
             'icon' => 'bx bx-chat',
             'route' => 'crm.discussions.index',
             'match' => ['crm.discussions.*'],
-            'roles' => ['admin', 'manager', 'rep'],
+            'default_permissions' => [
+                'admin' => 'admin',
+                'manager' => 'edit',
+                'rep' => 'edit',
+            ],
         ],
         'integrations' => [
             'label' => 'Integrations',
@@ -73,7 +163,11 @@ return [
             'icon' => 'bx bx-plug',
             'route' => 'crm.integrations.index',
             'match' => ['crm.integrations.*'],
-            'roles' => ['admin', 'manager', 'rep'],
+            'default_permissions' => [
+                'admin' => 'admin',
+                'manager' => 'view',
+                'rep' => 'view',
+            ],
         ],
         'users' => [
             'label' => 'Users',
@@ -81,7 +175,57 @@ return [
             'icon' => 'bx bx-group',
             'route' => 'crm.users.index',
             'match' => ['crm.users.*'],
-            'roles' => ['admin'],
+            'default_permissions' => [
+                'admin' => 'admin',
+            ],
+            'children' => [
+                [
+                    'label' => 'Directory',
+                    'route' => 'crm.users.index',
+                    'match' => ['crm.users.index', 'crm.users.create', 'crm.users.store', 'crm.users.edit', 'crm.users.update'],
+                    'minimum_permission' => 'view',
+                ],
+                [
+                    'label' => 'Settings',
+                    'route' => 'crm.users.settings.index',
+                    'match' => ['crm.users.settings.*'],
+                    'minimum_permission' => 'admin',
+                ],
+            ],
+            'route_permissions' => [
+                [
+                    'match' => ['crm.users.index', 'crm.users.edit'],
+                    'level' => 'view',
+                ],
+                [
+                    'match' => [
+                        'crm.users.qualifications.attachments.open',
+                        'crm.users.qualifications.attachments.download',
+                        'crm.users.signatures.open',
+                        'crm.users.signatures.download',
+                    ],
+                    'level' => 'view',
+                ],
+                [
+                    'match' => [
+                        'crm.users.create',
+                        'crm.users.store',
+                        'crm.users.update',
+                        'crm.users.qualifications.*',
+                        'crm.users.signatures.*',
+                        'crm.users.profile.*',
+                    ],
+                    'level' => 'edit',
+                ],
+                [
+                    'match' => [
+                        'crm.users.destroy',
+                        'crm.users.roles.*',
+                        'crm.users.settings.*',
+                    ],
+                    'level' => 'admin',
+                ],
+            ],
         ],
         'settings' => [
             'label' => 'Settings',
@@ -89,17 +233,56 @@ return [
             'icon' => 'bx bx-cog',
             'route' => 'crm.settings.index',
             'match' => ['crm.settings.*'],
-            'roles' => ['admin'],
+            'default_permissions' => [
+                'admin' => 'admin',
+                'finance' => 'edit',
+            ],
             'children' => [
                 [
                     'label' => 'Overview',
                     'route' => 'crm.settings.index',
                     'match' => ['crm.settings.index'],
+                    'minimum_permission' => 'admin',
                 ],
                 [
                     'label' => 'Sales stages',
                     'route' => 'crm.settings.sales-stages',
                     'match' => ['crm.settings.sales-stages*'],
+                    'minimum_permission' => 'admin',
+                ],
+                [
+                    'label' => 'Imports',
+                    'route' => 'crm.settings.imports',
+                    'match' => ['crm.settings.imports*'],
+                    'minimum_permission' => 'admin',
+                ],
+                [
+                    'label' => 'Commercial',
+                    'route' => 'crm.settings.commercial',
+                    'match' => ['crm.settings.commercial*'],
+                    'minimum_permission' => 'view',
+                ],
+            ],
+            'route_permissions' => [
+                [
+                    'match' => [
+                        'crm.settings.sales-stages*',
+                        'crm.settings.imports*',
+                    ],
+                    'level' => 'admin',
+                ],
+                [
+                    'match' => [
+                        'crm.settings.index',
+                        'crm.settings.commercial',
+                    ],
+                    'level' => 'view',
+                ],
+                [
+                    'match' => [
+                        'crm.settings.commercial.*',
+                    ],
+                    'level' => 'edit',
                 ],
             ],
         ],
@@ -112,6 +295,24 @@ return [
         'online_window_minutes' => 3,
         'launcher_poll_seconds' => 45,
         'launcher_limit' => 8,
+    ],
+    'user_genders' => [
+        'female' => 'Female',
+        'male' => 'Male',
+        'other' => 'Other',
+        'prefer_not_to_say' => 'Prefer not to say',
+    ],
+    'user_employment_statuses' => [
+        'active' => 'Active',
+        'probation' => 'Probation',
+        'on_leave' => 'On leave',
+        'suspended' => 'Suspended',
+        'terminated' => 'Terminated',
+    ],
+    'user_login_event_types' => [
+        'login' => 'Login',
+        'logout' => 'Logout',
+        'quick_access_login' => 'Quick access login',
     ],
     'lead_statuses' => [
         'active' => 'Active',
@@ -144,6 +345,84 @@ return [
         'email' => 'Email',
         'meeting' => 'Meeting',
         'note' => 'Note',
+    ],
+    'calendar_types' => [
+        'personal' => 'Personal',
+        'shared' => 'Shared',
+    ],
+    'calendar_member_permissions' => [
+        'view' => 'View',
+        'edit' => 'Edit',
+        'manage' => 'Manage',
+    ],
+    'calendar_event_statuses' => [
+        'scheduled' => 'Scheduled',
+        'completed' => 'Completed',
+        'cancelled' => 'Cancelled',
+    ],
+    'calendar_event_visibility' => [
+        'standard' => 'Visible',
+        'busy_only' => 'Busy only',
+        'private' => 'Private',
+    ],
+    'calendar_reminder_minutes' => [
+        5 => '5 minutes before',
+        15 => '15 minutes before',
+        30 => '30 minutes before',
+        60 => '1 hour before',
+        120 => '2 hours before',
+        1440 => '1 day before',
+    ],
+    'calendar_default_colors' => [
+        '#5156be',
+        '#f06548',
+        '#0ab39c',
+        '#299cdb',
+        '#f7b84b',
+        '#405189',
+        '#6559cc',
+        '#0d6efd',
+    ],
+    'calendar' => [
+        'default_event_duration_minutes' => 60,
+        'slot_duration_minutes' => 30,
+        'day_start_hour' => '07:00:00',
+        'day_end_hour' => '21:00:00',
+        'agenda_days' => 14,
+    ],
+    'commercial_discount_types' => [
+        'none' => 'None',
+        'fixed' => 'Fixed amount',
+        'percent' => 'Percentage',
+    ],
+    'commercial_product_types' => [
+        'license' => 'License',
+        'addon' => 'Add-on',
+        'implementation' => 'Implementation',
+        'support' => 'Support',
+        'training' => 'Training',
+        'service' => 'Service',
+    ],
+    'commercial_billing_frequencies' => [
+        'one_time' => 'One-time',
+        'monthly' => 'Monthly',
+        'annual' => 'Annual',
+        'custom' => 'Custom',
+    ],
+    'quote_statuses' => [
+        'draft' => 'Draft',
+        'sent' => 'Sent',
+        'accepted' => 'Accepted',
+        'rejected' => 'Rejected',
+        'expired' => 'Expired',
+        'cancelled' => 'Cancelled',
+    ],
+    'invoice_statuses' => [
+        'draft' => 'Draft',
+        'issued' => 'Issued',
+        'sent' => 'Sent',
+        'cancelled' => 'Cancelled',
+        'void' => 'Void',
     ],
     'development_statuses' => [
         'backlog' => 'Backlog',
@@ -179,5 +458,64 @@ return [
         'active' => 'Active',
         'inactive' => 'Inactive',
         'testing' => 'Testing',
+    ],
+    'import_statuses' => [
+        'draft' => 'Draft',
+        'validated' => 'Validated',
+        'queued' => 'Queued',
+        'processing' => 'Processing',
+        'completed' => 'Completed',
+        'completed_with_errors' => 'Completed With Errors',
+        'failed' => 'Failed',
+        'cancelled' => 'Cancelled',
+    ],
+    'imports' => [
+        'queue' => [
+            'connection' => env('CRM_IMPORT_QUEUE_CONNECTION', env('QUEUE_CONNECTION', 'database')),
+            'queue' => env('CRM_IMPORT_QUEUE_NAME', 'crm-imports'),
+        ],
+        'entities' => [
+            'users' => [
+                'label' => 'Users',
+                'description' => 'Import internal CRM users with profile, employment, and reusable filter details.',
+                'template_filename' => 'crm-users-import-template.xlsx',
+                'headings' => [
+                    'name',
+                    'email',
+                    'role',
+                    'active',
+                    'date_of_birth',
+                    'gender',
+                    'nationality',
+                    'id_number',
+                    'phone',
+                    'employment_status',
+                    'department',
+                    'position',
+                    'reports_to_email',
+                    'personal_payroll_number',
+                    'date_of_appointment',
+                    'custom_filters',
+                ],
+                'required' => ['name', 'email', 'role'],
+                'match_key' => 'email',
+            ],
+            'leads' => [
+                'label' => 'Leads',
+                'description' => 'Import institutional leads using a stable external reference for repeat upserts.',
+                'template_filename' => 'crm-leads-import-template.xlsx',
+                'headings' => ['import_reference', 'owner_email', 'company_name', 'industry', 'website', 'email', 'phone', 'country', 'status', 'notes'],
+                'required' => ['import_reference', 'company_name'],
+                'match_key' => 'import_reference',
+            ],
+            'contacts' => [
+                'label' => 'Contacts',
+                'description' => 'Import decision-makers linked to an existing lead reference.',
+                'template_filename' => 'crm-contacts-import-template.xlsx',
+                'headings' => ['import_reference', 'lead_import_reference', 'name', 'job_title', 'email', 'phone', 'is_primary', 'owner_email', 'notes'],
+                'required' => ['import_reference', 'lead_import_reference', 'name'],
+                'match_key' => 'import_reference',
+            ],
+        ],
     ],
 ];

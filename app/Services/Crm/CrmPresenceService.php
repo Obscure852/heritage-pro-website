@@ -11,6 +11,11 @@ use Illuminate\Support\Facades\Schema;
 
 class CrmPresenceService
 {
+    public function __construct(
+        private readonly DiscussionDeliveryService $discussionDeliveryService
+    ) {
+    }
+
     public function heartbeat(User $user, ?string $path = null): void
     {
         if (! $user->canAccessCrm()) {
@@ -47,11 +52,7 @@ class CrmPresenceService
 
     public function unreadPayload(User $currentUser): array
     {
-        return [
-            'count' => 0,
-            'threads' => [],
-            'note' => 'Unread CRM discussion counts are not surfaced in this launcher yet.',
-        ];
+        return $this->discussionDeliveryService->unreadPayload($currentUser);
     }
 
     private function onlineUserQuery(User $currentUser, ?string $search = null): Builder
@@ -120,9 +121,8 @@ class CrmPresenceService
             'initials' => $this->initials($user->name),
             'last_seen_at' => $lastSeenAt->toIso8601String(),
             'last_seen_label' => $lastSeenAt->diffForHumans(),
-            'discussion_url' => route('crm.discussions.index', [
+            'discussion_url' => route('crm.discussions.app.direct.start', [
                 'recipient_user_id' => $user->id,
-                'channel' => 'app',
             ]),
         ];
     }

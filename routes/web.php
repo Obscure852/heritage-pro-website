@@ -1,13 +1,11 @@
 <?php
 
-use App\Http\Controllers\Auth\QuickCrmAccessController;
 use App\Http\Controllers\PublicWebsiteController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::controller(PublicWebsiteController::class)->group(function () {
     Route::get('/', 'home')->name('website.home');
-    Route::get('/sign-in', QuickCrmAccessController::class)->name('website.sign-in');
     Route::get('/products', 'page')->defaults('page', 'products')->name('website.products');
     Route::get('/features', 'page')->defaults('page', 'features')->name('website.features');
     Route::get('/customers', 'page')->defaults('page', 'customers')->name('website.customers');
@@ -18,9 +16,12 @@ Route::controller(PublicWebsiteController::class)->group(function () {
     Route::post('/book-demo', 'bookDemo')->name('website.book-demo');
 });
 
-Auth::routes(['register' => false]);
+Route::get('/sign-in', fn () => redirect()->route('login'))->name('website.sign-in');
 
-Route::middleware(['auth', 'crm.access'])->group(function () {
+Auth::routes(['register' => false]);
+//Users/thatoobuseng/Sites/Heritage Website
+
+Route::middleware(['auth', 'crm.access', 'crm.onboarding'])->group(function () {
     Route::get('/dashboard', function () {
         return redirect()->route('crm.dashboard');
     })->name('dashboard');
@@ -34,14 +35,20 @@ Route::prefix('crm')
     ->middleware(['auth', 'crm.access'])
     ->name('crm.')
     ->group(function () {
-        require base_path('routes/crm/dashboard.php');
-        require base_path('routes/crm/workspace.php');
-        require base_path('routes/crm/customers.php');
-        require base_path('routes/crm/contacts.php');
-        require base_path('routes/crm/requests.php');
-        require base_path('routes/crm/dev.php');
-        require base_path('routes/crm/discussions.php');
-        require base_path('routes/crm/integrations.php');
-        require base_path('routes/crm/users.php');
-        require base_path('routes/crm/settings.php');
+        require base_path('routes/crm/onboarding.php');
+
+        Route::middleware('crm.onboarding')->group(function () {
+            require base_path('routes/crm/dashboard.php');
+            require base_path('routes/crm/workspace.php');
+            require base_path('routes/crm/customers.php');
+            require base_path('routes/crm/contacts.php');
+            require base_path('routes/crm/calendar.php');
+            require base_path('routes/crm/products.php');
+            require base_path('routes/crm/requests.php');
+            require base_path('routes/crm/dev.php');
+            require base_path('routes/crm/discussions.php');
+            require base_path('routes/crm/integrations.php');
+            require base_path('routes/crm/users.php');
+            require base_path('routes/crm/settings.php');
+        });
     });

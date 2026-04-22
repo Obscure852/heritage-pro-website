@@ -4,14 +4,22 @@
 @section('crm_heading', 'Dev')
 @section('crm_subheading', 'Capture new development requests and product improvements coming from schools, colleges, and internal customer feedback.')
 
-@section('crm_actions')
-    <a href="{{ route('crm.dev.create') }}" class="btn btn-primary">
-        <i class="bx bx-plus-circle"></i> New dev item
-    </a>
+@section('crm_header_stats')
+    @foreach ($devStats as $stat)
+        @include('crm.partials.header-stat', [
+            'value' => number_format($stat['value']),
+            'label' => $stat['label'],
+        ])
+    @endforeach
 @endsection
 
 @section('content')
     <div class="crm-stack">
+        @include('crm.partials.helper-text', [
+            'title' => 'Development Backlog',
+            'content' => 'Use the filters below to narrow the backlog by owner, status, or priority, then open an item to review delivery context or next steps.',
+        ])
+
         <section class="crm-card crm-filter-card">
             <div class="crm-card-title">
                 <div>
@@ -58,6 +66,9 @@
                 <div class="form-actions">
                     <a href="{{ route('crm.dev.index') }}" class="btn btn-light crm-btn-light"><i class="bx bx-reset"></i> Reset</a>
                     <button type="submit" class="btn btn-primary"><i class="bx bx-filter-alt"></i> Apply filters</button>
+                    <a href="{{ route('crm.dev.create') }}" class="btn btn-primary">
+                        <i class="bx bx-plus-circle"></i> New dev item
+                    </a>
                 </div>
             </form>
         </section>
@@ -98,13 +109,18 @@
                                     <td>{{ $item->owner?->name ?: 'Unassigned' }}</td>
                                     <td class="crm-table-actions">
                                         <div class="crm-action-row">
-                                            <a href="{{ route('crm.dev.edit', $item) }}" class="btn btn-secondary">
-                                                <i class="fas fa-edit"></i> Edit
+                                            @include('crm.partials.view-button', [
+                                                'url' => route('crm.dev.show', $item),
+                                                'label' => 'View development request',
+                                            ])
+                                            <a href="{{ route('crm.dev.edit', $item) }}" class="btn crm-icon-action" title="Edit development request" aria-label="Edit development request">
+                                                <i class="fas fa-edit"></i>
                                             </a>
                                             @include('crm.partials.delete-button', [
                                                 'action' => route('crm.dev.destroy', $item),
                                                 'message' => 'Are you sure you want to permanently delete this development request?',
-                                                'label' => 'Delete',
+                                                'label' => 'Delete development request',
+                                                'iconOnly' => true,
                                             ])
                                         </div>
                                     </td>

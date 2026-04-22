@@ -2,6 +2,8 @@
     $crmUser = auth()->user();
     $moduleRegistry = app(\App\Services\Crm\CrmModuleRegistry::class);
     $launcherModules = $moduleRegistry->launcherModulesFor($crmUser);
+    $companyName = $crmBrandingSettings?->company_name ?: 'Heritage Pro';
+    $companyLogoUrl = $crmBrandingSettings?->company_logo_url ?: asset('assets/images/heritage-pro-logo.jpg');
     $userInitials = collect(preg_split('/\s+/', trim($crmUser->name)) ?: [])
         ->filter()
         ->take(2)
@@ -14,21 +16,21 @@
             <div class="navbar-brand-box">
                 <a href="{{ route('crm.dashboard') }}" class="logo logo-dark">
                     <span class="logo-sm">
-                        <img src="{{ asset('assets/images/heritage-pro-logo.jpg') }}" alt="Heritage Pro" height="24">
+                        <img src="{{ $companyLogoUrl }}" alt="{{ $companyName }}" height="24">
                     </span>
                     <span class="logo-lg">
-                        <img src="{{ asset('assets/images/heritage-pro-logo.jpg') }}" alt="Heritage Pro" height="24">
-                        <span class="logo-txt">Heritage Pro</span>
+                        <img src="{{ $companyLogoUrl }}" alt="{{ $companyName }}" height="24">
+                        <span class="logo-txt">{{ $companyName }}</span>
                     </span>
                 </a>
 
                 <a href="{{ route('crm.dashboard') }}" class="logo logo-light">
                     <span class="logo-sm">
-                        <img src="{{ asset('assets/images/heritage-pro-logo.jpg') }}" alt="Heritage Pro" height="24">
+                        <img src="{{ $companyLogoUrl }}" alt="{{ $companyName }}" height="24">
                     </span>
                     <span class="logo-lg">
-                        <img src="{{ asset('assets/images/heritage-pro-logo.jpg') }}" alt="Heritage Pro" height="24">
-                        <span class="logo-txt">Heritage Pro</span>
+                        <img src="{{ $companyLogoUrl }}" alt="{{ $companyName }}" height="24">
+                        <span class="logo-txt">{{ $companyName }}</span>
                     </span>
                 </a>
             </div>
@@ -57,6 +59,7 @@
                         <span class="staff-presence-trigger-label">Online CRM Users</span>
                     </span>
                     <span class="staff-presence-trigger-count" id="crm-presence-count">0</span>
+                    <span class="staff-presence-trigger-unread" id="crm-presence-unread-badge" hidden>0</span>
                 </button>
 
                 <div class="crm-floating-panel staff-presence-panel" id="crm-presence-panel" hidden>
@@ -74,7 +77,17 @@
                     </div>
 
                     <div class="staff-presence-panel-note">
-                        Use the launcher to see who is active now and jump into an in-app discussion quickly.
+                        Use the launcher to see who is active now, spot unread app messages, and jump straight into the right thread.
+                    </div>
+
+                    <div class="staff-presence-unread-panel" id="crm-presence-unread-panel" hidden>
+                        <div class="staff-presence-unread-header">
+                            <strong>Unread app messages</strong>
+                            <a href="{{ route('crm.discussions.app.workspace') }}" class="btn btn-light crm-btn-light btn-sm">
+                                <i class="bx bx-chat"></i> Open inbox
+                            </a>
+                        </div>
+                        <div class="staff-presence-unread-list" id="crm-presence-unread-list"></div>
                     </div>
 
                     <div class="staff-presence-list" id="crm-presence-list">
@@ -108,7 +121,12 @@
             <div class="module-launcher crm-user-menu" id="crm-user-menu">
                 <button type="button" class="btn header-item bg-soft-light border-start border-end rounded-0 crm-panel-trigger"
                     id="crm-user-dropdown" aria-haspopup="true" aria-expanded="false">
-                    <span class="crm-user-avatar-circle">{{ $userInitials ?: 'CU' }}</span>
+                    @if ($crmUser->avatar_url)
+                        <img src="{{ $crmUser->avatar_url }}" alt="{{ $crmUser->name }}"
+                            class="crm-user-avatar-circle crm-user-avatar-photo">
+                    @else
+                        <span class="crm-user-avatar-circle crm-user-avatar-placeholder">{{ $userInitials ?: 'CU' }}</span>
+                    @endif
                     <span class="d-none d-xl-inline-block ms-2 fw-medium">{{ $crmUser->name }}</span>
                     <i class="mdi mdi-chevron-down d-none d-xl-inline-block"></i>
                 </button>

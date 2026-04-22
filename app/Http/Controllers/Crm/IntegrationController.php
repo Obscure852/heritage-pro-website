@@ -53,7 +53,7 @@ class IntegrationController extends CrmController
 
     public function create(): View
     {
-        $this->authorizeAdminSettings();
+        $this->authorizeModuleAccess('integrations', 'edit');
 
         return view('crm.integrations.create', $this->formData());
     }
@@ -64,13 +64,13 @@ class IntegrationController extends CrmController
             'integration' => $integration->load('owner'),
             'integrationKinds' => config('heritage_crm.integration_kinds'),
             'integrationStatuses' => config('heritage_crm.integration_statuses'),
-            'canManage' => $this->crmUser()->canManageCrmSettings(),
+            'canManage' => $this->crmUser()->canAccessCrmModule('integrations', 'edit'),
         ]);
     }
 
     public function edit(Integration $integration): View
     {
-        $this->authorizeAdminSettings();
+        $this->authorizeModuleAccess('integrations', 'edit');
 
         return view('crm.integrations.edit', array_merge($this->formData(), [
             'integration' => $integration,
@@ -79,7 +79,7 @@ class IntegrationController extends CrmController
 
     public function store(IntegrationUpsertRequest $request): RedirectResponse
     {
-        $this->authorizeAdminSettings();
+        $this->authorizeModuleAccess('integrations', 'edit');
 
         $data = $request->validated();
         $data['owner_id'] = $data['owner_id'] ?? $this->crmUser()->id;
@@ -93,7 +93,7 @@ class IntegrationController extends CrmController
 
     public function update(IntegrationUpsertRequest $request, Integration $integration): RedirectResponse
     {
-        $this->authorizeAdminSettings();
+        $this->authorizeModuleAccess('integrations', 'edit');
 
         $integration->update($request->validated());
 
@@ -104,7 +104,7 @@ class IntegrationController extends CrmController
 
     public function destroy(Integration $integration): RedirectResponse
     {
-        $this->authorizeAdminSettings();
+        $this->authorizeModuleAccess('integrations', 'admin');
 
         $integration->forceDelete();
 

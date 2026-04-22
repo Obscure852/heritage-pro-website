@@ -72,6 +72,23 @@
                 </div>
             </section>
 
+            @include('crm.requests._attachments', [
+                'crmRequest' => $crmRequest,
+                'attachments' => $crmRequest->attachments,
+                'allowDelete' => true,
+                'title' => 'Attached files',
+                'subtitle' => 'Open or download the documents linked to this request directly from the CRM.',
+            ])
+
+            @include('crm.products._related_documents', [
+                'quotes' => $crmRequest->quotes,
+                'invoices' => $crmRequest->invoices,
+                'quoteStatuses' => $quoteStatuses,
+                'invoiceStatuses' => $invoiceStatuses,
+                'title' => 'Related quotes and invoices',
+                'subtitle' => 'Commercial documents linked to this request.',
+            ])
+
             <section class="crm-card">
                 <div class="crm-card-title">
                     <div>

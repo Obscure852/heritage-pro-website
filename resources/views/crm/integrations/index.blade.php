@@ -4,16 +4,13 @@
 @section('crm_heading', 'Integrations')
 @section('crm_subheading', 'Manage API, email, WhatsApp, and webhook integrations used to connect Heritage Pro with schools and external communication providers.')
 
-@section('crm_actions')
-    @if (auth()->user()->canManageCrmSettings())
-        <a href="{{ route('crm.integrations.create') }}" class="btn btn-primary">
-            <i class="bx bx-plus-circle"></i> New integration
-        </a>
-    @endif
-@endsection
-
 @section('content')
     <div class="crm-stack">
+        @include('crm.partials.helper-text', [
+            'title' => 'Integrations Directory',
+            'content' => 'Use the filters below to narrow the list by owner, kind, or status, then open the integration profile you need to review or update.',
+        ])
+
         <section class="crm-card crm-filter-card">
             <div class="crm-card-title">
                 <div>
@@ -60,6 +57,11 @@
                 <div class="form-actions">
                     <a href="{{ route('crm.integrations.index') }}" class="btn btn-light crm-btn-light"><i class="bx bx-reset"></i> Reset</a>
                     <button type="submit" class="btn btn-primary"><i class="bx bx-filter-alt"></i> Apply filters</button>
+                    @if (auth()->user()->canManageCrmSettings())
+                        <a href="{{ route('crm.integrations.create') }}" class="btn btn-primary">
+                            <i class="bx bx-plus-circle"></i> New integration
+                        </a>
+                    @endif
                 </div>
             </form>
         </section>
@@ -89,18 +91,23 @@
                                         <span class="crm-muted-copy">•</span>
                                         <span class="crm-muted-copy">{{ $integration->owner?->name ?: 'Unassigned' }}</span>
                                     </div>
-                                    @if (auth()->user()->canManageCrmSettings())
-                                        <div class="crm-action-row">
-                                            <a href="{{ route('crm.integrations.edit', $integration) }}" class="btn btn-secondary">
-                                                <i class="fas fa-edit"></i> Edit
+                                    <div class="crm-action-row">
+                                        @include('crm.partials.view-button', [
+                                            'url' => route('crm.integrations.show', $integration),
+                                            'label' => 'View integration',
+                                        ])
+                                        @if (auth()->user()->canManageCrmSettings())
+                                            <a href="{{ route('crm.integrations.edit', $integration) }}" class="btn crm-icon-action" title="Edit integration" aria-label="Edit integration">
+                                                <i class="fas fa-edit"></i>
                                             </a>
                                             @include('crm.partials.delete-button', [
                                                 'action' => route('crm.integrations.destroy', $integration),
                                                 'message' => 'Are you sure you want to permanently delete this integration?',
-                                                'label' => 'Delete',
+                                                'label' => 'Delete integration',
+                                                'iconOnly' => true,
                                             ])
-                                        </div>
-                                    @endif
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
                     @endforeach

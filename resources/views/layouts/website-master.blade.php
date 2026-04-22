@@ -28,7 +28,7 @@
 
           .hero .hero-media .window-chrome .url {
             max-width: 360px;
-            font-size: 12px;
+            font-size: 11px;
           }
 
           .hero .mini-dash {
@@ -48,7 +48,7 @@
           }
 
           .hero .mini-nav-item {
-            font-size: 12px;
+            font-size: 11px;
             padding: 7px 10px;
           }
         }
@@ -99,7 +99,7 @@
         .heritage-modules-intro-title {
           margin-top: 120px;
           margin-bottom: 14px;
-          font-size: 32px;
+          font-size: 31px;
         }
 
         .heritage-modules-intro-copy {
@@ -145,7 +145,7 @@
           background: #fff;
           color: var(--fg-3);
           font-family: var(--font-mono);
-          font-size: 11px;
+          font-size: 10px;
         }
 
         #features-page-content .feature-surface {
@@ -163,13 +163,13 @@
         }
 
         #features-page-content .feature-panel h4 {
-          font-size: 15px;
+          font-size: 14px;
           margin-bottom: 6px;
         }
 
         #features-page-content .feature-panel p {
           margin: 0;
-          font-size: 13px;
+          font-size: 12px;
           color: var(--fg-3);
           line-height: 1.6;
         }
@@ -192,14 +192,14 @@
           margin-bottom: 6px;
           color: var(--brand-indigo-500);
           font-family: var(--font-display);
-          font-size: 20px;
+          font-size: 19px;
           line-height: 1;
         }
 
         #features-page-content .feature-stat span {
           display: block;
           color: var(--fg-3);
-          font-size: 11px;
+          font-size: 10px;
           text-transform: uppercase;
           letter-spacing: 0.08em;
         }
@@ -216,7 +216,7 @@
           border-radius: 999px;
           background: var(--brand-indigo-50);
           color: var(--brand-indigo-500);
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 700;
           letter-spacing: 0.01em;
         }
@@ -336,7 +336,7 @@
           justify-content: center;
           flex-shrink: 0;
           font-family: var(--font-display);
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
           letter-spacing: 0.04em;
         }
@@ -345,7 +345,7 @@
         #customers-page-content .client-pill strong {
           display: block;
           color: var(--fg-1);
-          font-size: 15px;
+          font-size: 14px;
           line-height: 1.3;
           font-weight: 600;
         }
@@ -354,7 +354,7 @@
           display: block;
           margin-top: 3px;
           color: var(--fg-3);
-          font-size: 12px;
+          font-size: 11px;
           text-transform: uppercase;
           letter-spacing: 0.08em;
         }
@@ -413,7 +413,7 @@
           flex-shrink: 0;
           color: #fff;
           font-family: var(--font-display);
-          font-size: 18px;
+          font-size: 17px;
           font-weight: 700;
           letter-spacing: 0.04em;
           background: var(--brand-gradient);
@@ -429,7 +429,7 @@
 
         #team-page-content .team-meta span {
           display: block;
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.08em;
@@ -439,13 +439,13 @@
 
         #team-page-content .team-meta h3 {
           margin: 0;
-          font-size: 24px;
+          font-size: 23px;
         }
 
         #team-page-content .team-card p {
           margin: 0;
           color: var(--fg-3);
-          font-size: 15px;
+          font-size: 14px;
           line-height: 1.7;
         }
 
@@ -462,7 +462,7 @@
           border-radius: 999px;
           background: var(--bg-subtle);
           color: var(--fg-2);
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 700;
           letter-spacing: 0.02em;
         }
@@ -489,7 +489,7 @@
         .contact-alert {
           padding: 12px 14px;
           border-radius: 12px;
-          font-size: 13px;
+          font-size: 12px;
           line-height: 1.6;
           border: 1px solid rgba(67, 77, 176, 0.18);
           background: #eef1ff;
@@ -503,7 +503,7 @@
         }
 
         .form-field .field-error {
-          font-size: 12px;
+          font-size: 11px;
           color: #b42318;
           line-height: 1.5;
         }

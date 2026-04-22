@@ -4,35 +4,20 @@
 @section('crm_heading', 'Settings')
 @section('crm_subheading', 'Manage CRM-wide sales pipeline stages and the operational configuration that governs the foundation modules.')
 
-@section('crm_actions')
-    @if ($activeSection === 'sales-stages')
-        <a href="{{ route('crm.settings.sales-stages.create') }}" class="btn btn-primary">
-            <i class="bx bx-plus-circle"></i> New sales stage
-        </a>
-    @endif
+@section('crm_header_stats')
+    @include('crm.partials.header-stat', ['value' => $stages->count(), 'label' => 'Total'])
+    @include('crm.partials.header-stat', ['value' => $stages->where('is_active', true)->count(), 'label' => 'Active'])
+    @include('crm.partials.header-stat', ['value' => $stages->sum('requests_count'), 'label' => 'Mapped'])
 @endsection
 
 @section('content')
     <div class="crm-stack">
-        <div class="crm-tabs">
-            <a href="{{ route('crm.settings.index') }}" @class(['crm-tab', 'is-active' => $activeSection === 'overview'])>Overview</a>
-            <a href="{{ route('crm.settings.sales-stages') }}" @class(['crm-tab', 'is-active' => $activeSection === 'sales-stages'])>Sales stages</a>
-        </div>
+        @include('crm.settings._tabs', ['activeSection' => $activeSection])
 
-        <div class="crm-grid cols-3">
-            <div class="crm-metric">
-                <span>Total stages</span>
-                <strong>{{ $stages->count() }}</strong>
-            </div>
-            <div class="crm-metric">
-                <span>Active stages</span>
-                <strong>{{ $stages->where('is_active', true)->count() }}</strong>
-            </div>
-            <div class="crm-metric">
-                <span>Requests mapped</span>
-                <strong>{{ $stages->sum('requests_count') }}</strong>
-            </div>
-        </div>
+        @include('crm.partials.helper-text', [
+            'title' => 'Settings Overview',
+            'content' => 'Use the tabs to move through CRM settings. On this page, filter the stage list when you need to review pipeline structure or update a stage.',
+        ])
 
         <section class="crm-card crm-filter-card">
             <div class="crm-card-title">
@@ -69,6 +54,11 @@
                 <div class="form-actions">
                     <a href="{{ route('crm.settings.sales-stages') }}" class="btn btn-light crm-btn-light"><i class="bx bx-reset"></i> Reset</a>
                     <button type="submit" class="btn btn-primary"><i class="bx bx-filter-alt"></i> Apply filters</button>
+                    @if ($activeSection === 'sales-stages')
+                        <a href="{{ route('crm.settings.sales-stages.create') }}" class="btn btn-primary">
+                            <i class="bx bx-plus-circle"></i> New sales stage
+                        </a>
+                    @endif
                 </div>
             </form>
         </section>
@@ -114,13 +104,14 @@
                                     <td>{{ $stage->requests_count }}</td>
                                     <td class="crm-table-actions">
                                         <div class="crm-action-row">
-                                            <a href="{{ route('crm.settings.sales-stages.edit', $stage) }}" class="btn btn-secondary">
-                                                <i class="fas fa-edit"></i> Edit
+                                            <a href="{{ route('crm.settings.sales-stages.edit', $stage) }}" class="btn crm-icon-action" title="Edit sales stage" aria-label="Edit sales stage">
+                                                <i class="fas fa-edit"></i>
                                             </a>
                                             @include('crm.partials.delete-button', [
                                                 'action' => route('crm.settings.sales-stages.destroy', $stage),
                                                 'message' => 'Are you sure you want to permanently delete this sales stage?',
-                                                'label' => 'Delete',
+                                                'label' => 'Delete sales stage',
+                                                'iconOnly' => true,
                                             ])
                                         </div>
                                     </td>

@@ -12,10 +12,12 @@
 
 @section('content')
     <div class="crm-stack">
-        <div class="crm-tabs">
-            <a href="{{ route('crm.settings.index') }}" class="crm-tab">Overview</a>
-            <a href="{{ route('crm.settings.sales-stages') }}" class="crm-tab is-active">Sales stages</a>
-        </div>
+        @include('crm.settings._tabs', ['activeSection' => 'sales-stages'])
+
+        @include('crm.partials.helper-text', [
+            'title' => 'New Sales Stage',
+            'content' => 'Set the stage name, order, and terminal flags here, then return to the stage list to verify how it fits the pipeline.',
+        ])
 
         <section class="crm-card">
             <div class="crm-card-title">

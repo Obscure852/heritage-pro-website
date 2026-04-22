@@ -27,28 +27,28 @@
         </div>
         <div class="crm-field">
             <label for="recipient_email">Recipient email</label>
-            <input id="recipient_email" name="recipient_email" type="email" value="{{ old('recipient_email') }}" placeholder="name@company.com">
+            <input id="recipient_email" name="recipient_email" type="email" value="{{ old('recipient_email', request('recipient_email')) }}" placeholder="name@company.com">
         </div>
         <div class="crm-field">
             <label for="recipient_phone">Recipient phone</label>
-            <input id="recipient_phone" name="recipient_phone" value="{{ old('recipient_phone') }}" placeholder="Enter recipient phone number">
+            <input id="recipient_phone" name="recipient_phone" value="{{ old('recipient_phone', request('recipient_phone')) }}" placeholder="Enter recipient phone number">
         </div>
         <div class="crm-field full">
             <label for="integration_id">Integration</label>
             <select id="integration_id" name="integration_id">
                 <option value="">Select an integration</option>
                 @foreach ($integrations as $integration)
-                    <option value="{{ $integration->id }}" @selected((int) old('integration_id') === $integration->id)>{{ $integration->name }}</option>
+                    <option value="{{ $integration->id }}" @selected((int) old('integration_id', request('integration_id')) === $integration->id)>{{ $integration->name }}</option>
                 @endforeach
             </select>
         </div>
         <div class="crm-field full">
             <label for="body">Opening message</label>
-            <textarea id="body" name="body" placeholder="Write the opening message" required>{{ old('body') }}</textarea>
+            <textarea id="body" name="body" placeholder="Write the opening message" required>{{ old('body', request('body')) }}</textarea>
         </div>
         <div class="crm-field full">
             <label for="notes">Notes</label>
-            <textarea id="notes" name="notes" placeholder="Add internal notes for this discussion">{{ old('notes') }}</textarea>
+            <textarea id="notes" name="notes" placeholder="Add internal notes for this discussion">{{ old('notes', request('notes')) }}</textarea>
         </div>
     </div>
 

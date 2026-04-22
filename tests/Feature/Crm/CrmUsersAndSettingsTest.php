@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Crm;
 
+use App\Models\CrmUserDepartment;
+use App\Models\CrmUserPosition;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -17,17 +19,38 @@ class CrmUsersAndSettingsTest extends TestCase
             'email' => 'admin@example.com',
             'role' => 'admin',
         ]);
+        $department = CrmUserDepartment::query()->create([
+            'name' => 'Administration',
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+        $position = CrmUserPosition::query()->create([
+            'name' => 'Officer',
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
 
-        $this->actingAs($admin)
+        $response = $this->actingAs($admin)
             ->post(route('crm.users.store'), [
                 'name' => 'Sales Rep',
                 'email' => 'sales.rep@example.com',
-                'password' => 'password123',
-                'password_confirmation' => 'password123',
+                'phone' => '+267 7111 0001',
+                'id_number' => 'ID-0001',
+                'date_of_birth' => '1990-05-10',
+                'gender' => 'male',
+                'nationality' => 'Botswana',
+                'employment_status' => 'active',
+                'department_id' => $department->id,
+                'position_id' => $position->id,
+                'reports_to_user_id' => $admin->id,
+                'date_of_appointment' => '2024-01-02',
                 'role' => 'rep',
                 'active' => '1',
-            ])
-            ->assertRedirect(route('crm.users.index'));
+            ]);
+
+        $createdUser = User::query()->where('email', 'sales.rep@example.com')->firstOrFail();
+
+        $response->assertRedirect(route('crm.users.edit', ['user' => $createdUser, 'tab' => 'profile']));
 
         $this->assertDatabaseHas('users', [
             'email' => 'sales.rep@example.com',
@@ -102,6 +125,45 @@ class CrmUsersAndSettingsTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_update_an_existing_user_to_the_finance_role(): void
+    {
+        $admin = $this->createUser([
+            'email' => 'finance-update-admin@example.com',
+            'role' => 'admin',
+        ]);
+
+        $rep = $this->createUser([
+            'email' => 'finance-update-rep@example.com',
+            'role' => 'rep',
+            'name' => 'Rep To Finance',
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('crm.users.roles.update', $rep), [
+                'role' => 'finance',
+                'module_permissions' => [
+                    'dashboard' => 'view',
+                    'customers' => null,
+                    'contacts' => null,
+                    'calendar' => 'edit',
+                    'products' => 'admin',
+                    'requests' => null,
+                    'dev' => null,
+                    'discussions' => null,
+                    'integrations' => null,
+                    'users' => null,
+                    'settings' => 'edit',
+                ],
+            ])
+            ->assertRedirect(route('crm.users.edit', ['user' => $rep, 'tab' => 'roles']));
+
+        $this->assertDatabaseHas('users', [
+            'id' => $rep->id,
+            'role' => 'finance',
+            'active' => true,
+        ]);
+    }
+
     public function test_admin_can_delete_sales_stages(): void
     {
         $admin = $this->createUser([
@@ -127,6 +189,30 @@ class CrmUsersAndSettingsTest extends TestCase
         $this->assertDatabaseMissing('sales_stages', [
             'id' => $stageId,
         ]);
+    }
+
+    public function test_manager_cannot_access_customer_onboarding_flow(): void
+    {
+        $manager = $this->createUser([
+            'email' => 'manager-onboarding@example.com',
+            'role' => 'manager',
+        ]);
+
+        $this->actingAs($manager)
+            ->get(route('crm.customers.onboarding.create'))
+            ->assertForbidden();
+
+        $this->actingAs($manager)
+            ->get(route('crm.customers.index'))
+            ->assertOk()
+            ->assertDontSee('Import customer');
+
+        $this->actingAs($manager)
+            ->post(route('crm.customers.onboarding.store'), [
+                'company_name' => 'Blocked Import Customer',
+                'status' => 'active',
+            ])
+            ->assertForbidden();
     }
 
     private function createUser(array $attributes = []): User

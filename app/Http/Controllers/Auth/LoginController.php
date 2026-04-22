@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Providers\RouteServiceProvider;
+use App\Services\Crm\CrmUserLoginEventService;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -14,8 +17,9 @@ class LoginController extends Controller
 
     protected $redirectTo = RouteServiceProvider::HOME;
 
-    public function __construct()
-    {
+    public function __construct(
+        private readonly CrmUserLoginEventService $loginEventService
+    ) {
         $this->middleware('guest')->except('logout');
     }
 
@@ -36,7 +40,7 @@ class LoginController extends Controller
         }
         
         if ($activeTab === 'user' && Auth::check()) {
-            return redirect()->route('dashboard');
+            return $this->redirectAuthenticatedUser();
         }
         
         if (Auth::guard('sponsor')->check()) {
@@ -48,7 +52,7 @@ class LoginController extends Controller
         }
         
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            return $this->redirectAuthenticatedUser();
         }
         
         return view('auth.login', [
@@ -101,7 +105,15 @@ class LoginController extends Controller
 
     protected function authenticated(Request $request, $user)
     {
-        return redirect()->intended($this->redirectPath());
+        if ($user instanceof User) {
+            $this->loginEventService->record($user, 'login', $request);
+
+            if ($user->requiresCrmOnboarding()) {
+                return redirect()->route($user->crmOnboardingRouteName());
+            }
+        }
+
+        return null;
     }
 
     protected function credentials(Request $request)
@@ -128,8 +140,30 @@ class LoginController extends Controller
             ->withErrors($errors);
     }
 
-    protected function loggedOut(Request $request)
+    public function logout(Request $request)
     {
+        $user = $request->user();
+
+        $this->guard()->logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        if ($user instanceof User) {
+            $this->loginEventService->record($user, 'logout', $request);
+        }
+
         return redirect()->route('login');
+    }
+
+    private function redirectAuthenticatedUser(): RedirectResponse
+    {
+        $user = Auth::user();
+
+        if ($user instanceof User && $user->requiresCrmOnboarding()) {
+            return redirect()->route($user->crmOnboardingRouteName());
+        }
+
+        return redirect()->route('dashboard');
     }
 }

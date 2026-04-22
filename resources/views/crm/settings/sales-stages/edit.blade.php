@@ -12,10 +12,12 @@
 
 @section('content')
     <div class="crm-stack">
-        <div class="crm-tabs">
-            <a href="{{ route('crm.settings.index') }}" class="crm-tab">Overview</a>
-            <a href="{{ route('crm.settings.sales-stages') }}" class="crm-tab is-active">Sales stages</a>
-        </div>
+        @include('crm.settings._tabs', ['activeSection' => 'sales-stages'])
+
+        @include('crm.partials.helper-text', [
+            'title' => 'Edit Sales Stage',
+            'content' => 'Update the stage definition here, then return to the stage list to confirm ordering, terminal flags, and usage.',
+        ])
 
         <section class="crm-card">
             <div class="crm-card-title">

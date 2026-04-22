@@ -14,12 +14,15 @@ class CrmUserStoreRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
-            'name' => ['required', 'string', 'max:160'],
-            'email' => ['required', 'email', 'max:160', Rule::unique('users', 'email')->whereNull('deleted_at')],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', Rule::in(['admin', 'manager', 'rep'])],
+        return array_merge(
+            CrmUserProfileRules::identity(),
+            CrmUserProfileRules::work(),
+            [
+            'role' => ['required', Rule::in(array_keys(config('heritage_crm.roles', [])))],
             'active' => ['nullable', 'boolean'],
-        ];
+            'custom_filter_ids' => ['nullable', 'array'],
+            'custom_filter_ids.*' => ['integer', 'exists:crm_user_filters,id'],
+            ]
+        );
     }
 }

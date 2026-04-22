@@ -4,16 +4,21 @@
 @section('crm_heading', 'CRM Dashboard')
 @section('crm_subheading', 'Monitor sales pipeline health, open support and sales requests, recent activity, and follow-up pressure from a single Heritage-branded workspace.')
 
+@section('crm_header_stats')
+    @foreach ($metrics as $metric)
+        @include('crm.partials.header-stat', [
+            'value' => number_format($metric['value']),
+            'label' => $metric['label'],
+        ])
+    @endforeach
+@endsection
+
 @section('content')
     <div class="crm-stack">
-        <div class="crm-grid cols-3">
-            @foreach ($metrics as $metric)
-                <div class="crm-metric">
-                    <span>{{ $metric['label'] }}</span>
-                    <strong>{{ number_format($metric['value']) }}</strong>
-                </div>
-            @endforeach
-        </div>
+        @include('crm.partials.helper-text', [
+            'title' => 'CRM Dashboard Overview',
+            'content' => 'Start here to spot bottlenecks, recent movement, and workload pressure, then jump into the module that needs attention.',
+        ])
 
         <div class="crm-grid cols-2">
             <section class="crm-card">

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Contact extends Model
@@ -14,6 +15,7 @@ class Contact extends Model
 
     protected $fillable = [
         'owner_id',
+        'import_reference',
         'lead_id',
         'customer_id',
         'name',
@@ -41,5 +43,15 @@ class Contact extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function quotes(): HasMany
+    {
+        return $this->hasMany(CrmQuote::class);
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(CrmInvoice::class);
     }
 }

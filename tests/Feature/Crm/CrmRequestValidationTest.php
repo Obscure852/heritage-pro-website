@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Crm;
 
+use App\Models\Customer;
 use App\Models\Lead;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -22,14 +23,13 @@ class CrmRequestValidationTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->from(route('crm.requests.index'))
-            ->post(route('crm.requests.store'), [
+            ->from(route('crm.requests.sales.create'))
+            ->post(route('crm.requests.sales.store'), [
                 'owner_id' => $admin->id,
                 'lead_id' => $lead->id,
-                'type' => 'sales',
                 'title' => 'Initial outreach',
             ])
-            ->assertRedirect(route('crm.requests.index'))
+            ->assertRedirect(route('crm.requests.sales.create'))
             ->assertSessionHasErrors('sales_stage_id');
     }
 
@@ -39,21 +39,20 @@ class CrmRequestValidationTest extends TestCase
             'email' => 'support-admin@example.com',
         ]);
 
-        $lead = Lead::query()->create([
+        $customer = Customer::query()->create([
             'owner_id' => $admin->id,
             'company_name' => 'Senior Support School',
             'status' => 'active',
         ]);
 
         $this->actingAs($admin)
-            ->from(route('crm.requests.index'))
-            ->post(route('crm.requests.store'), [
+            ->from(route('crm.requests.support.create'))
+            ->post(route('crm.requests.support.store'), [
                 'owner_id' => $admin->id,
-                'lead_id' => $lead->id,
-                'type' => 'support',
+                'customer_id' => $customer->id,
                 'title' => 'Data fix request',
             ])
-            ->assertRedirect(route('crm.requests.index'))
+            ->assertRedirect(route('crm.requests.support.create'))
             ->assertSessionHasErrors('support_status');
     }
 

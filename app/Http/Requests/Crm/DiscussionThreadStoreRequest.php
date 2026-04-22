@@ -23,6 +23,10 @@ class DiscussionThreadStoreRequest extends FormRequest
             'integration_id' => ['nullable', 'exists:crm_integrations,id'],
             'notes' => ['nullable', 'string', 'max:3000'],
             'body' => ['required', 'string', 'max:8000'],
+            'source_type' => ['nullable', Rule::in(['quote', 'invoice'])],
+            'source_id' => ['nullable', 'integer', 'min:1'],
+            'attachments' => ['nullable', 'array', 'max:10'],
+            'attachments.*' => ['file', 'max:15360', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp'],
         ];
     }
 
@@ -41,6 +45,10 @@ class DiscussionThreadStoreRequest extends FormRequest
 
             if ($channel === 'whatsapp' && blank($this->input('recipient_phone'))) {
                 $validator->errors()->add('recipient_phone', 'A WhatsApp discussion requires a phone number.');
+            }
+
+            if (filled($this->input('source_type')) && blank($this->input('source_id'))) {
+                $validator->errors()->add('source_id', 'A source record is required when a source type is supplied.');
             }
         });
     }

@@ -19,6 +19,16 @@ class DevController extends CrmController
             'priority' => (string) $request->query('priority', ''),
         ];
 
+        $devStatsQuery = $this->scopeOwned(DevelopmentRequest::query());
+        $devStats = [
+            ['label' => 'Total', 'value' => (clone $devStatsQuery)->count()],
+            ['label' => 'Backlog', 'value' => (clone $devStatsQuery)->where('status', 'backlog')->count()],
+            ['label' => 'Planned', 'value' => (clone $devStatsQuery)->where('status', 'planned')->count()],
+            ['label' => 'In Progress', 'value' => (clone $devStatsQuery)->where('status', 'in_progress')->count()],
+            ['label' => 'Shipped', 'value' => (clone $devStatsQuery)->where('status', 'shipped')->count()],
+            ['label' => 'Declined', 'value' => (clone $devStatsQuery)->where('status', 'declined')->count()],
+        ];
+
         $items = $this->scopeOwned(
             DevelopmentRequest::query()
                 ->with(['owner', 'lead:id,company_name', 'customer:id,company_name', 'contact:id,name'])
@@ -48,6 +58,7 @@ class DevController extends CrmController
             'developmentStatuses' => config('heritage_crm.development_statuses'),
             'developmentPriorities' => config('heritage_crm.development_priorities'),
             'filters' => $filters,
+            'devStats' => $devStats,
         ]);
     }
 

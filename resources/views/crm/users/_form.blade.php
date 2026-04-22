@@ -28,14 +28,6 @@
                 <span>Active account</span>
             </label>
         </div>
-        <div class="crm-field">
-            <label for="password">{{ isset($user) ? 'New password' : 'Password' }}</label>
-            <input id="password" name="password" type="password" placeholder="Enter password" @required(! isset($user))>
-        </div>
-        <div class="crm-field">
-            <label for="password_confirmation">{{ isset($user) ? 'Confirm new password' : 'Confirm password' }}</label>
-            <input id="password_confirmation" name="password_confirmation" type="password" placeholder="Confirm password" @required(! isset($user))>
-        </div>
     </div>
 
     <div class="form-actions">

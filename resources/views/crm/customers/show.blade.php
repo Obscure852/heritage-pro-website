@@ -65,7 +65,13 @@
                     </div>
                     <div class="crm-meta-row">
                         <span>Source lead</span>
-                        <strong>{{ $customer->lead?->company_name ?: 'Direct customer' }}</strong>
+                        <strong>
+                            @if ($customer->lead)
+                                <a href="{{ route('crm.leads.show', $customer->lead) }}">{{ $customer->lead->company_name }}</a>
+                            @else
+                                Source lead unavailable
+                            @endif
+                        </strong>
                     </div>
                     <div class="crm-meta-row">
                         <span>Purchase date</span>
@@ -144,6 +150,15 @@
                         </div>
                     @endif
                 </section>
+
+                @include('crm.products._related_documents', [
+                    'quotes' => $customer->quotes,
+                    'invoices' => $customer->invoices,
+                    'quoteStatuses' => $quoteStatuses,
+                    'invoiceStatuses' => $invoiceStatuses,
+                    'title' => 'Related quotes and invoices',
+                    'subtitle' => 'Commercial documents linked directly to this customer.',
+                ])
             </div>
         </div>
     </div>

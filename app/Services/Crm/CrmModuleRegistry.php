@@ -7,15 +7,19 @@ use Illuminate\Support\Collection;
 
 class CrmModuleRegistry
 {
+    public function __construct(
+        private readonly CrmModulePermissionService $permissionService
+    ) {
+    }
+
     public function modulesFor(User $user): array
     {
-        return collect(config('heritage_crm.modules', []))
-            ->map(function (array $module, string $key) {
-                $module['key'] = $key;
-
-                return $module;
-            })
-            ->filter(fn (array $module) => in_array($user->role, $module['roles'] ?? [], true))
+        return $this->permissionService->modules()
+            ->filter(fn (array $module) => $this->permissionService->hasAccess(
+                $user,
+                $module['key'],
+                $module['minimum_permission'] ?? 'view'
+            ))
             ->values()
             ->all();
     }
@@ -28,7 +32,7 @@ class CrmModuleRegistry
                 'label' => $module['label'],
                 'caption' => $module['caption'] ?? null,
                 'icon' => $module['icon'] ?? 'bx bx-grid-alt',
-                'url' => route($module['route']),
+                'url' => route($this->defaultRouteFor($user, $module)),
             ])
             ->values()
             ->all();
@@ -60,8 +64,26 @@ class CrmModuleRegistry
         return $module['match'] ?? [$module['route']];
     }
 
-    public function childrenFor(array $module): Collection
+    public function childrenFor(User $user, array $module): Collection
     {
-        return collect($module['children'] ?? []);
+        return collect($module['children'] ?? [])
+            ->filter(fn (array $child) => $this->itemIsVisibleToUser($user, $module['key'], $child))
+            ->values();
+    }
+
+    public function defaultRouteFor(User $user, array $module): string
+    {
+        $firstVisibleChild = $this->childrenFor($user, $module)->first();
+
+        return $firstVisibleChild['route'] ?? $module['route'];
+    }
+
+    private function itemIsVisibleToUser(User $user, string $moduleKey, array $item): bool
+    {
+        return $this->permissionService->hasAccess(
+            $user,
+            $moduleKey,
+            $item['minimum_permission'] ?? 'view'
+        );
     }
 }
