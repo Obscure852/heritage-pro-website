@@ -235,6 +235,128 @@
             font-size: 13px;
         }
 
+        .crm-clock-widget {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .crm-clock-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-width: 38px;
+            height: 38px;
+            padding: 0 12px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid #e9ebef;
+            background: #fff;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+            white-space: nowrap;
+        }
+
+        .crm-clock-btn.is-out {
+            color: #334155;
+        }
+
+        .crm-clock-btn.is-out:hover {
+            border-color: #cbd5e1;
+            background: #f8fafc;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+        }
+
+        .crm-clock-btn.is-in {
+            border-color: #6ee7b7;
+            color: #065f46;
+            background: rgba(10, 179, 156, 0.06);
+        }
+
+        .crm-clock-btn.is-in:hover {
+            border-color: #34d399;
+            background: rgba(10, 179, 156, 0.1);
+            box-shadow: 0 6px 18px rgba(10, 179, 156, 0.12);
+        }
+
+        .crm-clock-btn i {
+            font-size: 16px;
+        }
+
+        .crm-clock-timer {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 28px;
+            height: 28px;
+            padding: 0 8px;
+            border-radius: 999px;
+            background: rgba(10, 179, 156, 0.12);
+            color: #065f46;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .crm-clock-label {
+            display: none;
+        }
+
+        @media (min-width: 768px) {
+            .crm-clock-label {
+                display: inline;
+            }
+        }
+
+        .crm-slide-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 420px;
+            height: 100vh;
+            background: #ffffff;
+            border-left: 1px solid #e5e7eb;
+            box-shadow: -4px 0 24px rgba(0, 0, 0, 0.08);
+            z-index: 1050;
+            transform: translateX(100%);
+            transition: transform 0.25s ease;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .crm-slide-panel.is-open {
+            transform: translateX(0);
+        }
+
+        .crm-slide-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .crm-slide-panel-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.2);
+            z-index: 1049;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+            pointer-events: none;
+        }
+
+        .crm-slide-panel-backdrop.is-visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        @media (max-width: 768px) {
+            .crm-slide-panel {
+                width: 100%;
+            }
+        }
+
         .crm-user-summary {
             display: flex;
             justify-content: space-between;
@@ -459,6 +581,7 @@
                             $subheading = trim($__env->yieldContent('crm_subheading', 'Manage customers, contacts, requests, pipeline settings, and internal communication from one workspace.'));
                             $headerStats = trim($__env->yieldContent('crm_header_stats'));
                             $hasHeaderStats = $headerStats !== '';
+                            $shellAttributes = trim($__env->yieldContent('crm_shell_attributes'));
                         @endphp
 
                         @include('components.breadcrumb', [
@@ -502,8 +625,10 @@
                             </div>
                         @endif
 
-                        @include('crm.partials.flash')
-                        @yield('content')
+                        <div {!! $shellAttributes !== '' ? $shellAttributes : '' !!}>
+                            @include('crm.partials.flash')
+                            @yield('content')
+                        </div>
                     </div>
                 </div>
             </div>
@@ -552,6 +677,10 @@
             </div>
         </div>
     </div>
+
+    <audio id="crm-discussion-sound" preload="auto">
+        <source src="{{ asset('assets/sounds/crm-message-soft.wav') }}" type="audio/wav">
+    </audio>
 
     <script src="{{ asset('assets/libs/jquery/jquery.min.js') }}"></script>
     <script src="{{ asset('assets/libs/bootstrap/bootstrap.min.js') }}"></script>
@@ -797,6 +926,10 @@
                 }
 
                 dropzone.addEventListener('click', function (event) {
+                    if (event.target === input || event.target.closest('[data-dropzone-input]')) {
+                        return;
+                    }
+
                     if (event.target.closest('a, button')) {
                         return;
                     }
@@ -1229,7 +1362,24 @@
             var presenceUnreadBadge = document.getElementById('crm-presence-unread-badge');
             var presenceUnreadPanel = document.getElementById('crm-presence-unread-panel');
             var presenceUnreadList = document.getElementById('crm-presence-unread-list');
+            var presenceSoundToggle = document.getElementById('crm-presence-sound-toggle');
+            var presenceSoundPreview = document.getElementById('crm-presence-sound-preview');
+            var presenceSoundStatus = document.getElementById('crm-presence-sound-status');
             var sidebarDiscussionsBadge = document.getElementById('crm-sidebar-discussions-badge');
+            var sidebarChannelBadges = Array.prototype.slice.call(document.querySelectorAll('[data-crm-discussion-channel-badge]'));
+            var discussionSound = document.getElementById('crm-discussion-sound');
+            var activeDiscussionThreadNode = document.querySelector('[data-crm-active-discussion-thread]');
+            var activeDiscussionThread = activeDiscussionThreadNode
+                ? (parseInt(activeDiscussionThreadNode.getAttribute('data-crm-active-discussion-thread') || '', 10) || null)
+                : null;
+            var soundPreferenceRequest = null;
+            var discussionSoundEnabled = presenceSoundToggle
+                ? presenceSoundToggle.getAttribute('data-enabled') === 'true'
+                : true;
+            var discussionSoundUnlocked = false;
+            var discussionSoundSeeded = false;
+            var knownUnreadActivityKeys = {};
+            var pendingUnreadActivityKeys = {};
 
             function escapeHtml(value) {
                 return String(value || '')
@@ -1266,9 +1416,194 @@
                 }).join('');
             }
 
+            function unreadActivityKey(thread) {
+                if (!thread) {
+                    return '';
+                }
+
+                return [
+                    thread.thread_id || thread.id || '',
+                    thread.message_id || '',
+                    thread.activity_at || '',
+                ].join(':');
+            }
+
+            function syncDiscussionSoundToggle(enabled) {
+                discussionSoundEnabled = !!enabled;
+
+                if (!presenceSoundToggle) {
+                    return;
+                }
+
+                presenceSoundToggle.setAttribute('data-enabled', discussionSoundEnabled ? 'true' : 'false');
+                presenceSoundToggle.setAttribute('aria-pressed', discussionSoundEnabled ? 'true' : 'false');
+                presenceSoundToggle.classList.toggle('is-enabled', discussionSoundEnabled);
+                presenceSoundToggle.classList.toggle('is-muted', !discussionSoundEnabled);
+                presenceSoundToggle.innerHTML = discussionSoundEnabled
+                    ? '<i class="bx bx-volume-full"></i><span>Sound on</span>'
+                    : '<i class="bx bx-volume-mute"></i><span>Sound off</span>';
+
+                if (presenceSoundStatus) {
+                    presenceSoundStatus.textContent = discussionSoundEnabled
+                        ? 'Sound plays for new unread activity only, not for the thread you already have open.'
+                        : 'Discussion sounds are muted for this account.';
+                }
+
+                if (!discussionSoundEnabled) {
+                    pendingUnreadActivityKeys = {};
+                }
+            }
+
+            function primeDiscussionSoundPlayback() {
+                if (!discussionSound || discussionSoundUnlocked) {
+                    return;
+                }
+
+                var originalVolume = discussionSound.volume;
+                discussionSound.volume = 0;
+                var attempt = discussionSound.play();
+
+                if (!attempt || typeof attempt.then !== 'function') {
+                    discussionSound.pause();
+                    discussionSound.currentTime = 0;
+                    discussionSound.volume = originalVolume;
+                    discussionSoundUnlocked = true;
+                    return;
+                }
+
+                attempt.then(function () {
+                    discussionSound.pause();
+                    discussionSound.currentTime = 0;
+                    discussionSound.volume = originalVolume;
+                    discussionSoundUnlocked = true;
+                    flushPendingDiscussionSound();
+                }).catch(function () {
+                    discussionSound.currentTime = 0;
+                    discussionSound.volume = originalVolume;
+                });
+            }
+
+            function registerDiscussionSoundUnlock() {
+                ['pointerdown', 'keydown', 'touchstart'].forEach(function (eventName) {
+                    document.addEventListener(eventName, primeDiscussionSoundPlayback, { passive: true });
+                });
+            }
+
+            function flushPendingDiscussionSound() {
+                if (!discussionSoundEnabled || !discussionSoundUnlocked || !discussionSound || Object.keys(pendingUnreadActivityKeys).length === 0) {
+                    return;
+                }
+
+                discussionSound.pause();
+                discussionSound.currentTime = 0;
+                discussionSound.volume = 1;
+
+                var pendingKeys = Object.keys(pendingUnreadActivityKeys);
+                var clearPendingKeys = function () {
+                    pendingKeys.forEach(function (key) {
+                        delete pendingUnreadActivityKeys[key];
+                    });
+                };
+
+                var playback = discussionSound.play();
+
+                if (playback && typeof playback.then === 'function') {
+                    playback.then(function () {
+                        clearPendingKeys();
+                    }).catch(function () {
+                        // Keep pending keys so the next unlocked poll can retry.
+                    });
+                    return;
+                }
+
+                if (playback && typeof playback.catch === 'function') {
+                    playback.catch(function () {
+                        // Keep pending keys so the next unlocked poll can retry.
+                    });
+                    return;
+                }
+
+                clearPendingKeys();
+            }
+
+            function playDiscussionSoundPreview() {
+                if (!discussionSound) {
+                    return;
+                }
+
+                discussionSound.pause();
+                discussionSound.currentTime = 0;
+                discussionSound.volume = 1;
+
+                var playback = discussionSound.play();
+
+                if (playback && typeof playback.then === 'function') {
+                    playback.then(function () {
+                        discussionSoundUnlocked = true;
+
+                        if (presenceSoundStatus) {
+                            presenceSoundStatus.textContent = discussionSoundEnabled
+                                ? 'Preview played. New unread activity will chime automatically.'
+                                : 'Preview played. Automatic discussion sounds are still muted.';
+                        }
+                    }).catch(function () {
+                        if (presenceSoundStatus) {
+                            presenceSoundStatus.textContent = 'The browser blocked audio playback. Click the test button again and check system volume.';
+                        }
+                    });
+                }
+            }
+
+            function playDiscussionSoundIfNeeded(payload) {
+                var threads = payload && Array.isArray(payload.threads) ? payload.threads : [];
+                var nextKnownActivityKeys = {};
+                var nextPendingActivityKeys = {};
+
+                threads.forEach(function (thread) {
+                    var key = unreadActivityKey(thread);
+
+                    if (!key) {
+                        return;
+                    }
+
+                    nextKnownActivityKeys[key] = true;
+
+                    if (!discussionSoundSeeded || knownUnreadActivityKeys[key]) {
+                        if (pendingUnreadActivityKeys[key]) {
+                            nextPendingActivityKeys[key] = thread;
+                        }
+
+                        return;
+                    }
+
+                    if (activeDiscussionThread && parseInt(thread.thread_id || 0, 10) === activeDiscussionThread) {
+                        return;
+                    }
+
+                    nextPendingActivityKeys[key] = thread;
+                });
+
+                pendingUnreadActivityKeys = nextPendingActivityKeys;
+
+                if (!discussionSoundSeeded) {
+                    discussionSoundSeeded = true;
+                    knownUnreadActivityKeys = nextKnownActivityKeys;
+                    pendingUnreadActivityKeys = {};
+                    return;
+                }
+
+                knownUnreadActivityKeys = nextKnownActivityKeys;
+
+                flushPendingDiscussionSound();
+            }
+
             function renderUnreadThreads(payload) {
                 var count = parseInt((payload && payload.count) || 0, 10) || 0;
                 var countLabel = count > 99 ? '99+' : String(count);
+
+                if (payload && Object.prototype.hasOwnProperty.call(payload, 'discussion_sound_enabled')) {
+                    syncDiscussionSoundToggle(!!payload.discussion_sound_enabled);
+                }
 
                 if (presenceUnreadBadge) {
                     presenceUnreadBadge.hidden = count === 0;
@@ -1280,6 +1615,19 @@
                     sidebarDiscussionsBadge.textContent = countLabel;
                 }
 
+                if (sidebarChannelBadges.length > 0) {
+                    var channelCounts = payload && payload.channel_counts ? payload.channel_counts : {};
+
+                    sidebarChannelBadges.forEach(function (badge) {
+                        var channel = badge.getAttribute('data-crm-discussion-channel-badge') || '';
+                        var channelCount = parseInt(channelCounts[channel] || 0, 10) || 0;
+                        var channelLabel = channelCount > 99 ? '99+' : String(channelCount);
+
+                        badge.hidden = channelCount === 0;
+                        badge.textContent = channelLabel;
+                    });
+                }
+
                 if (!presenceUnreadPanel || !presenceUnreadList) {
                     return;
                 }
@@ -1287,19 +1635,28 @@
                 if (count === 0 || !payload.threads || payload.threads.length === 0) {
                     presenceUnreadPanel.hidden = true;
                     presenceUnreadList.innerHTML = '';
+                    playDiscussionSoundIfNeeded({ threads: [] });
                     return;
                 }
 
                 presenceUnreadPanel.hidden = false;
                 presenceUnreadList.innerHTML = payload.threads.map(function (thread) {
                     return '<a class="staff-presence-unread-link" href="' + thread.url + '">' +
-                        '<span class="staff-presence-unread-icon"><i class="bx bx-chat"></i></span>' +
+                        '<span class="staff-presence-unread-icon"><i class="' + escapeHtml(thread.icon || 'bx bx-chat') + '"></i></span>' +
                         '<div class="staff-presence-unread-copy">' +
                             '<strong>' + escapeHtml(thread.label) + '</strong>' +
-                            '<span>Open unread app activity</span>' +
+                            '<span class="staff-presence-unread-meta">' +
+                                escapeHtml(thread.channel_label || 'Discussion') +
+                                (thread.activity_reason_label ? ' · ' + escapeHtml(thread.activity_reason_label) : '') +
+                                (thread.sender_label ? ' · ' + escapeHtml(thread.sender_label) : '') +
+                                (thread.activity_label ? ' · ' + escapeHtml(thread.activity_label) : '') +
+                            '</span>' +
+                            '<span class="staff-presence-unread-preview">' + escapeHtml(thread.preview || 'Open this discussion to review the latest activity.') + '</span>' +
                         '</div>' +
                     '</a>';
                 }).join('');
+
+                playDiscussionSoundIfNeeded(payload);
             }
 
             function fetchPresence(searchTerm) {
@@ -1370,6 +1727,53 @@
                     fetchPresence(presenceSearch.value.trim());
                 }, 220));
             }
+
+            if (presenceSoundToggle) {
+                syncDiscussionSoundToggle(discussionSoundEnabled);
+
+                presenceSoundToggle.addEventListener('click', function () {
+                    var nextEnabled = !(presenceSoundToggle.getAttribute('data-enabled') === 'true');
+
+                    if (soundPreferenceRequest) {
+                        return;
+                    }
+
+                    syncDiscussionSoundToggle(nextEnabled);
+
+                    soundPreferenceRequest = fetch('{{ route('crm.presence.discussion-sound.update') }}', {
+                        method: 'PATCH',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({
+                            crm_discussion_sound_enabled: nextEnabled
+                        })
+                    }).then(function (response) {
+                        if (!response.ok) {
+                            throw new Error('Unable to save sound preference.');
+                        }
+
+                        return response.json();
+                    }).then(function (payload) {
+                        syncDiscussionSoundToggle(!!payload.discussion_sound_enabled);
+                    }).catch(function () {
+                        syncDiscussionSoundToggle(!nextEnabled);
+                    }).finally(function () {
+                        soundPreferenceRequest = null;
+                    });
+                });
+            }
+
+            if (presenceSoundPreview) {
+                presenceSoundPreview.addEventListener('click', function () {
+                    playDiscussionSoundPreview();
+                });
+            }
+
+            registerDiscussionSoundUnlock();
 
             function sendHeartbeat() {
                 fetch('{{ route('crm.presence.heartbeat') }}', {

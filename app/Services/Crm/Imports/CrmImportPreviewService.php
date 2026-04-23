@@ -113,14 +113,52 @@ class CrmImportPreviewService
             ]);
         }
 
-        $headers = array_map(fn ($header) => Str::lower(trim((string) $header)), array_shift($rows));
+        $headerRow = $this->trimTrailingEmptyCells(array_shift($rows));
+        $headers = array_map(fn ($header) => Str::lower(trim((string) $header)), $headerRow);
         $indexedRows = [];
+        $headerCount = count($headers);
+        $rows = $this->trimTrailingEmptyRows($rows, $headerCount);
 
         foreach ($rows as $index => $row) {
-            $indexedRows[$index + 2] = $row;
+            $indexedRows[$index + 2] = array_slice($row, 0, $headerCount);
         }
 
         return [$headers, $indexedRows];
+    }
+
+    private function trimTrailingEmptyCells(array $row): array
+    {
+        while ($row !== [] && trim((string) end($row)) === '') {
+            array_pop($row);
+        }
+
+        return $row;
+    }
+
+    private function trimTrailingEmptyRows(array $rows, int $columnCount): array
+    {
+        while ($rows !== []) {
+            $row = end($rows);
+
+            if ($this->rowHasContent(is_array($row) ? array_slice($row, 0, $columnCount) : [])) {
+                break;
+            }
+
+            array_pop($rows);
+        }
+
+        return $rows;
+    }
+
+    private function rowHasContent(array $row): bool
+    {
+        foreach ($row as $value) {
+            if (trim((string) $value) !== '') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function assertValidHeaders(array $headers, array $expectedHeadings): void

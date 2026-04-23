@@ -12,6 +12,7 @@ use App\Models\DiscussionCampaign;
 use App\Models\DiscussionCampaignRecipient;
 use App\Models\DiscussionMessage;
 use App\Models\DiscussionMessageAttachment;
+use App\Models\DiscussionMessageMention;
 use App\Models\DiscussionThread;
 use App\Models\DiscussionThreadParticipant;
 use App\Models\Lead;
@@ -23,6 +24,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -42,6 +44,7 @@ class DiscussionDeliveryService
                 'integration',
                 'participants.user',
                 'latestMessage.attachments',
+                'latestMessage.mentions.user',
             ])
             ->when(! $user->canManageOperationalRecords(), function (Builder $query) use ($user): void {
                 $query->where(function (Builder $threadQuery) use ($user): void {
@@ -250,7 +253,8 @@ class DiscussionDeliveryService
         User $sender,
         string $body = '',
         array $files = [],
-        array $audienceUserIds = []
+        array $audienceUserIds = [],
+        array $mentionUserIds = []
     ): DiscussionMessage {
         if (! $thread->isAppThread()) {
             throw ValidationException::withMessages([
@@ -264,7 +268,8 @@ class DiscussionDeliveryService
             ]);
         }
 
-        return DB::transaction(function () use ($audienceUserIds, $body, $files, $sender, $thread): DiscussionMessage {
+        return DB::transaction(function () use ($audienceUserIds, $body, $files, $mentionUserIds, $sender, $thread): DiscussionMessage {
+            $mentionedUsers = $this->resolveMentionUsers($thread, $sender, $body, $mentionUserIds);
             $message = $thread->messages()->create([
                 'user_id' => $sender->id,
                 'direction' => 'outbound',
@@ -275,6 +280,7 @@ class DiscussionDeliveryService
             ]);
 
             $this->storeUploadedAttachments($message, $sender, $files);
+            $this->storeMessageMentions($message, $mentionedUsers);
 
             $thread->forceFill([
                 'last_message_at' => $message->sent_at,
@@ -288,6 +294,13 @@ class DiscussionDeliveryService
 
             if ($thread->isCompanyChat()) {
                 $participantIds = array_values(array_unique(array_merge($participantIds, array_map('intval', $audienceUserIds))));
+            }
+
+            if ($thread->isCompanyChat() || $thread->isGroupChat()) {
+                $participantIds = array_values(array_unique(array_merge(
+                    $participantIds,
+                    $mentionedUsers->pluck('id')->map(fn ($value) => (int) $value)->all()
+                )));
             }
 
             foreach ($participantIds as $participantId) {
@@ -309,7 +322,7 @@ class DiscussionDeliveryService
                 );
             }
 
-            return $message->fresh(['user', 'attachments']);
+            return $message->fresh(['user', 'attachments', 'mentions.user']);
         });
     }
 
@@ -455,9 +468,12 @@ class DiscussionDeliveryService
                 'last_message_at' => $message->sent_at ?: now(),
             ])->save();
 
+            $this->syncThreadParticipants($thread, $sender);
+
             return $thread->fresh([
                 'initiatedBy',
                 'recipientUser',
+                'participants.user',
                 'integration',
                 'messages.user',
                 'messages.attachments',
@@ -512,6 +528,8 @@ class DiscussionDeliveryService
                 'status' => $this->highLevelStatus($dispatchStatus),
                 'last_message_at' => $message->sent_at,
             ])->save();
+
+            $this->syncThreadParticipants($thread, $sender);
 
             return $message->fresh(['user', 'attachments']);
         });
@@ -663,6 +681,8 @@ class DiscussionDeliveryService
                     'last_message_at' => $message->sent_at,
                 ])->save();
 
+                $this->syncThreadParticipants($thread, $sender);
+
                 $campaign->recipients()->create([
                     'thread_id' => $thread->id,
                     'message_id' => $message->id,
@@ -719,37 +739,34 @@ class DiscussionDeliveryService
 
     public function unreadPayload(User $user): array
     {
-        $threadIds = DiscussionThreadParticipant::query()
-            ->where('user_id', $user->id)
-            ->where(function (Builder $query): void {
-                $query->whereNull('last_read_at')
-                    ->orWhereHas('thread', function (Builder $threadQuery): void {
-                        $threadQuery->whereColumn('crm_discussion_threads.last_message_at', '>', 'crm_discussion_thread_participants.last_read_at');
-                    });
-            })
-            ->limit(12)
-            ->pluck('thread_id')
-            ->all();
+        $unreadThreads = $this->unreadThreadsQueryFor($user);
+        $count = (clone $unreadThreads)->count();
+        $channelCounts = (clone $unreadThreads)
+            ->selectRaw('channel, COUNT(*) as aggregate')
+            ->groupBy('channel')
+            ->pluck('aggregate', 'channel');
 
-        $threads = DiscussionThread::query()
-            ->whereIn('id', $threadIds)
-            ->with(['participants.user'])
+        $threads = $unreadThreads
+            ->with([
+                'initiatedBy',
+                'recipientUser',
+                'participants.user',
+                'latestMessage.user',
+                'latestMessage.attachments',
+                'latestMessage.mentions.user',
+            ])
             ->orderByDesc('last_message_at')
+            ->limit(12)
             ->get();
 
         return [
-            'count' => count($threadIds),
-            'threads' => $threads->map(function (DiscussionThread $thread) use ($user): array {
-                return [
-                    'id' => $thread->id,
-                    'label' => $thread->isCompanyChat()
-                        ? 'Company Chat'
-                        : ($thread->isGroupChat()
-                            ? $thread->subject
-                            : ($thread->counterpartFor($user)?->name ?: $thread->subject)),
-                    'url' => $this->threadRoute($thread),
-                ];
-            })->all(),
+            'count' => $count,
+            'channel_counts' => [
+                'app' => (int) ($channelCounts['app'] ?? 0),
+                'email' => (int) ($channelCounts['email'] ?? 0),
+                'whatsapp' => (int) ($channelCounts['whatsapp'] ?? 0),
+            ],
+            'threads' => $threads->map(fn (DiscussionThread $thread): array => $this->mapUnreadThread($thread, $user))->all(),
         ];
     }
 
@@ -842,7 +859,10 @@ class DiscussionDeliveryService
         $contactIds = collect($payload['contact_ids'] ?? [])->map(fn ($value) => (int) $value)->filter();
 
         foreach ($userIds as $userId) {
-            $target = User::query()->find($userId);
+            $target = User::query()
+                ->where('active', true)
+                ->whereIn('role', array_keys(config('heritage_crm.roles', [])))
+                ->find($userId);
 
             if (! $target) {
                 continue;
@@ -1087,8 +1107,8 @@ class DiscussionDeliveryService
                 'recipient_id' => $target->id,
                 'user_id' => $target->id,
                 'label' => $target->name,
-                'email' => $payload['recipient_email'] ?: $target->email,
-                'phone' => $payload['recipient_phone'] ?: $target->phone,
+                'email' => ($payload['recipient_email'] ?? null) ?: $target->email,
+                'phone' => ($payload['recipient_phone'] ?? null) ?: $target->phone,
             ];
         }
 
@@ -1102,8 +1122,8 @@ class DiscussionDeliveryService
                 'recipient_id' => $lead->id,
                 'user_id' => null,
                 'label' => $lead->company_name,
-                'email' => $payload['recipient_email'] ?: ($primaryContact?->email ?: $lead->email),
-                'phone' => $payload['recipient_phone'] ?: ($primaryContact?->phone ?: $lead->phone),
+                'email' => ($payload['recipient_email'] ?? null) ?: ($primaryContact?->email ?: $lead->email),
+                'phone' => ($payload['recipient_phone'] ?? null) ?: ($primaryContact?->phone ?: $lead->phone),
             ];
         }
 
@@ -1117,8 +1137,8 @@ class DiscussionDeliveryService
                 'recipient_id' => $customer->id,
                 'user_id' => null,
                 'label' => $customer->company_name,
-                'email' => $payload['recipient_email'] ?: ($primaryContact?->email ?: $customer->email),
-                'phone' => $payload['recipient_phone'] ?: ($primaryContact?->phone ?: $customer->phone),
+                'email' => ($payload['recipient_email'] ?? null) ?: ($primaryContact?->email ?: $customer->email),
+                'phone' => ($payload['recipient_phone'] ?? null) ?: ($primaryContact?->phone ?: $customer->phone),
             ];
         }
 
@@ -1131,8 +1151,8 @@ class DiscussionDeliveryService
                 'recipient_id' => $contact->id,
                 'user_id' => null,
                 'label' => $contact->name,
-                'email' => $payload['recipient_email'] ?: $contact->email,
-                'phone' => $payload['recipient_phone'] ?: $contact->phone,
+                'email' => ($payload['recipient_email'] ?? null) ?: $contact->email,
+                'phone' => ($payload['recipient_phone'] ?? null) ?: $contact->phone,
             ];
         }
 
@@ -1140,7 +1160,7 @@ class DiscussionDeliveryService
             'recipient_type' => 'manual',
             'recipient_id' => null,
             'user_id' => null,
-            'label' => $payload['recipient_label'] ?: ($payload['recipient_email'] ?: $payload['recipient_phone']),
+            'label' => ($payload['recipient_label'] ?? null) ?: (($payload['recipient_email'] ?? null) ?: ($payload['recipient_phone'] ?? null)),
             'email' => $payload['recipient_email'] ?? null,
             'phone' => $payload['recipient_phone'] ?? null,
         ];
@@ -1154,6 +1174,216 @@ class DiscussionDeliveryService
         }
 
         return $recipient;
+    }
+
+    private function unreadThreadsQueryFor(User $user): Builder
+    {
+        return DiscussionThread::query()
+            ->whereNotNull('last_message_at')
+            ->where('status', '!=', 'draft')
+            ->where(function (Builder $threadQuery) use ($user): void {
+                $threadQuery->whereHas('participants', function (Builder $participantQuery) use ($user): void {
+                    $participantQuery->where('user_id', $user->id)
+                        ->whereNull('archived_at')
+                        ->where(function (Builder $unreadQuery): void {
+                            $unreadQuery->whereNull('last_read_at')
+                                ->orWhereColumn('crm_discussion_threads.last_message_at', '>', 'crm_discussion_thread_participants.last_read_at');
+                        });
+                })->orWhere(function (Builder $legacyQuery) use ($user): void {
+                    $legacyQuery->where('recipient_user_id', $user->id)
+                        ->where('channel', '!=', 'app')
+                        ->whereDoesntHave('participants', function (Builder $participantQuery) use ($user): void {
+                            $participantQuery->where('user_id', $user->id);
+                        });
+                });
+            });
+    }
+
+    private function mapUnreadThread(DiscussionThread $thread, User $user): array
+    {
+        $message = $thread->latestMessage;
+        $activityAt = $message?->sent_at ?: $thread->last_message_at;
+        $mentionedUser = $message?->mentionsUser($user) ?? false;
+
+        return [
+            'id' => $thread->id,
+            'thread_id' => $thread->id,
+            'message_id' => $message?->id,
+            'label' => $this->unreadThreadLabel($thread, $user),
+            'channel' => $thread->channel,
+            'channel_label' => config('heritage_crm.discussion_channels.' . $thread->channel, ucfirst($thread->channel)),
+            'icon' => $this->unreadThreadIcon($thread),
+            'sender_label' => $message?->user?->name ?: ($thread->initiatedBy?->name ?: 'CRM user'),
+            'preview' => $this->unreadThreadPreview($thread),
+            'mentioned' => $mentionedUser,
+            'activity_reason' => $mentionedUser ? 'mentioned_you' : 'unread_message',
+            'activity_reason_label' => $mentionedUser ? 'Mentioned you' : null,
+            'activity_at' => $activityAt?->toIso8601String(),
+            'activity_label' => $activityAt?->diffForHumans(),
+            'url' => $this->threadRoute($thread),
+        ];
+    }
+
+    private function unreadThreadLabel(DiscussionThread $thread, User $user): string
+    {
+        if ($thread->isCompanyChat()) {
+            return 'Company Chat';
+        }
+
+        if ($thread->isGroupChat()) {
+            return $thread->subject ?: 'Group chat';
+        }
+
+        if ($thread->channel === 'app') {
+            return $thread->counterpartFor($user)?->name ?: ($thread->subject ?: 'Direct message');
+        }
+
+        return $thread->subject ?: ($thread->initiatedBy?->name ?: config('heritage_crm.discussion_channels.' . $thread->channel, 'Discussion'));
+    }
+
+    private function unreadThreadPreview(DiscussionThread $thread): string
+    {
+        $message = $thread->latestMessage;
+
+        if (! $message) {
+            return 'Open this discussion to review the latest activity.';
+        }
+
+        $body = trim(preg_replace('/\s+/', ' ', (string) $message->body));
+
+        if ($body !== '') {
+            return Str::limit($body, 110);
+        }
+
+        return $message->attachments->isNotEmpty()
+            ? 'Attachment shared in this discussion.'
+            : 'Open this discussion to review the latest activity.';
+    }
+
+    private function unreadThreadIcon(DiscussionThread $thread): string
+    {
+        return match ($thread->channel) {
+            'email' => 'bx bx-envelope',
+            'whatsapp' => 'bx bxl-whatsapp',
+            default => 'bx bx-chat',
+        };
+    }
+
+    private function syncThreadParticipants(DiscussionThread $thread, User $actor): void
+    {
+        $participantIds = collect([
+            $thread->owner_id,
+            $thread->initiated_by_id,
+            $thread->recipient_user_id,
+            $actor->id,
+        ])
+            ->merge(
+                DiscussionThreadParticipant::query()
+                    ->where('thread_id', $thread->id)
+                    ->pluck('user_id')
+            )
+            ->filter()
+            ->map(fn ($value) => (int) $value)
+            ->unique()
+            ->values();
+
+        foreach ($participantIds as $participantId) {
+            $existingReadAt = DiscussionThreadParticipant::query()
+                ->where('thread_id', $thread->id)
+                ->where('user_id', $participantId)
+                ->value('last_read_at');
+
+            DiscussionThreadParticipant::query()->updateOrCreate(
+                [
+                    'thread_id' => $thread->id,
+                    'user_id' => $participantId,
+                ],
+                [
+                    'role' => in_array($participantId, [(int) $thread->owner_id, (int) $thread->initiated_by_id], true) ? 'owner' : 'member',
+                    'last_read_at' => $participantId === (int) $actor->id ? now() : $existingReadAt,
+                    'archived_at' => null,
+                ]
+            );
+        }
+    }
+
+    private function resolveMentionUsers(DiscussionThread $thread, User $sender, string $body, array $mentionUserIds): Collection
+    {
+        $mentionIds = collect($mentionUserIds)
+            ->map(fn ($value) => (int) $value)
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($mentionIds->isEmpty()) {
+            return collect();
+        }
+
+        if (! ($thread->isCompanyChat() || $thread->isGroupChat())) {
+            throw ValidationException::withMessages([
+                'mention_user_ids' => 'Mentions are only available in company chat and group chats.',
+            ]);
+        }
+
+        $users = User::query()
+            ->where('active', true)
+            ->whereIn('role', array_keys(config('heritage_crm.roles', [])))
+            ->whereIn('id', $mentionIds)
+            ->get();
+
+        if ($users->count() !== $mentionIds->count()) {
+            throw ValidationException::withMessages([
+                'mention_user_ids' => 'One or more mentioned users are no longer available in CRM.',
+            ]);
+        }
+
+        $trimmedBody = trim($body);
+
+        return $users
+            ->reject(fn (User $user) => (int) $user->id === (int) $sender->id)
+            ->filter(function (User $user) use ($trimmedBody): bool {
+                return $trimmedBody !== '' && Str::contains($trimmedBody, $this->mentionTokensForUser($user));
+            })
+            ->values();
+    }
+
+    private function storeMessageMentions(DiscussionMessage $message, Collection $mentionedUsers): void
+    {
+        if ($mentionedUsers->isEmpty()) {
+            return;
+        }
+
+        DiscussionMessageMention::query()
+            ->where('message_id', $message->id)
+            ->delete();
+
+        $now = now();
+
+        DiscussionMessageMention::query()->insert(
+            $mentionedUsers
+                ->map(fn (User $user): array => [
+                    'message_id' => $message->id,
+                    'user_id' => $user->id,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ])
+                ->all()
+        );
+    }
+
+    private function mentionLabelForUser(User $user): string
+    {
+        return trim((string) ($user->name ?: ($user->email ?: ('User #' . $user->id))));
+    }
+
+    private function mentionTokensForUser(User $user): array
+    {
+        $label = $this->mentionLabelForUser($user);
+
+        return [
+            '@' . $label,
+            '@[' . $label . ']',
+        ];
     }
 
     private function dispatchExternalMessage(

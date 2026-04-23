@@ -5,6 +5,14 @@
     $selectedCounterpart = $selectedThread->isDirectMessage() ? $selectedThread->counterpartFor($currentUser) : null;
     $selectedParticipants = $selectedThread->isGroupChat() ? $selectedThread->otherParticipantsFor($currentUser) : collect();
     $selectedCampaign = $selectedThread->campaigns->sortByDesc('id')->first();
+    $mentionsEnabled = $selectedThread->isCompanyChat() || $selectedThread->isGroupChat();
+    $mentionableUsers = $crmUsers
+        ->map(fn ($user) => [
+            'id' => (int) $user->id,
+            'name' => $user->name ?: ($user->email ?: ('User #' . $user->id)),
+            'email' => $user->email,
+        ])
+        ->values();
     $participantSummary = function ($thread) use ($currentUser) {
         $names = $thread->otherParticipantsFor($currentUser)->pluck('name')->filter()->values();
 
@@ -28,6 +36,7 @@
 @section('title', $selectedLabel . ' - App Messaging')
 @section('crm_heading', 'App Messaging')
 @section('crm_subheading', 'Slack-like internal messaging with company chat, direct messages, reusable group chats, attachment sharing, and in-app previews.')
+@section('crm_shell_attributes', 'data-crm-active-discussion-thread="' . $selectedThread->id . '"')
 
 @section('crm_header_stats')
     @include('crm.partials.header-stat', ['value' => $directThreads->count(), 'label' => 'DIRECT THREADS'])
@@ -54,7 +63,7 @@
     @include('crm.discussions.partials.channel-styles')
     @include('crm.discussions.partials.channel-nav', ['active' => 'app'])
 
-    <div class="crm-app-shell">
+    <div class="crm-app-shell" data-crm-active-discussion-thread="{{ $selectedThread->id }}">
         <aside class="crm-app-sidebar">
             <section class="crm-app-sidebar-section">
                 <div>
@@ -73,7 +82,7 @@
                         <span class="crm-app-thread-icon crm-app-thread-icon-group"><i class="bx bx-group"></i></span>
                         <div class="crm-app-thread-copy">
                             <strong>Group chat</strong>
-                            <span>Create a multi-person thread from custom contacts and departments.</span>
+                            <span>Create a multi-person thread from selected users and departments.</span>
                         </div>
                     </a>
                 </div>
@@ -255,12 +264,32 @@
                     action="{{ $selectedThread->isCompanyChat() ? route('crm.discussions.app.company-chat.messages.store') : route('crm.discussions.app.direct.messages.store', $selectedThread) }}"
                     class="crm-form"
                     enctype="multipart/form-data"
+                    data-live-composer-form
+                    data-mention-enabled="{{ $mentionsEnabled ? 'true' : 'false' }}"
+                    data-mentionable-users='{{ json_encode($mentionableUsers, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) }}'
                 >
                     @csrf
 
-                    <div class="crm-field">
+                    <div class="crm-field crm-app-composer-field">
                         <label for="body">Message</label>
-                        <textarea id="body" name="body" placeholder="Write a message for {{ strtolower($selectedLabel) }}">{{ old('body') }}</textarea>
+                        <textarea
+                            id="body"
+                            name="body"
+                            placeholder="Write a message for {{ strtolower($selectedLabel) }}"
+                            data-live-composer-input
+                            data-app-mention-input
+                            autocomplete="off"
+                        >{{ old('body') }}</textarea>
+                        <div class="crm-live-composer-hint">
+                            <span>Enter to send • Shift+Enter for a new line</span>
+                            @if ($mentionsEnabled)
+                                <span> • Type {{ '@' }} to mention a user</span>
+                            @endif
+                        </div>
+                        @if ($mentionsEnabled)
+                            <div data-app-mention-hidden-inputs></div>
+                            <div class="crm-app-mention-menu" data-app-mention-menu hidden></div>
+                        @endif
                     </div>
 
                     @include('crm.discussions.partials.attachment-dropzone', [
@@ -306,6 +335,8 @@
     </div>
 @endsection
 
+@include('crm.discussions.partials.live-composer-shortcuts')
+
 @push('scripts')
     <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="https://unpkg.com/docx-preview@0.3.6/dist/docx-preview.min.js"></script>
@@ -317,6 +348,14 @@
             var modalTitle = document.getElementById('crm-app-attachment-modal-title');
             var modalStatus = modalElement ? modalElement.querySelector('[data-attachment-modal-status]') : null;
             var modalBody = modalElement ? modalElement.querySelector('[data-attachment-modal-body]') : null;
+            var composerForm = document.querySelector('[data-live-composer-form]');
+            var composerTextarea = composerForm ? composerForm.querySelector('[data-app-mention-input]') : null;
+            var mentionMenu = composerForm ? composerForm.querySelector('[data-app-mention-menu]') : null;
+            var mentionHiddenInputs = composerForm ? composerForm.querySelector('[data-app-mention-hidden-inputs]') : null;
+            var mentionEnabled = composerForm && composerForm.getAttribute('data-mention-enabled') === 'true';
+            var mentionableUsers = [];
+            var selectedMentions = {};
+            var activeMentionIndex = 0;
             var previewModal = modalElement && window.bootstrap && window.bootstrap.Modal
                 ? new window.bootstrap.Modal(modalElement, { backdrop: 'static' })
                 : null;
@@ -327,6 +366,23 @@
 
             var pollUrl = messagesContainer.getAttribute('data-poll-url');
             var lastMessageAt = messagesContainer.getAttribute('data-last-message-at') || '';
+
+            if (mentionEnabled) {
+                try {
+                    mentionableUsers = JSON.parse(composerForm.getAttribute('data-mentionable-users') || '[]');
+                } catch (error) {
+                    mentionableUsers = [];
+                }
+            }
+
+            function escapeHtml(value) {
+                return String(value || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
 
             function scrollToBottom(force) {
                 if (!messagesPanel) {
@@ -446,6 +502,145 @@
                 }
             }
 
+            function tokenForUser(user) {
+                return '@' + (user.name || '');
+            }
+
+            function hasMentionToken(body, user) {
+                var plainToken = tokenForUser(user);
+                var legacyToken = '@[' + (user.name || '') + ']';
+
+                return body.indexOf(plainToken) !== -1 || body.indexOf(legacyToken) !== -1;
+            }
+
+            function syncMentionInputs() {
+                if (!mentionHiddenInputs) {
+                    return;
+                }
+
+                mentionHiddenInputs.innerHTML = Object.keys(selectedMentions).map(function (userId) {
+                    return '<input type="hidden" name="mention_user_ids[]" value="' + userId + '">';
+                }).join('');
+            }
+
+            function syncMentionsFromBody() {
+                if (!composerTextarea) {
+                    return;
+                }
+
+                var body = composerTextarea.value;
+
+                Object.keys(selectedMentions).forEach(function (userId) {
+                    if (!hasMentionToken(body, selectedMentions[userId])) {
+                        delete selectedMentions[userId];
+                    }
+                });
+
+                syncMentionInputs();
+            }
+
+            function mentionQuery() {
+                if (!mentionEnabled || !composerTextarea) {
+                    return null;
+                }
+
+                var cursor = composerTextarea.selectionStart || 0;
+                var prefix = composerTextarea.value.slice(0, cursor);
+                var match = prefix.match(/(^|[\s\n])@\[?([^\]\n\r]*)$/);
+
+                if (!match) {
+                    return null;
+                }
+
+                var marker = match[0];
+                var query = match[2] || '';
+                var start = cursor - query.length - 1 - (marker.indexOf('@[') !== -1 ? 1 : 0);
+
+                return {
+                    start: start,
+                    end: cursor,
+                    query: query.trim().toLowerCase(),
+                };
+            }
+
+            function matchingMentionUsers(query) {
+                return mentionableUsers.filter(function (user) {
+                    if (selectedMentions[String(user.id)]) {
+                        return false;
+                    }
+
+                    var searchText = String((user.name || '') + ' ' + (user.email || '')).toLowerCase();
+                    return query === '' || searchText.indexOf(query) !== -1;
+                }).slice(0, 6);
+            }
+
+            function closeMentionMenu() {
+                if (!mentionMenu) {
+                    return;
+                }
+
+                mentionMenu.hidden = true;
+                mentionMenu.innerHTML = '';
+                activeMentionIndex = 0;
+
+                if (composerTextarea) {
+                    composerTextarea.setAttribute('data-mention-menu-open', 'false');
+                }
+            }
+
+            function renderMentionMenu() {
+                if (!mentionMenu || !mentionEnabled || !composerTextarea) {
+                    return;
+                }
+
+                var queryData = mentionQuery();
+
+                if (!queryData) {
+                    closeMentionMenu();
+                    return;
+                }
+
+                var matches = matchingMentionUsers(queryData.query);
+
+                if (matches.length === 0) {
+                    closeMentionMenu();
+                    return;
+                }
+
+                if (activeMentionIndex >= matches.length) {
+                    activeMentionIndex = 0;
+                }
+
+                mentionMenu.hidden = false;
+                composerTextarea.setAttribute('data-mention-menu-open', 'true');
+                mentionMenu.innerHTML = matches.map(function (user, index) {
+                    return '<button type="button" class="crm-app-mention-option' + (index === activeMentionIndex ? ' active' : '') + '" data-mention-user-id="' + user.id + '">' +
+                        '<strong>' + escapeHtml(user.name) + '</strong>' +
+                        (user.email ? '<span>' + escapeHtml(user.email) + '</span>' : '') +
+                    '</button>';
+                }).join('');
+            }
+
+            function insertMention(user) {
+                if (!composerTextarea) {
+                    return;
+                }
+
+                var queryData = mentionQuery();
+
+                if (!queryData) {
+                    return;
+                }
+
+                var token = tokenForUser(user) + ' ';
+                composerTextarea.value = composerTextarea.value.slice(0, queryData.start) + token + composerTextarea.value.slice(queryData.end);
+                composerTextarea.focus();
+                composerTextarea.selectionStart = composerTextarea.selectionEnd = queryData.start + token.length;
+                selectedMentions[String(user.id)] = user;
+                syncMentionInputs();
+                closeMentionMenu();
+            }
+
             function pollThread() {
                 if (!pollUrl || document.visibilityState !== 'visible') {
                     return;
@@ -486,6 +681,94 @@
                     openAttachmentModal(toggleButton);
                 }
             });
+
+            if (mentionEnabled && composerTextarea && mentionMenu) {
+                composerTextarea.setAttribute('data-mention-menu-open', 'false');
+
+                mentionableUsers.forEach(function (user) {
+                    if (hasMentionToken(composerTextarea.value, user)) {
+                        selectedMentions[String(user.id)] = user;
+                    }
+                });
+
+                syncMentionInputs();
+
+                composerTextarea.addEventListener('input', function () {
+                    syncMentionsFromBody();
+                    renderMentionMenu();
+                });
+
+                composerTextarea.addEventListener('click', renderMentionMenu);
+                composerTextarea.addEventListener('keyup', function (event) {
+                    if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown' && event.key !== 'Enter') {
+                        renderMentionMenu();
+                    }
+                });
+
+                composerTextarea.addEventListener('keydown', function (event) {
+                    if (mentionMenu.hidden) {
+                        return;
+                    }
+
+                    var queryData = mentionQuery();
+                    var matches = matchingMentionUsers(queryData ? queryData.query : '');
+
+                    if (matches.length === 0) {
+                        closeMentionMenu();
+                        return;
+                    }
+
+                    if (event.key === 'ArrowDown') {
+                        event.preventDefault();
+                        activeMentionIndex = (activeMentionIndex + 1) % matches.length;
+                        renderMentionMenu();
+                        return;
+                    }
+
+                    if (event.key === 'ArrowUp') {
+                        event.preventDefault();
+                        activeMentionIndex = (activeMentionIndex - 1 + matches.length) % matches.length;
+                        renderMentionMenu();
+                        return;
+                    }
+
+                    if (event.key === 'Escape') {
+                        event.preventDefault();
+                        closeMentionMenu();
+                        return;
+                    }
+
+                    if (event.key === 'Enter' || event.key === 'Tab') {
+                        event.preventDefault();
+                        insertMention(matches[activeMentionIndex]);
+                    }
+                });
+
+                mentionMenu.addEventListener('click', function (event) {
+                    var option = event.target.closest('[data-mention-user-id]');
+
+                    if (!option) {
+                        return;
+                    }
+
+                    event.preventDefault();
+
+                    var userId = String(option.getAttribute('data-mention-user-id'));
+                    var selectedUser = mentionableUsers.find(function (user) {
+                        return String(user.id) === userId;
+                    });
+
+                    if (selectedUser) {
+                        insertMention(selectedUser);
+                    }
+                });
+
+                document.addEventListener('click', function (event) {
+                    if (!composerForm.contains(event.target)) {
+                        closeMentionMenu();
+                    }
+                });
+            }
 
             if (modalElement) {
                 modalElement.addEventListener('hidden.bs.modal', function () {

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class DiscussionThread extends Model
@@ -126,5 +127,48 @@ class DiscussionThread extends Model
     public function counterpartFor(User $user): ?User
     {
         return $this->otherParticipantsFor($user)->first();
+    }
+
+    public function participantForUserId(?int $userId): ?DiscussionThreadParticipant
+    {
+        if (! $userId) {
+            return null;
+        }
+
+        if (! $this->relationLoaded('participants')) {
+            $this->loadMissing('participants.user');
+        }
+
+        return $this->participants->firstWhere('user_id', $userId);
+    }
+
+    public function messageSeenByUser(DiscussionMessage $message, ?int $userId): bool
+    {
+        $participant = $this->participantForUserId($userId);
+        $activityAt = $message->activityAt();
+
+        return $participant !== null
+            && $participant->last_read_at instanceof Carbon
+            && $activityAt instanceof Carbon
+            && $participant->last_read_at->greaterThanOrEqualTo($activityAt);
+    }
+
+    public function participantReadCountForMessage(DiscussionMessage $message, ?int $excludeUserId = null): int
+    {
+        $activityAt = $message->activityAt();
+
+        if (! $activityAt instanceof Carbon) {
+            return 0;
+        }
+
+        if (! $this->relationLoaded('participants')) {
+            $this->loadMissing('participants.user');
+        }
+
+        return $this->participants
+            ->reject(fn (DiscussionThreadParticipant $participant) => $excludeUserId !== null && (int) $participant->user_id === (int) $excludeUserId)
+            ->filter(fn (DiscussionThreadParticipant $participant) => $participant->last_read_at instanceof Carbon
+                && $participant->last_read_at->greaterThanOrEqualTo($activityAt))
+            ->count();
     }
 }

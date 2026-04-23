@@ -3,6 +3,7 @@
 @section('title', $discussionThread->subject . ' - Discussion')
 @section('crm_heading', $discussionThread->subject)
 @section('crm_subheading', 'Thread detail for internal messaging and provider-backed outbound communications.')
+@section('crm_shell_attributes', 'data-crm-active-discussion-thread="' . $discussionThread->id . '"')
 
 @section('crm_actions')
     @include('crm.partials.delete-button', [
@@ -13,7 +14,7 @@
 @endsection
 
 @section('content')
-    <div class="crm-grid cols-2">
+    <div class="crm-grid cols-2" data-crm-active-discussion-thread="{{ $discussionThread->id }}">
         <section class="crm-card">
             <div class="crm-card-title">
                 <div>

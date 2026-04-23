@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Crm;
 
 use App\Exports\Crm\ArrayRowsExport;
 use App\Http\Requests\Crm\CrmImportPreviewRequest;
-use App\Jobs\Crm\ProcessCrmImportRun;
 use App\Models\CrmImportRun;
 use App\Services\Crm\Imports\CrmImportDefinitionRegistry;
 use App\Services\Crm\Imports\CrmImportPreviewService;
@@ -70,20 +69,24 @@ class ImportController extends CrmController
         $this->authorizeAdminSettings();
 
         try {
-            ['run' => $run, 'queued' => $queued] = $this->runService->queue($crmImportRun);
+            ['run' => $run, 'processed' => $processed] = $this->runService->process($crmImportRun);
         } catch (\Throwable $exception) {
             return redirect()
                 ->route('crm.settings.imports.' . $crmImportRun->entity, ['preview_run' => $crmImportRun->uuid])
                 ->with('crm_error', $exception->getMessage());
         }
 
-        if ($queued) {
-            ProcessCrmImportRun::dispatch($run->id);
+        $message = 'This import has already been processed.';
+
+        if ($processed) {
+            $message = $run->status === 'completed_with_errors'
+                ? 'Import finished with some errors.'
+                : 'Import completed successfully.';
         }
 
         return redirect()
             ->route('crm.settings.imports.runs.show', $run)
-            ->with('crm_success', $queued ? 'Import queued successfully.' : 'This import run was already queued.');
+            ->with('crm_success', $message);
     }
 
     public function showRun(CrmImportRun $crmImportRun): View

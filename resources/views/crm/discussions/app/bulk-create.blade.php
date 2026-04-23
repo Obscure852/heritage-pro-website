@@ -2,7 +2,7 @@
 
 @section('title', 'New App Group Chat')
 @section('crm_heading', 'App Messaging')
-@section('crm_subheading', 'Create a reusable internal group chat from selected people and departments.')
+@section('crm_subheading', 'Create a reusable internal group chat from selected users and departments.')
 
 @section('crm_actions')
     <a href="{{ route('crm.discussions.app.workspace') }}" class="btn btn-light crm-btn-light">
@@ -19,7 +19,7 @@
 
         @include('crm.partials.helper-text', [
             'title' => 'Group Chats',
-            'content' => 'Bulk app messaging now creates a dedicated chat thread. Combine custom contacts with departments to build the member list, then send the opening message into that new group.',
+            'content' => 'Bulk app messaging now creates a dedicated chat thread. Combine custom users with departments to build the member list, then send the opening message into that new group.',
         ])
 
         <section class="crm-card">

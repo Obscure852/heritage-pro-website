@@ -2,7 +2,7 @@
 
 @section('title', 'CRM Settings - Imports')
 @section('crm_heading', 'Settings')
-@section('crm_subheading', 'Import CRM users, leads, and contacts from fixed Excel templates with preview, validation, and queued processing.')
+@section('crm_subheading', 'Import CRM users, leads, and contacts from fixed Excel templates with preview, validation, and direct processing.')
 
 @section('crm_actions')
     <a href="{{ route('crm.settings.imports.templates.download', $activeImportEntity) }}" class="btn btn-primary">
@@ -16,7 +16,7 @@
 
         @include('crm.partials.helper-text', [
             'title' => 'Import Workspace',
-            'content' => 'Choose an import area from the tabs, confirm the required template columns, then preview the spreadsheet before queueing it.',
+            'content' => 'Choose an import area from the tabs, confirm the required template columns, then preview the spreadsheet before importing it.',
         ])
 
         @include('crm.settings._import_tabs', ['entityTabs' => $entityTabs, 'activeImportEntity' => $activeImportEntity])
@@ -35,6 +35,12 @@
                     Required columns: {{ implode(', ', $importDefinition['required']) }}.
                     Matching key: <strong>{{ $importDefinition['match_key'] }}</strong>.
                 </div>
+
+                @if (in_array('date_of_birth', $importDefinition['headings'], true) || in_array('date_of_appointment', $importDefinition['headings'], true))
+                    <div class="crm-help mt-3">
+                        Date columns must use <strong>DD/MM/YYYY</strong> when entered as text in the spreadsheet. Native Excel date cells are also accepted.
+                    </div>
+                @endif
 
                 <div class="crm-import-guide">
                     @foreach ($importDefinition['headings'] as $heading)
@@ -76,7 +82,7 @@
                             </div>
                             <div class="crm-import-dropzone-meta">
                                 <span><i class="bx bx-table"></i> Fixed template only</span>
-                                <span><i class="bx bx-check-shield"></i> Preview runs before queueing</span>
+                                <span><i class="bx bx-check-shield"></i> Preview before importing</span>
                                 <span><i class="bx bx-file"></i> Excel only: `.xlsx`, `.xls`</span>
                             </div>
                         </div>
@@ -105,8 +111,8 @@
                             <form method="POST" action="{{ route('crm.settings.imports.confirm', $previewRun) }}">
                                 @csrf
                                 <button type="submit" class="btn btn-primary btn-loading">
-                                    <span class="btn-text"><i class="fas fa-save"></i> Confirm and queue</span>
-                                    <span class="btn-spinner d-none"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Queueing...</span>
+                                    <span class="btn-text"><i class="fas fa-save"></i> Import now</span>
+                                    <span class="btn-spinner d-none"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Importing...</span>
                                 </button>
                             </form>
                         @endif

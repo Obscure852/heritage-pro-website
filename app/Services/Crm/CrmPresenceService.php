@@ -52,7 +52,21 @@ class CrmPresenceService
 
     public function unreadPayload(User $currentUser): array
     {
-        return $this->discussionDeliveryService->unreadPayload($currentUser);
+        return $this->discussionDeliveryService->unreadPayload($currentUser) + [
+            'discussion_sound_enabled' => (bool) $currentUser->crm_discussion_sound_enabled,
+        ];
+    }
+
+    public function updateDiscussionSoundPreference(User $currentUser, bool $enabled): array
+    {
+        $currentUser->forceFill([
+            'crm_discussion_sound_enabled' => $enabled,
+        ])->save();
+
+        return [
+            'ok' => true,
+            'discussion_sound_enabled' => (bool) $currentUser->crm_discussion_sound_enabled,
+        ];
     }
 
     private function onlineUserQuery(User $currentUser, ?string $search = null): Builder

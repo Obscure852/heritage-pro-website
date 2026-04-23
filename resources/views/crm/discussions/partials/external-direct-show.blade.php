@@ -4,6 +4,23 @@
         'queued', 'pending_integration' => 'warning',
         default => 'success',
     };
+    $currentUser = auth()->user();
+    $messageReceipt = function ($message) use ($currentUser, $discussionThread) {
+        if ($message->direction !== 'outbound' || ! $discussionThread->recipient_user_id) {
+            return null;
+        }
+
+        if ((int) $message->user_id !== (int) $currentUser?->id) {
+            return null;
+        }
+
+        $seen = $discussionThread->messageSeenByUser($message, (int) $discussionThread->recipient_user_id);
+
+        return [
+            'label' => $seen ? 'Seen in CRM' : 'Unseen in CRM',
+            'class' => $seen ? 'is-seen' : 'is-pending',
+        ];
+    };
 @endphp
 
 @if ($discussionThread->source_type && $discussionThread->source_id)
@@ -23,7 +40,7 @@
     ])
 @endif
 
-<div class="crm-discussion-split">
+<div class="crm-discussion-split" data-crm-active-discussion-thread="{{ $discussionThread->id }}">
     <section class="crm-card">
         <div class="crm-card-title">
             <div>
@@ -37,6 +54,7 @@
         @else
             <div class="crm-discussion-timeline">
                 @foreach ($discussionThread->messages as $message)
+                    @php($receipt = $messageReceipt($message))
                     <article class="crm-discussion-timeline-item">
                         <div class="crm-discussion-timeline-head">
                             <div>
@@ -48,7 +66,7 @@
                             </span>
                         </div>
 
-                        <div class="crm-discussion-timeline-copy">{!! nl2br(e($message->body)) !!}</div>
+                        <div class="crm-discussion-timeline-copy">{!! $message->renderedBody($currentUser) !!}</div>
 
                         @if ($message->attachments->isNotEmpty())
                             <div class="crm-attachments-grid">
@@ -73,6 +91,10 @@
                                 @endforeach
                             </div>
                         @endif
+
+                        @if ($receipt)
+                            <div class="crm-message-receipt {{ $receipt['class'] }}">{{ $receipt['label'] }}</div>
+                        @endif
                     </article>
                 @endforeach
             </div>
@@ -88,11 +110,12 @@
                 </div>
             </div>
 
-            <form method="POST" action="{{ route($routeBase . '.direct.reply', $discussionThread) }}" class="crm-form" enctype="multipart/form-data">
+            <form method="POST" action="{{ route($routeBase . '.direct.reply', $discussionThread) }}" class="crm-form" enctype="multipart/form-data" data-live-composer-form>
                 @csrf
                 <div class="crm-field">
                     <label for="body">Message body</label>
-                    <textarea id="body" name="body" placeholder="Write the reply body" required>{{ old('body') }}</textarea>
+                    <textarea id="body" name="body" placeholder="Write the reply body" required data-live-composer-input>{{ old('body') }}</textarea>
+                    <div class="crm-live-composer-hint">Enter to send • Shift+Enter for a new line</div>
                 </div>
 
                 @include('crm.discussions.partials.attachment-dropzone', [
@@ -147,3 +170,5 @@
         </section>
     </div>
 </div>
+
+@include('crm.discussions.partials.live-composer-shortcuts')

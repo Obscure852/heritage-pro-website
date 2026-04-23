@@ -50,4 +50,20 @@ class WorkspaceController extends CrmController
     {
         return response()->json($this->presenceService->unreadPayload($this->crmUser()));
     }
+
+    public function updateDiscussionSoundPreference(Request $request): JsonResponse
+    {
+        abort_unless($this->crmUser()->canAccessCrm(), 403);
+
+        $payload = $request->validate([
+            'crm_discussion_sound_enabled' => ['required', 'boolean'],
+        ]);
+
+        return response()->json(
+            $this->presenceService->updateDiscussionSoundPreference(
+                $this->crmUser(),
+                (bool) $payload['crm_discussion_sound_enabled']
+            )
+        );
+    }
 }

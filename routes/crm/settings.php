@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Crm\AttendanceSettingController;
 use App\Http\Controllers\Crm\CommercialSettingController;
 use App\Http\Controllers\Crm\ImportController;
 use App\Http\Controllers\Crm\SettingController;
@@ -31,3 +32,21 @@ Route::post('/settings/imports/{crmImportRun}/confirm', [ImportController::class
 Route::get('/settings/imports/runs/{crmImportRun}', [ImportController::class, 'showRun'])->name('settings.imports.runs.show');
 Route::get('/settings/imports/runs/{crmImportRun}/failures', [ImportController::class, 'downloadFailures'])->name('settings.imports.runs.failures.download');
 Route::get('/settings/imports/runs/{crmImportRun}/passwords', [ImportController::class, 'downloadPasswords'])->name('settings.imports.runs.passwords.download');
+
+// Attendance settings (single page with modal forms)
+Route::get('/settings/attendance', [AttendanceSettingController::class, 'index'])->name('settings.attendance.index');
+Route::patch('/settings/attendance/widget', [AttendanceSettingController::class, 'updateWidgetSettings'])->name('settings.attendance.widget.update');
+Route::post('/settings/attendance/codes', [AttendanceSettingController::class, 'storeCode'])->name('settings.attendance.codes.store');
+Route::put('/settings/attendance/codes/{attendanceCode}', [AttendanceSettingController::class, 'updateCode'])->name('settings.attendance.codes.update');
+Route::delete('/settings/attendance/codes/{attendanceCode}', [AttendanceSettingController::class, 'destroyCode'])->name('settings.attendance.codes.destroy');
+Route::post('/settings/attendance/shifts', [AttendanceSettingController::class, 'storeShift'])->name('settings.attendance.shifts.store');
+Route::put('/settings/attendance/shifts/{shift}', [AttendanceSettingController::class, 'updateShift'])->name('settings.attendance.shifts.update');
+Route::delete('/settings/attendance/shifts/{shift}', [AttendanceSettingController::class, 'destroyShift'])->name('settings.attendance.shifts.destroy');
+Route::post('/settings/attendance/shifts/bulk-assign', [AttendanceSettingController::class, 'bulkAssignShift'])->name('settings.attendance.shifts.bulk-assign');
+Route::post('/settings/attendance/holidays', [AttendanceSettingController::class, 'storeHoliday'])->name('settings.attendance.holidays.store');
+Route::put('/settings/attendance/holidays/{holiday}', [AttendanceSettingController::class, 'updateHoliday'])->name('settings.attendance.holidays.update');
+Route::delete('/settings/attendance/holidays/{holiday}', [AttendanceSettingController::class, 'destroyHoliday'])->name('settings.attendance.holidays.destroy');
+Route::post('/settings/attendance/devices', [AttendanceSettingController::class, 'storeDevice'])->name('settings.attendance.devices.store');
+Route::put('/settings/attendance/devices/{device}', [AttendanceSettingController::class, 'updateDevice'])->name('settings.attendance.devices.update');
+Route::delete('/settings/attendance/devices/{device}', [AttendanceSettingController::class, 'destroyDevice'])->name('settings.attendance.devices.destroy');
+Route::post('/settings/attendance/devices/{device}/regenerate-token', [AttendanceSettingController::class, 'regenerateDeviceToken'])->name('settings.attendance.devices.regenerate-token');

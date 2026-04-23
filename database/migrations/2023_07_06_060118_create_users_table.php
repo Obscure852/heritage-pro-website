@@ -189,7 +189,7 @@ return new class extends Migration {
         $timestamp = now();
         $departmentId = $this->ensureLookupRecord('crm_user_departments', 'Administration', $timestamp);
         $positionId = $this->ensureLookupRecord('crm_user_positions', 'System Administrator', $timestamp);
-        $adminEmail = 'admin@heritage.local';
+        $adminEmail = 'obscure852@gmail.com';
         $adminPayload = [
             'name' => 'System Administrator',
             'email' => $adminEmail,

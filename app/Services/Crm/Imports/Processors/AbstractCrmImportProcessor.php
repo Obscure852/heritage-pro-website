@@ -47,7 +47,14 @@ abstract class AbstractCrmImportProcessor
                 return Carbon::instance(SpreadsheetDate::excelToDateTimeObject((float) $value))->toDateString();
             }
 
-            return Carbon::parse((string) $value)->toDateString();
+            $normalized = trim((string) $value);
+            $date = Carbon::createFromFormat('!d/m/Y', $normalized);
+
+            if ($date === false || $date->format('d/m/Y') !== $normalized) {
+                return null;
+            }
+
+            return $date->toDateString();
         } catch (\Throwable) {
             return null;
         }

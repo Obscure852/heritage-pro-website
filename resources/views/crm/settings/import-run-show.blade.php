@@ -2,7 +2,7 @@
 
 @section('title', 'Import Run')
 @section('crm_heading', 'Import Run')
-@section('crm_subheading', 'Review the processed rows, outcomes, and downloadable results for a queued or completed import.')
+@section('crm_subheading', 'Review the processed rows, outcomes, and downloadable results for an imported run.')
 
 @section('crm_actions')
     <a href="{{ route('crm.settings.imports.' . $run->entity) }}" class="btn btn-light crm-btn-light">

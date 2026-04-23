@@ -19,7 +19,14 @@ class AppDiscussionCampaignRequest extends FormRequest
             'body' => ['required', 'string', 'max:8000'],
             'notes' => ['nullable', 'string', 'max:3000'],
             'recipient_user_ids' => ['nullable', 'array', 'max:100'],
-            'recipient_user_ids.*' => ['integer', 'exists:users,id'],
+            'recipient_user_ids.*' => [
+                'integer',
+                'distinct',
+                Rule::exists('users', 'id')->where(function ($query) {
+                    $query->where('active', true)
+                        ->whereIn('role', array_keys(config('heritage_crm.roles', [])));
+                }),
+            ],
             'department_ids' => ['nullable', 'array', 'max:25'],
             'department_ids.*' => ['integer', 'exists:crm_user_departments,id'],
             'intent' => ['required', Rule::in(['draft', 'send'])],

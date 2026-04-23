@@ -55,18 +55,32 @@ class CrmImportRunService
         });
     }
 
-    public function process(CrmImportRun $run): void
+    public function process(CrmImportRun $run): array
     {
-        DB::transaction(function () use ($run) {
+        ['run' => $run, 'should_process' => $shouldProcess] = DB::transaction(function () use ($run) {
             $run = CrmImportRun::query()->lockForUpdate()->findOrFail($run->id);
             CrmImportEntityLock::query()->whereKey($run->entity)->lockForUpdate()->firstOrFail();
 
             if ($run->status === 'processing') {
-                return;
+                return [
+                    'run' => $run->fresh(),
+                    'should_process' => false,
+                ];
             }
 
-            if ($run->status !== 'queued') {
-                throw new RuntimeException('Only queued import runs can be processed.');
+            if (in_array($run->status, ['completed', 'completed_with_errors', 'failed', 'cancelled'], true)) {
+                return [
+                    'run' => $run->fresh(),
+                    'should_process' => false,
+                ];
+            }
+
+            if (! in_array($run->status, ['validated', 'queued'], true)) {
+                throw new RuntimeException('Only validated import previews can be imported.');
+            }
+
+            if ($run->rows()->whereIn('action', ['create', 'update'])->count() === 0) {
+                throw new RuntimeException('This preview has no valid rows to import.');
             }
 
             $otherActiveRun = CrmImportRun::query()
@@ -85,7 +99,19 @@ class CrmImportRunService
                 'started_at' => $run->started_at ?: now(),
                 'last_error' => null,
             ]);
+
+            return [
+                'run' => $run->fresh(),
+                'should_process' => true,
+            ];
         });
+
+        if (! $shouldProcess) {
+            return [
+                'run' => $run,
+                'processed' => false,
+            ];
+        }
 
         $processor = $this->processorResolver->for($run->entity);
         $created = 0;
@@ -151,6 +177,11 @@ class CrmImportRunService
             'passwords_payload' => $passwordResults !== [] ? Crypt::encryptString(json_encode($passwordResults, JSON_THROW_ON_ERROR)) : null,
             'completed_at' => now(),
         ]);
+
+        return [
+            'run' => $run->fresh(),
+            'processed' => true,
+        ];
     }
 
     public function fail(CrmImportRun $run, \Throwable $exception): void

@@ -31,7 +31,7 @@ class UserImportProcessor extends AbstractCrmImportProcessor implements CrmImpor
         $payload = [
             'name' => $this->normalizeString($row['name'] ?? null),
             'email' => Str::lower((string) $this->normalizeString($row['email'] ?? null)),
-            'role' => $this->normalizeString($row['role'] ?? null),
+            'role' => $this->normalizeRole($row['role'] ?? null),
             'active' => $this->normalizeBoolean($row['active'] ?? null),
             'date_of_birth' => $this->normalizeDate($row['date_of_birth'] ?? null),
             'gender' => $this->normalizeString($row['gender'] ?? null),
@@ -69,11 +69,11 @@ class UserImportProcessor extends AbstractCrmImportProcessor implements CrmImpor
         }
 
         if (($row['date_of_birth'] ?? null) !== null && $row['date_of_birth'] !== '' && $payload['date_of_birth'] === null) {
-            $errors[] = 'Date of birth must be a valid date.';
+            $errors[] = 'Date of birth must use DD/MM/YYYY format.';
         }
 
         if (($row['date_of_appointment'] ?? null) !== null && $row['date_of_appointment'] !== '' && $payload['date_of_appointment'] === null) {
-            $errors[] = 'Date of appointment must be a valid date.';
+            $errors[] = 'Date of appointment must use DD/MM/YYYY format.';
         }
 
         if ($payload['reports_to_email']) {
@@ -168,6 +168,32 @@ class UserImportProcessor extends AbstractCrmImportProcessor implements CrmImpor
     private function temporaryPassword(): string
     {
         return Str::random(10) . random_int(10, 99) . '!';
+    }
+
+    private function normalizeRole(mixed $value): ?string
+    {
+        $normalized = $this->normalizeString($value);
+
+        if ($normalized === null) {
+            return null;
+        }
+
+        $candidate = $this->canonicalizeRoleValue($normalized);
+
+        foreach (config('heritage_crm.roles', []) as $key => $label) {
+            if ($candidate === $this->canonicalizeRoleValue($key) || $candidate === $this->canonicalizeRoleValue($label)) {
+                return $key;
+            }
+        }
+
+        return null;
+    }
+
+    private function canonicalizeRoleValue(string $value): string
+    {
+        return (string) Str::of($value)
+            ->lower()
+            ->replace([' ', '-', '_'], '');
     }
 
     private function departmentId(?string $name): ?int

@@ -48,6 +48,8 @@ Route::prefix('crm')
             require base_path('routes/crm/dev.php');
             require base_path('routes/crm/discussions.php');
             require base_path('routes/crm/integrations.php');
+            require base_path('routes/crm/attendance.php');
+            require base_path('routes/crm/leave.php');
             require base_path('routes/crm/users.php');
             require base_path('routes/crm/settings.php');
         });

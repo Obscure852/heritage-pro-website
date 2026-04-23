@@ -1,5 +1,32 @@
 @php
     $currentUser = auth()->user();
+    $messageReceipt = function ($message) use ($currentUser, $selectedThread) {
+        if ((int) $message->user_id !== (int) $currentUser?->id) {
+            return null;
+        }
+
+        if ($selectedThread->isDirectMessage()) {
+            $counterpart = $selectedThread->counterpartFor($currentUser);
+
+            if (! $counterpart) {
+                return null;
+            }
+
+            $seen = $selectedThread->messageSeenByUser($message, $counterpart->id);
+
+            return [
+                'label' => $seen ? 'Seen' : 'Unseen',
+                'class' => $seen ? 'is-seen' : 'is-pending',
+            ];
+        }
+
+        $seenCount = $selectedThread->participantReadCountForMessage($message, (int) $currentUser?->id);
+
+        return [
+            'label' => $seenCount > 0 ? 'Seen by ' . $seenCount : 'Unseen',
+            'class' => $seenCount > 0 ? 'is-seen' : 'is-pending',
+        ];
+    };
 @endphp
 
 @if ($selectedThread->messages->isEmpty())
@@ -8,6 +35,7 @@
     <div class="crm-app-message-stream">
         @foreach ($selectedThread->messages as $message)
             @php($isMine = (int) $message->user_id === (int) $currentUser?->id)
+            @php($receipt = $messageReceipt($message))
             <div class="crm-app-message-row {{ $isMine ? 'mine' : '' }}">
                 <div class="crm-app-message-bubble">
                     <div class="crm-app-message-meta">
@@ -15,7 +43,7 @@
                         <span>{{ optional($message->sent_at ?: $message->created_at)->format('d M Y H:i') }}</span>
                     </div>
                     @if (filled($message->body))
-                        <p>{{ $message->body }}</p>
+                        <p>{!! $message->renderedBody($currentUser) !!}</p>
                     @endif
 
                     @if ($message->attachments->isNotEmpty())
@@ -67,6 +95,10 @@
                                 </article>
                             @endforeach
                         </div>
+                    @endif
+
+                    @if ($receipt)
+                        <div class="crm-message-receipt {{ $receipt['class'] }}">{{ $receipt['label'] }}</div>
                     @endif
                 </div>
             </div>

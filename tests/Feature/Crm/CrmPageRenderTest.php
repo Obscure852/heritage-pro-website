@@ -8,9 +8,11 @@ use App\Models\CrmProduct;
 use App\Models\CrmQuote;
 use App\Models\CrmRequest;
 use App\Models\DiscussionCampaign;
+use App\Models\DiscussionMessage;
 use App\Models\Customer;
 use App\Models\DevelopmentRequest;
 use App\Models\DiscussionThread;
+use App\Models\DiscussionThreadParticipant;
 use App\Models\Integration;
 use App\Models\Lead;
 use App\Models\SalesStage;
@@ -29,7 +31,9 @@ class CrmPageRenderTest extends TestCase
 
         $this->actingAs($admin)
             ->get(route('crm.dashboard'))
-            ->assertOk();
+            ->assertOk()
+            ->assertSee('crm-presence-sound-toggle', false)
+            ->assertSee('crm-discussion-sound', false);
 
         $this->actingAs($admin)
             ->get(route('crm.leads.index'))
@@ -527,7 +531,14 @@ class CrmPageRenderTest extends TestCase
 
         $this->actingAs($admin)
             ->get(route('crm.discussions.app.workspace'))
-            ->assertOk();
+            ->assertOk()
+            ->assertSee('data-crm-discussion-channel-badge="app"', false)
+            ->assertSee('data-crm-discussion-channel-badge="email"', false)
+            ->assertSee('data-crm-discussion-channel-badge="whatsapp"', false)
+            ->assertSee('data-crm-active-discussion-thread="', false)
+            ->assertSee('Enter to send')
+            ->assertSee('Shift+Enter for a new line')
+            ->assertSee('Type @ to mention a user');
 
         $this->actingAs($admin)
             ->get(route('crm.discussions.app.direct.create'))
@@ -559,7 +570,10 @@ class CrmPageRenderTest extends TestCase
 
         $this->actingAs($admin)
             ->get(route('crm.discussions.email.direct.show', $emailDiscussion))
-            ->assertOk();
+            ->assertOk()
+            ->assertSee('data-crm-active-discussion-thread="' . $emailDiscussion->id . '"', false)
+            ->assertSee('Enter to send')
+            ->assertSee('Shift+Enter for a new line');
 
         $this->actingAs($admin)
             ->get(route('crm.discussions.email.bulk.create'))
@@ -583,7 +597,8 @@ class CrmPageRenderTest extends TestCase
 
         $this->actingAs($admin)
             ->get(route('crm.discussions.whatsapp.direct.show', $whatsappDiscussion))
-            ->assertOk();
+            ->assertOk()
+            ->assertSee('data-crm-active-discussion-thread="' . $whatsappDiscussion->id . '"', false);
 
         $this->actingAs($admin)
             ->get(route('crm.discussions.whatsapp.bulk.create'))
@@ -620,6 +635,63 @@ class CrmPageRenderTest extends TestCase
         $this->actingAs($admin)
             ->get(route('crm.settings.sales-stages.edit', $salesStage))
             ->assertOk();
+    }
+
+    public function test_external_discussion_show_page_renders_seen_in_crm_for_internal_recipients(): void
+    {
+        $sender = $this->createUser([
+            'email' => 'render-email-sender@example.com',
+            'role' => 'admin',
+            'name' => 'Render Sender',
+        ]);
+
+        $recipient = $this->createUser([
+            'email' => 'render-email-recipient@example.com',
+            'role' => 'manager',
+            'name' => 'Render Recipient',
+        ]);
+
+        $thread = DiscussionThread::query()->create([
+            'owner_id' => $sender->id,
+            'initiated_by_id' => $sender->id,
+            'recipient_user_id' => $recipient->id,
+            'subject' => 'CRM seen email thread',
+            'channel' => 'email',
+            'kind' => 'external_direct',
+            'recipient_email' => $recipient->email,
+            'delivery_status' => 'sent',
+            'status' => 'sent',
+            'last_message_at' => now(),
+        ]);
+
+        $message = DiscussionMessage::query()->create([
+            'thread_id' => $thread->id,
+            'user_id' => $sender->id,
+            'direction' => 'outbound',
+            'channel' => 'email',
+            'body' => 'Please confirm the CRM seen state.',
+            'delivery_status' => 'sent',
+            'sent_at' => now(),
+        ]);
+
+        DiscussionThreadParticipant::query()->create([
+            'thread_id' => $thread->id,
+            'user_id' => $sender->id,
+            'role' => 'owner',
+            'last_read_at' => now(),
+        ]);
+
+        DiscussionThreadParticipant::query()->create([
+            'thread_id' => $thread->id,
+            'user_id' => $recipient->id,
+            'role' => 'member',
+            'last_read_at' => $message->sent_at->copy()->addMinute(),
+        ]);
+
+        $this->actingAs($sender)
+            ->get(route('crm.discussions.email.direct.show', $thread))
+            ->assertOk()
+            ->assertSee('Seen in CRM');
     }
 
     private function createUser(array $attributes = []): User

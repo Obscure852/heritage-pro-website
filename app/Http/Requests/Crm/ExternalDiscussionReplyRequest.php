@@ -15,6 +15,8 @@ class ExternalDiscussionReplyRequest extends FormRequest
     {
         return [
             'body' => ['required', 'string', 'max:8000'],
+            'mention_user_ids' => ['prohibited'],
+            'mention_user_ids.*' => ['prohibited'],
             'attachments' => ['nullable', 'array', 'max:10'],
             'attachments.*' => ['file', 'max:15360', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp'],
         ];

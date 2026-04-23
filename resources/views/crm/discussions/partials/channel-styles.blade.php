@@ -225,16 +225,19 @@
 
             .crm-app-shell {
                 display: grid;
-                grid-template-columns: 320px minmax(0, 1fr);
+                grid-template-columns: minmax(300px, 320px) minmax(0, 1fr);
                 gap: 20px;
                 align-items: start;
+                isolation: isolate;
             }
 
             .crm-app-sidebar,
             .crm-app-main {
                 border: 1px solid #cfe0ff;
                 border-radius: 3px;
-                box-shadow: 0 18px 34px rgba(37, 99, 235, 0.08);
+                box-shadow: 0 14px 24px rgba(37, 99, 235, 0.08);
+                min-width: 0;
+                position: relative;
             }
 
             .crm-app-sidebar {
@@ -247,6 +250,7 @@
                 gap: 18px;
                 position: sticky;
                 top: 24px;
+                z-index: 0;
             }
 
             .crm-app-sidebar-section {
@@ -351,6 +355,8 @@
                 display: grid;
                 grid-template-rows: auto minmax(360px, 1fr) auto;
                 min-height: 760px;
+                z-index: 1;
+                overflow: hidden;
                 background:
                     radial-gradient(circle at top right, rgba(99, 102, 241, 0.08), transparent 22%),
                     radial-gradient(circle at bottom left, rgba(6, 182, 212, 0.08), transparent 26%),
@@ -428,6 +434,22 @@
                 white-space: pre-line;
             }
 
+            .crm-discussion-mention {
+                display: inline-flex;
+                align-items: center;
+                padding: 1px 7px;
+                border-radius: 999px;
+                background: rgba(59, 130, 246, 0.14);
+                color: #1d4ed8;
+                font-weight: 700;
+            }
+
+            .crm-discussion-mention.is-personal {
+                background: rgba(124, 58, 237, 0.16);
+                color: #6d28d9;
+                box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.12);
+            }
+
             .crm-app-attachment-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -466,6 +488,154 @@
 
             .crm-app-attachment-actions {
                 gap: 8px;
+            }
+
+            .crm-message-receipt {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                width: fit-content;
+                padding: 5px 10px;
+                border-radius: 999px;
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+            }
+
+            .crm-message-receipt.is-seen {
+                background: rgba(14, 165, 233, 0.12);
+                color: #0f766e;
+            }
+
+            .crm-message-receipt.is-pending {
+                background: rgba(148, 163, 184, 0.12);
+                color: #475569;
+            }
+
+            .crm-app-user-picker {
+                position: relative;
+            }
+
+            .crm-app-user-picker-control {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 8px;
+                min-height: 52px;
+                padding: 8px 12px;
+                border: 1px solid #d1d5db;
+                border-radius: 3px;
+                background: #fff;
+                transition: border-color 0.18s ease, box-shadow 0.18s ease;
+            }
+
+            .crm-app-user-picker-control:focus-within {
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+
+            .crm-app-user-picker.is-invalid .crm-app-user-picker-control {
+                border-color: #dc2626;
+                box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
+            }
+
+            .crm-app-user-picker-tags {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .crm-app-user-picker-input {
+                flex: 1 1 180px;
+                min-width: 180px;
+                border: 0 !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                min-height: 32px;
+                background: transparent !important;
+            }
+
+            .crm-app-user-picker-input:focus {
+                outline: 0;
+            }
+
+            .crm-app-user-tag {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 7px 10px;
+                border: 1px solid #bfdbfe;
+                border-radius: 999px;
+                background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+                color: #1d4ed8;
+                font-size: 12px;
+                font-weight: 600;
+                line-height: 1;
+                transition: border-color 0.18s ease, transform 0.18s ease;
+            }
+
+            .crm-app-user-tag:hover {
+                border-color: #60a5fa;
+                transform: translateY(-1px);
+            }
+
+            .crm-app-user-tag-meta {
+                color: #475569;
+                font-weight: 500;
+            }
+
+            .crm-app-user-tag i {
+                font-size: 16px;
+                color: #2563eb;
+            }
+
+            .crm-app-user-picker-dropdown {
+                position: absolute;
+                top: calc(100% + 8px);
+                left: 0;
+                right: 0;
+                z-index: 30;
+                max-height: 260px;
+                overflow-y: auto;
+                padding: 6px;
+                border: 1px solid #dbe5f1;
+                border-radius: 3px;
+                background: #fff;
+                box-shadow: 0 18px 34px rgba(15, 23, 42, 0.12);
+            }
+
+            .crm-app-user-picker-option {
+                width: 100%;
+                display: grid;
+                gap: 4px;
+                padding: 10px 12px;
+                border: 0;
+                border-radius: 3px;
+                background: transparent;
+                text-align: left;
+                transition: background-color 0.18s ease;
+            }
+
+            .crm-app-user-picker-option:hover {
+                background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(34, 211, 238, 0.08));
+            }
+
+            .crm-app-user-picker-option-name {
+                color: #0f172a;
+                font-size: 13px;
+                font-weight: 600;
+            }
+
+            .crm-app-user-picker-option-meta,
+            .crm-app-user-picker-empty {
+                color: #64748b;
+                font-size: 12px;
+                line-height: 1.45;
+            }
+
+            .crm-app-user-picker-empty {
+                padding: 12px;
             }
 
             .crm-app-btn {
@@ -686,8 +856,61 @@
                 background: #fff;
             }
 
+            .crm-app-composer-field {
+                position: relative;
+            }
+
             .crm-app-composer textarea {
                 min-height: 120px;
+            }
+
+            .crm-live-composer-hint {
+                margin-top: 8px;
+                color: #64748b;
+                font-size: 12px;
+                line-height: 1.5;
+            }
+
+            .crm-app-mention-menu {
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: calc(100% + 10px);
+                display: grid;
+                gap: 6px;
+                padding: 10px;
+                border: 1px solid #d7e5ff;
+                border-radius: 3px;
+                background: #fff;
+                box-shadow: 0 18px 34px rgba(37, 99, 235, 0.12);
+                z-index: 12;
+            }
+
+            .crm-app-mention-option {
+                display: grid;
+                gap: 2px;
+                padding: 10px 12px;
+                border: 1px solid transparent;
+                border-radius: 3px;
+                background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+                text-align: left;
+                color: #0f172a;
+            }
+
+            .crm-app-mention-option strong,
+            .crm-app-mention-option span {
+                display: block;
+            }
+
+            .crm-app-mention-option span {
+                color: #64748b;
+                font-size: 12px;
+            }
+
+            .crm-app-mention-option:hover,
+            .crm-app-mention-option.active {
+                border-color: #93c5fd;
+                background: linear-gradient(135deg, rgba(219, 234, 254, 0.9), rgba(224, 242, 254, 0.82));
             }
 
             .crm-app-file-grid {

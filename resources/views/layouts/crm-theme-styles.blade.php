@@ -75,6 +75,17 @@ body.crm-body .mm-active .active i {
     color: #5156be !important;
 }
 
+.crm-sidebar-child-link {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.crm-sidebar-child-link > span:first-child {
+    min-width: 0;
+}
+
 .crm-page-header {
     display: flex;
     justify-content: space-between;
@@ -1789,6 +1800,61 @@ body.crm-body .mm-active .active i {
     font-size: 11px;
 }
 
+.staff-presence-sound-control {
+    margin: 12px 18px 0;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #dbeafe;
+    background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+}
+
+.staff-presence-sound-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.staff-presence-sound-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 3px;
+}
+
+.staff-presence-sound-preview {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 3px;
+}
+
+.staff-presence-sound-toggle i {
+    font-size: 16px;
+}
+
+.staff-presence-sound-preview i {
+    font-size: 16px;
+    color: #0891b2;
+}
+
+.staff-presence-sound-toggle.is-enabled {
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+}
+
+.staff-presence-sound-toggle.is-muted {
+    border-color: #cbd5e1;
+    color: #475569;
+}
+
+.staff-presence-sound-status {
+    display: block;
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
 .staff-presence-unread-panel {
     margin: 12px 18px 0;
     padding: 12px;
@@ -1864,6 +1930,16 @@ body.crm-body .mm-active .active i {
     margin-top: 3px;
     color: #64748b;
     font-size: 11px;
+}
+
+.staff-presence-unread-meta {
+    color: #991b1b !important;
+    font-weight: 600;
+}
+
+.staff-presence-unread-preview {
+    color: #475569 !important;
+    line-height: 1.45;
 }
 
 .staff-presence-list {

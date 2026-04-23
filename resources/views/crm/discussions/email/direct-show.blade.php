@@ -3,6 +3,7 @@
 @section('title', $discussionThread->subject . ' - Email Discussion')
 @section('crm_heading', 'Email Discussions')
 @section('crm_subheading', 'Review a sent or queued email thread and reply without reopening the original draft form.')
+@section('crm_shell_attributes', 'data-crm-active-discussion-thread="' . $discussionThread->id . '"')
 
 @section('crm_actions')
     <div class="crm-action-row">

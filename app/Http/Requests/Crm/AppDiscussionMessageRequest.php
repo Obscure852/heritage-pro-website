@@ -15,6 +15,8 @@ class AppDiscussionMessageRequest extends FormRequest
     {
         return [
             'body' => ['nullable', 'string', 'max:8000'],
+            'mention_user_ids' => ['nullable', 'array', 'max:20'],
+            'mention_user_ids.*' => ['integer', 'distinct', 'exists:users,id'],
             'attachments' => ['nullable', 'array', 'max:10'],
             'attachments.*' => ['file', 'max:15360', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp'],
         ];

@@ -51,6 +51,8 @@
         </div>
 
         <div class="d-flex align-items-center">
+            @include('crm.attendance.partials.clock-button')
+
             <div class="staff-presence-launcher me-2" id="crm-presence-launcher">
                 <button type="button" class="btn header-item staff-presence-trigger" id="crm-presence-trigger"
                     aria-haspopup="true" aria-expanded="false">
@@ -77,13 +79,41 @@
                     </div>
 
                     <div class="staff-presence-panel-note">
-                        Use the launcher to see who is active now, spot unread app messages, and jump straight into the right thread.
+                        Use the launcher to see who is active now, review unread discussions, and jump straight into the right thread.
+                    </div>
+
+                    <div class="staff-presence-sound-control">
+                        <div class="staff-presence-sound-actions">
+                            <button
+                                type="button"
+                                class="btn btn-light crm-btn-light btn-sm staff-presence-sound-toggle {{ $crmUser->crm_discussion_sound_enabled ? 'is-enabled' : 'is-muted' }}"
+                                id="crm-presence-sound-toggle"
+                                data-enabled="{{ $crmUser->crm_discussion_sound_enabled ? 'true' : 'false' }}"
+                                aria-pressed="{{ $crmUser->crm_discussion_sound_enabled ? 'true' : 'false' }}"
+                            >
+                                <i class="bx {{ $crmUser->crm_discussion_sound_enabled ? 'bx-volume-full' : 'bx-volume-mute' }}"></i>
+                                <span>{{ $crmUser->crm_discussion_sound_enabled ? 'Sound on' : 'Sound off' }}</span>
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-light crm-btn-light btn-sm staff-presence-sound-preview"
+                                id="crm-presence-sound-preview"
+                            >
+                                <i class="bx bx-play-circle"></i>
+                                <span>Test sound</span>
+                            </button>
+                        </div>
+                        <span class="staff-presence-sound-status" id="crm-presence-sound-status">
+                            {{ $crmUser->crm_discussion_sound_enabled
+                                ? 'Sound plays for new unread activity only, not for the thread you already have open.'
+                                : 'Discussion sounds are muted for this account.' }}
+                        </span>
                     </div>
 
                     <div class="staff-presence-unread-panel" id="crm-presence-unread-panel" hidden>
                         <div class="staff-presence-unread-header">
-                            <strong>Unread app messages</strong>
-                            <a href="{{ route('crm.discussions.app.workspace') }}" class="btn btn-light crm-btn-light btn-sm">
+                            <strong>Unread discussions</strong>
+                            <a href="{{ route('crm.discussions.index') }}" class="btn btn-light crm-btn-light btn-sm">
                                 <i class="bx bx-chat"></i> Open inbox
                             </a>
                         </div>

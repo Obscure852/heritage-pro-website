@@ -9,6 +9,8 @@ use App\Models\DiscussionThread;
 use App\Models\Lead;
 use App\Models\RequestActivity;
 use App\Models\SalesStage;
+use App\Models\CrmAttendanceSetting;
+use App\Services\Crm\AttendanceClockService;
 use Illuminate\Contracts\View\View;
 
 class DashboardController extends CrmController
@@ -93,7 +95,14 @@ class DashboardController extends CrmController
             ->limit(8)
             ->get();
 
+        $attendanceSettings = CrmAttendanceSetting::resolve();
+        $clockStatus = $attendanceSettings->show_dashboard_clock
+            ? app(AttendanceClockService::class)->currentStatus($this->crmUser())
+            : null;
+
         return view('crm.dashboard', [
+            'clockStatus' => $clockStatus,
+            'showDashboardClock' => $attendanceSettings->show_dashboard_clock,
             'metrics' => [
                 ['label' => 'Active leads', 'value' => $activeLeads],
                 ['label' => 'Live customers', 'value' => $activeCustomers],

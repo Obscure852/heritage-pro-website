@@ -90,13 +90,16 @@ abstract class ExternalDiscussionChannelController extends CrmController
     {
         $this->ensureChannelThread($discussionThread);
         $this->deliveryService->authorizeThreadAccess($this->crmUser(), $discussionThread);
+        $this->deliveryService->markThreadRead($discussionThread, $this->crmUser());
 
         $discussionThread->load([
             'initiatedBy',
             'recipientUser',
             'integration',
+            'participants.user',
             'messages.user',
             'messages.attachments',
+            'messages.mentions.user',
         ]);
 
         return view($this->viewBase() . '.direct-show', [

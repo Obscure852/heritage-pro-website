@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Crm;
 
-use App\Jobs\Crm\ProcessCrmImportRun;
 use App\Models\Contact;
 use App\Models\CrmImportRun;
 use App\Models\CrmUserDepartment;
@@ -15,7 +14,6 @@ use App\Services\Crm\Imports\CrmImportRunService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -129,10 +127,129 @@ class CrmImportTest extends TestCase
         $this->assertStringContainsString('boolean', strtolower(implode(' ', $row->validation_errors ?? [])));
     }
 
-    public function test_confirm_is_idempotent_and_same_entity_imports_are_serialized(): void
+    public function test_preview_ignores_trailing_blank_header_columns_from_sheet_range(): void
     {
         Storage::fake('documents');
-        Queue::fake();
+        $admin = $this->createUser();
+
+        $this->actingAs($admin)
+            ->post(route('crm.settings.imports.preview'), [
+                'entity' => 'users',
+                'file' => $this->makeSpreadsheetUpload(
+                    'users-trailing-blank-columns.xlsx',
+                    config('heritage_crm.imports.entities.users.headings'),
+                    [['Trim Header User', 'trim-header-user@example.com', 'rep', 'yes']],
+                    function ($sheet) {
+                        $sheet->getColumnDimension('Z')->setWidth(12);
+                    }
+                ),
+            ])
+            ->assertRedirect();
+
+        $run = CrmImportRun::query()->latest('id')->firstOrFail();
+        $row = $run->rows()->firstOrFail();
+
+        $this->assertSame('validated', $run->status);
+        $this->assertSame(0, $run->failed_count);
+        $this->assertSame('create', $row->action);
+    }
+
+    public function test_preview_ignores_trailing_blank_rows_from_sheet_range(): void
+    {
+        Storage::fake('documents');
+        $admin = $this->createUser();
+
+        $this->actingAs($admin)
+            ->post(route('crm.settings.imports.preview'), [
+                'entity' => 'users',
+                'file' => $this->makeSpreadsheetUpload(
+                    'users-trailing-blank-rows.xlsx',
+                    config('heritage_crm.imports.entities.users.headings'),
+                    [['Trim Row User', 'trim-row-user@example.com', 'rep', 'yes']],
+                    function ($sheet) {
+                        $sheet->getRowDimension(25)->setRowHeight(18);
+                    }
+                ),
+            ])
+            ->assertRedirect();
+
+        $run = CrmImportRun::query()->latest('id')->firstOrFail();
+        $row = $run->rows()->sole();
+
+        $this->assertSame('validated', $run->status);
+        $this->assertSame(1, $run->total_count);
+        $this->assertSame(0, $run->skipped_count);
+        $this->assertSame(0, $run->failed_count);
+        $this->assertSame('create', $row->action);
+    }
+
+    public function test_user_import_requires_dd_mm_yyyy_for_text_dates(): void
+    {
+        Storage::fake('documents');
+        $admin = $this->createUser();
+
+        $this->actingAs($admin)
+            ->post(route('crm.settings.imports.preview'), [
+                'entity' => 'users',
+                'file' => $this->makeSpreadsheetUpload(
+                    'users-invalid-dates.xlsx',
+                    config('heritage_crm.imports.entities.users.headings'),
+                    [[
+                        'Date Format User',
+                        'date-format-user@example.com',
+                        'rep',
+                        'yes',
+                        '1990-02-14',
+                        'female',
+                        'Botswana',
+                        'ID-9002',
+                        '+267 7000 0000',
+                        'active',
+                        'Student Services',
+                        'Coordinator',
+                        $admin->email,
+                        'PAY-9002',
+                        '2024-03-01',
+                        'Priority',
+                    ]]
+                ),
+            ])
+            ->assertRedirect();
+
+        $run = CrmImportRun::query()->latest('id')->firstOrFail();
+        $row = $run->rows()->firstOrFail();
+        $errors = implode(' ', $row->validation_errors ?? []);
+
+        $this->assertSame('error', $row->action);
+        $this->assertStringContainsString('DD/MM/YYYY', $errors);
+    }
+
+    public function test_user_import_accepts_common_role_labels_case_insensitively(): void
+    {
+        Storage::fake('documents');
+        $admin = $this->createUser();
+
+        $run = $this->previewImport($admin, 'users', [
+            ['Admin Label User', 'admin-label@example.com', 'Admin', 'yes'],
+            ['Manager Label User', 'manager-label@example.com', 'Manager', 'yes'],
+            ['Rep Label User', 'rep-label@example.com', 'Rep', 'yes'],
+        ]);
+
+        $rows = $run->rows()->orderBy('row_number')->get();
+
+        $this->assertSame('validated', $run->status);
+        $this->assertSame(0, $run->failed_count);
+        $this->assertSame('admin', $rows[0]->payload['role']);
+        $this->assertSame('manager', $rows[1]->payload['role']);
+        $this->assertSame('rep', $rows[2]->payload['role']);
+        $this->assertSame('create', $rows[0]->action);
+        $this->assertSame('create', $rows[1]->action);
+        $this->assertSame('create', $rows[2]->action);
+    }
+
+    public function test_confirm_processes_immediately_and_is_idempotent(): void
+    {
+        Storage::fake('documents');
 
         $admin = $this->createUser();
         $firstRun = $this->previewImport($admin, 'users', [
@@ -147,32 +264,28 @@ class CrmImportTest extends TestCase
             ->post(route('crm.settings.imports.confirm', $firstRun))
             ->assertRedirect(route('crm.settings.imports.runs.show', $firstRun));
 
-        Queue::assertPushed(ProcessCrmImportRun::class, 1);
-        $this->assertSame('queued', $firstRun->fresh()->status);
+        $this->assertSame('completed', $firstRun->fresh()->status);
         $this->assertSame(1, CrmImportRun::query()->count());
 
         $secondRun = $this->previewImport($admin, 'users', [
-            ['Queued Clash', 'queued-clash@example.com', 'rep', 'yes'],
+            ['Direct Import User', 'direct-import-user@example.com', 'rep', 'yes'],
         ]);
 
         $this->actingAs($admin)
-            ->from(route('crm.settings.imports.users', ['preview_run' => $secondRun->uuid]))
             ->post(route('crm.settings.imports.confirm', $secondRun))
-            ->assertRedirect(route('crm.settings.imports.users', ['preview_run' => $secondRun->uuid]))
-            ->assertSessionHas('crm_error');
+            ->assertRedirect(route('crm.settings.imports.runs.show', $secondRun));
 
-        $this->assertSame('validated', $secondRun->fresh()->status);
+        $this->assertSame('completed', $secondRun->fresh()->status);
 
         $leadRun = $this->previewImport($admin, 'leads', [
-            ['LEAD-001', $admin->email, 'Parallel Lead', 'Education', '', '', '', 'Botswana', 'active', 'Queued in parallel'],
+            ['LEAD-001', $admin->email, 'Immediate Lead', 'Education', '', '', '', 'Botswana', 'active', 'Imported directly'],
         ]);
 
         $this->actingAs($admin)
             ->post(route('crm.settings.imports.confirm', $leadRun))
             ->assertRedirect(route('crm.settings.imports.runs.show', $leadRun));
 
-        Queue::assertPushed(ProcessCrmImportRun::class, 2);
-        $this->assertSame('queued', $leadRun->fresh()->status);
+        $this->assertSame('completed', $leadRun->fresh()->status);
     }
 
     public function test_user_import_upserts_and_password_export_is_one_time(): void
@@ -250,7 +363,7 @@ class CrmImportTest extends TestCase
                 'imported-profile@example.com',
                 'rep',
                 'yes',
-                '1990-02-14',
+                '14/02/1990',
                 'female',
                 'Botswana',
                 'ID-9001',
@@ -260,7 +373,7 @@ class CrmImportTest extends TestCase
                 'Coordinator',
                 $admin->email,
                 'PAY-9090',
-                '2024-03-01',
+                '01/03/2024',
                 'Priority|Regional',
             ],
         ]);
@@ -285,6 +398,8 @@ class CrmImportTest extends TestCase
             'reports_to_user_id' => $admin->id,
             'personal_payroll_number' => 'PAY-9090',
         ]);
+        $this->assertSame('1990-02-14', optional($user->date_of_birth)->toDateString());
+        $this->assertSame('2024-03-01', optional($user->date_of_appointment)->toDateString());
         $this->assertDatabaseHas('crm_user_filter_user', [
             'user_id' => $user->id,
             'crm_user_filter_id' => $priorityFilter->id,
@@ -435,7 +550,6 @@ class CrmImportTest extends TestCase
     private function processRun(CrmImportRun $run): CrmImportRun
     {
         $service = app(CrmImportRunService::class);
-        $service->queue($run);
         $service->process($run->fresh());
 
         return $run->fresh();
@@ -450,7 +564,7 @@ class CrmImportTest extends TestCase
         return $this->binarySpreadsheetRows($response->baseResponse->getFile()->getPathname())[0];
     }
 
-    private function makeSpreadsheetUpload(string $filename, array $headings, array $rows): UploadedFile
+    private function makeSpreadsheetUpload(string $filename, array $headings, array $rows, ?callable $mutateSheet = null): UploadedFile
     {
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -458,6 +572,10 @@ class CrmImportTest extends TestCase
 
         foreach ($rows as $index => $row) {
             $sheet->fromArray($row, null, 'A' . ($index + 2));
+        }
+
+        if ($mutateSheet) {
+            $mutateSheet($sheet);
         }
 
         $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION)) === 'xls' ? 'xls' : 'xlsx';

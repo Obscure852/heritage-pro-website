@@ -42,6 +42,7 @@ class AppDiscussionController extends CrmController
             'participants.user',
             'messages.user',
             'messages.attachments',
+            'messages.mentions.user',
             'campaigns',
         ]);
 
@@ -78,6 +79,7 @@ class AppDiscussionController extends CrmController
             'participants.user',
             'messages.user',
             'messages.attachments',
+            'messages.mentions.user',
         ]);
 
         return response()->json([
@@ -106,7 +108,14 @@ class AppDiscussionController extends CrmController
             $thread,
             $this->crmUser(),
             (string) $request->validated('body', ''),
-            $request->file('attachments', [])
+            $request->file('attachments', []),
+            $this->crmUsersForSelect()
+                ->pluck('id')
+                ->reject(fn ($userId) => (int) $userId === (int) $this->crmUser()->id)
+                ->map(fn ($userId) => (int) $userId)
+                ->values()
+                ->all(),
+            $request->validated('mention_user_ids', [])
         );
 
         return redirect()
@@ -210,7 +219,9 @@ class AppDiscussionController extends CrmController
             $discussionThread,
             $this->crmUser(),
             (string) $request->validated('body', ''),
-            $request->file('attachments', [])
+            $request->file('attachments', []),
+            [],
+            $request->validated('mention_user_ids', [])
         );
 
         return redirect()

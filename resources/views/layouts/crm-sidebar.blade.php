@@ -22,8 +22,11 @@
                             <ul class="sub-menu {{ $isActive ? 'mm-show' : '' }}" aria-expanded="{{ $isActive ? 'true' : 'false' }}">
                                 @foreach ($children as $child)
                                     <li>
-                                        <a href="{{ route($child['route']) }}" class="{{ request()->routeIs(...($child['match'] ?? [$child['route']])) ? 'active' : '' }}">
+                                        <a href="{{ route($child['route']) }}" class="crm-sidebar-child-link {{ request()->routeIs(...($child['match'] ?? [$child['route']])) ? 'active' : '' }}">
                                             <span>{{ $child['label'] }}</span>
+                                            @if (($module['key'] ?? null) === 'discussions' && in_array($child['key'] ?? null, ['app', 'email', 'whatsapp'], true))
+                                                <span class="crm-sidebar-badge is-alert" data-crm-discussion-channel-badge="{{ $child['key'] }}" hidden>0</span>
+                                            @endif
                                         </a>
                                     </li>
                                 @endforeach
@@ -62,8 +65,11 @@
                                 <ul class="sub-menu {{ $isActive ? 'mm-show' : '' }}" aria-expanded="{{ $isActive ? 'true' : 'false' }}">
                                     @foreach ($children as $child)
                                         <li>
-                                            <a href="{{ route($child['route']) }}" class="{{ request()->routeIs(...($child['match'] ?? [$child['route']])) ? 'active' : '' }}">
+                                            <a href="{{ route($child['route']) }}" class="crm-sidebar-child-link {{ request()->routeIs(...($child['match'] ?? [$child['route']])) ? 'active' : '' }}">
                                                 <span>{{ $child['label'] }}</span>
+                                                @if (($module['key'] ?? null) === 'discussions' && in_array($child['key'] ?? null, ['app', 'email', 'whatsapp'], true))
+                                                    <span class="crm-sidebar-badge is-alert" data-crm-discussion-channel-badge="{{ $child['key'] }}" hidden>0</span>
+                                                @endif
                                             </a>
                                         </li>
                                     @endforeach
@@ -85,8 +91,5 @@
             </ul>
         </div>
 
-        <div class="crm-shell-footer">
-            <p>CRM foundation aligned to the Junior app shell. Public site remains unchanged.</p>
-        </div>
     </div>
 </div>

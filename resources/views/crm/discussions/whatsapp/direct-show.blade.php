@@ -3,6 +3,7 @@
 @section('title', $discussionThread->subject . ' - WhatsApp Discussion')
 @section('crm_heading', 'WhatsApp Discussions')
 @section('crm_subheading', 'Review queued or sent WhatsApp threads and continue the conversation from the thread view.')
+@section('crm_shell_attributes', 'data-crm-active-discussion-thread="' . $discussionThread->id . '"')
 
 @section('crm_actions')
     <div class="crm-action-row">

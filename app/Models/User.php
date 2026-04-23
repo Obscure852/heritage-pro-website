@@ -43,14 +43,20 @@ class User extends Authenticatable
         'personal_payroll_number',
         'date_of_appointment',
         'avatar_path',
+        'shift_id',
         'crm_onboarding_required_at',
         'crm_onboarding_step',
         'crm_onboarded_at',
+        'crm_discussion_sound_enabled',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+    ];
+
+    protected $attributes = [
+        'crm_discussion_sound_enabled' => true,
     ];
 
     protected $casts = [
@@ -61,6 +67,7 @@ class User extends Authenticatable
         'crm_onboarding_required_at' => 'datetime',
         'crm_onboarding_step' => 'integer',
         'crm_onboarded_at' => 'datetime',
+        'crm_discussion_sound_enabled' => 'boolean',
     ];
 
     public function leads()
@@ -157,6 +164,31 @@ class User extends Authenticatable
     public function modulePermissions(): HasMany
     {
         return $this->hasMany(CrmUserModulePermission::class)->orderBy('module_key');
+    }
+
+    public function shift(): BelongsTo
+    {
+        return $this->belongsTo(CrmAttendanceShift::class, 'shift_id');
+    }
+
+    public function attendanceRecords(): HasMany
+    {
+        return $this->hasMany(CrmAttendanceRecord::class)->latest('date');
+    }
+
+    public function leaveRequests(): HasMany
+    {
+        return $this->hasMany(CrmLeaveRequest::class)->latest('created_at');
+    }
+
+    public function leaveBalances(): HasMany
+    {
+        return $this->hasMany(CrmLeaveBalance::class);
+    }
+
+    public function pendingLeaveApprovals(): HasMany
+    {
+        return $this->hasMany(CrmLeaveRequest::class, 'current_approver_id')->where('status', 'pending');
     }
 
     public function isAdmin(): bool
