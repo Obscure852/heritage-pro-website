@@ -150,6 +150,29 @@ return new class extends Migration {
             });
         }
 
+        // Add shift_id to users table
+        if (! Schema::hasColumn('users', 'shift_id')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->foreignId('shift_id')->nullable()->after('date_of_appointment')->constrained('crm_attendance_shifts')->nullOnDelete();
+            });
+        }
+
+        if (! Schema::hasTable('crm_attendance_settings')) {
+            Schema::create('crm_attendance_settings', function (Blueprint $table) {
+                $table->id();
+                $table->boolean('show_topbar_clock')->default(true);
+                $table->boolean('show_dashboard_clock')->default(true);
+                $table->timestamps();
+            });
+
+            DB::table('crm_attendance_settings')->insert([
+                'show_topbar_clock' => true,
+                'show_dashboard_clock' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
         if (! Schema::hasTable('crm_attendance_holidays')) {
             Schema::create('crm_attendance_holidays', function (Blueprint $table) {
                 $table->id();
@@ -170,6 +193,13 @@ return new class extends Migration {
 
     public function down(): void
     {
+        if (Schema::hasColumn('users', 'shift_id')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->dropConstrainedForeignId('shift_id');
+            });
+        }
+
+        Schema::dropIfExists('crm_attendance_settings');
         Schema::dropIfExists('crm_attendance_holidays');
         Schema::dropIfExists('crm_attendance_corrections');
         Schema::dropIfExists('crm_attendance_records');

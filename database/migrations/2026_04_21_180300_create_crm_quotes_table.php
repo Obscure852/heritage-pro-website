@@ -27,6 +27,8 @@ return new class extends Migration {
             $table->string('currency_symbol', 12);
             $table->string('currency_position', 12)->default('before');
             $table->unsignedTinyInteger('currency_precision')->default(2);
+            $table->string('tax_scope', 20)->default('line');
+            $table->decimal('document_tax_rate', 5, 2)->default(0);
             $table->string('document_discount_type', 10)->default('none');
             $table->decimal('document_discount_value', 12, 2)->default(0);
             $table->decimal('document_discount_amount', 14, 2)->default(0);

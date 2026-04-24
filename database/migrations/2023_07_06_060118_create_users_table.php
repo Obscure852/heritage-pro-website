@@ -63,6 +63,7 @@ return new class extends Migration {
                 $table->timestamp('crm_onboarding_required_at')->nullable();
                 $table->unsignedTinyInteger('crm_onboarding_step')->nullable();
                 $table->timestamp('crm_onboarded_at')->nullable();
+                $table->boolean('crm_discussion_sound_enabled')->default(true);
                 $table->rememberToken();
                 $table->timestamps();
                 $table->softDeletes();

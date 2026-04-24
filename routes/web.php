@@ -35,10 +35,7 @@ Route::middleware(['auth', 'crm.access', 'crm.onboarding'])->group(function () {
     })->name('home');
 });
 
-Route::prefix('crm')
-    ->middleware(['auth', 'crm.access'])
-    ->name('crm.')
-    ->group(function () {
+Route::prefix('crm')->middleware(['auth', 'crm.access'])->name('crm.')->group(function () {
         require base_path('routes/crm/onboarding.php');
 
         Route::middleware('crm.onboarding')->group(function () {

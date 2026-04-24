@@ -20,7 +20,11 @@ return new class extends Migration {
             $table->string('website')->nullable();
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
+            $table->string('fax')->nullable();
             $table->string('country')->nullable();
+            $table->string('location')->nullable();
+            $table->string('postal_address')->nullable();
+            $table->string('region')->nullable();
             $table->string('status', 30)->default('active');
             $table->timestamp('purchased_at')->nullable();
             $table->text('notes')->nullable();
