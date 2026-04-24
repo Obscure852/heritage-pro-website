@@ -927,6 +927,10 @@ p.lead { font-size: 17px; color: var(--fg-3); line-height: 1.55; }
   background: #fff; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-1);
   max-width: 280px;
 }
+.window-chrome .url,
+.window-chrome .url:hover {
+  text-decoration: none;
+}
 
 /* ---------- Mini dashboard mock (reused in multiple sections) ---------- */
 .mini-dash { padding: 20px; display: grid; grid-template-columns: 200px 1fr; gap: 18px; min-height: 440px; }
@@ -1038,11 +1042,43 @@ p.lead { font-size: 17px; color: var(--fg-3); line-height: 1.55; }
   box-shadow: 0 30px 60px -24px rgba(37, 44, 110, 0.22), 0 8px 20px -8px rgba(37, 44, 110, 0.08);
   overflow: hidden;
 }
+.feature-mock .window-chrome {
+  height: 32px;
+  background: #F3F5F9;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--border-1);
+}
+.feature-mock .window-chrome span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--neutral-200);
+  flex: 0 0 auto;
+}
+.feature-mock .window-chrome .url {
+  flex: 1;
+  margin-left: 18px;
+  font-size: 10px;
+  color: var(--fg-3);
+  font-family: var(--font-mono);
+  background: #fff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-1);
+  max-width: 280px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Feature icons grid (shorter modules) */
-.modules-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 64px; }
+.modules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-top: 64px; }
 .module-tile {
-  padding: 24px; border-radius: 14px; background: #fff; border: 1px solid var(--border-1);
+  padding: 22px; border-radius: 14px; background: #fff; border: 1px solid var(--border-1);
   transition: all 180ms var(--ease-out);
 }
 .module-tile:hover { border-color: var(--brand-indigo-300); box-shadow: var(--shadow-sm); transform: translateY(-2px); }
@@ -1052,7 +1088,7 @@ p.lead { font-size: 17px; color: var(--fg-3); line-height: 1.55; }
   margin-bottom: 16px;
 }
 .module-tile .icon svg { width: 22px; height: 22px; }
-.module-tile h4 { font-size: 14px; margin-bottom: 6px; }
+.module-tile h4 { font-size: 14px; margin-bottom: 6px; line-height: 1.35; }
 .module-tile p { font-size: 12px; color: var(--fg-3); margin: 0; line-height: 1.5; }
 
 /* ---------- Testimonials ---------- */

@@ -141,13 +141,13 @@ function HeroSplit() {
             <a href="#features" className="btn btn-secondary btn-lg"><Icon name="play" size={14}/> See the product</a>
           </div>
           <div className="hero-trust">
-            <div><b>180+</b> institutions</div>
-            <div><b>96,000+</b> learners</div>
+            <div><b>98+</b> institutions</div>
+            <div><b>84,000+</b> learners</div>
             <div><b>99.95%</b> uptime</div>
           </div>
         </div>
         <div className="hero-media">
-          <div className="window-chrome"><span/><span/><span/><div className="url">demo.heritagepro.net</div></div>
+          <div className="window-chrome"><span/><span/><span/><div className="url">app.heritagepro.net</div></div>
           <MiniDash product="schools"/>
         </div>
       </div>
@@ -168,12 +168,12 @@ function HeroCentred() {
             <a href="#features" className="btn btn-secondary btn-lg">Explore modules</a>
           </div>
           <div className="hero-trust">
-            <div><b>180+</b> institutions</div>
-            <div><b>96,000+</b> learners</div>
+            <div><b>98+</b> institutions</div>
+            <div><b>84,000+</b> learners</div>
             <div><b>99.95%</b> uptime</div>
           </div>
           <div className="hero-media" style={{ marginTop: 56 }}>
-            <div className="window-chrome"><span/><span/><span/><div className="url">demo.heritagepro.net</div></div>
+            <div className="window-chrome"><span/><span/><span/><div className="url">app.heritagepro.net</div></div>
             <MiniDash product="schools"/>
           </div>
         </div>
@@ -195,13 +195,13 @@ function HeroDark() {
             <a href="#features" className="btn btn-lg" style={{ color: "#fff", borderColor: "rgba(255,255,255,0.28)" }}>See the modules</a>
           </div>
           <div className="hero-trust">
-            <div><b>180+</b> institutions</div>
-            <div><b>96,000+</b> learners</div>
+            <div><b>98+</b> institutions</div>
+            <div><b>84,000+</b> learners</div>
             <div><b>99.95%</b> uptime</div>
           </div>
         </div>
         <div className="hero-media">
-          <div className="window-chrome"><span/><span/><span/><div className="url">demo.heritagepro.net</div></div>
+          <div className="window-chrome"><span/><span/><span/><div className="url">app.heritagepro.net</div></div>
           <MiniDash product="collegiate"/>
         </div>
       </div>
@@ -211,7 +211,7 @@ function HeroDark() {
 
 /* ---------- Logo strip ---------- */
 function LogoStrip() {
-  const names = ["Thornhill Prep", "St Joseph's College", "Gaborone Polytechnic", "Platinum Academy", "Limkokwing U.", "Botswana Accountancy"];
+  const names = ["Francistown Senior School", "Madiba Senior School", "Nata Senior School", "Shakawe Senior School", "Sunnysands", "Swaneng Hill Senior School"];
   return (
     <section className="logo-strip">
       <div className="container">

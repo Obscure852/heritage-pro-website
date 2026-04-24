@@ -47,18 +47,20 @@
                     @endif
 
                     @if ($message->attachments->isNotEmpty())
-                        <div class="crm-app-attachment-grid">
+                        <div class="crm-app-attachment-grid crm-discussion-attachment-list">
                             @foreach ($message->attachments as $attachment)
                                 @php($isPreviewable = $attachment->isImage() || $attachment->isPdf() || $attachment->isDocx())
-                                <article class="crm-app-attachment">
-                                    <div class="crm-app-attachment-icon">
-                                        <i class="{{ $attachment->iconClass() }}"></i>
+                                <article class="crm-app-attachment crm-discussion-attachment-row">
+                                    <div class="crm-discussion-attachment-file">
+                                        <span class="crm-discussion-attachment-badge">
+                                            <i class="{{ $attachment->iconClass() }}"></i>
+                                        </span>
+                                        <div class="crm-app-attachment-copy crm-discussion-attachment-copy">
+                                            <strong title="{{ $attachment->original_name }}">{{ $attachment->original_name }}</strong>
+                                            <span>{{ strtoupper($attachment->extension ?: 'file') }} · {{ $attachment->formattedSize() }}</span>
+                                        </div>
                                     </div>
-                                    <div class="crm-app-attachment-copy">
-                                        <strong>{{ $attachment->original_name }}</strong>
-                                        <span>{{ strtoupper($attachment->extension ?: 'file') }} · {{ $attachment->formattedSize() }}</span>
-                                    </div>
-                                    <div class="crm-action-row crm-app-attachment-actions">
+                                    <div class="crm-action-row crm-app-attachment-actions crm-discussion-attachment-actions">
                                         @if ($isPreviewable)
                                             <button
                                                 type="button"

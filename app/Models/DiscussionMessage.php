@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class DiscussionMessage extends Model
 {
@@ -50,6 +51,10 @@ class DiscussionMessage extends Model
 
     public function renderedBody(?User $viewer = null): string
     {
+        if ($this->channel === 'email') {
+            return static::emailBodyAsHtml((string) $this->body);
+        }
+
         $body = nl2br(e((string) $this->body));
 
         foreach ($this->resolvedMentions()->sortByDesc(fn (DiscussionMessageMention $mention) => strlen($mention->label())) as $mention) {
@@ -78,6 +83,28 @@ class DiscussionMessage extends Model
         return $body;
     }
 
+    public static function emailBodyAsHtml(string $body): string
+    {
+        if (! str_contains($body, '<')) {
+            return nl2br(e($body));
+        }
+
+        $sanitized = trim((string) preg_replace('/\s+/', ' ', static::sanitizeEmailHtml($body)));
+
+        if ($sanitized === '') {
+            return nl2br(e(strip_tags($body)));
+        }
+
+        return static::sanitizeEmailHtml($body);
+    }
+
+    public static function emailBodyPreview(string $body, int $limit = 220): string
+    {
+        $plainText = trim((string) preg_replace('/\s+/', ' ', strip_tags($body)));
+
+        return Str::limit($plainText, $limit);
+    }
+
     public function mentionsUser(?User $user): bool
     {
         if (! $user) {
@@ -103,5 +130,18 @@ class DiscussionMessage extends Model
         }
 
         return $this->mentions;
+    }
+
+    private static function sanitizeEmailHtml(string $html): string
+    {
+        $allowedTags = '<p><br><strong><b><em><i><u><s><ol><ul><li><blockquote><a><h1><h2><h3><h4><h5><h6><table><thead><tbody><tr><td><th>';
+        $sanitized = strip_tags($html, $allowedTags);
+
+        $sanitized = preg_replace('/\sstyle=("|\').*?\1/i', '', $sanitized);
+        $sanitized = preg_replace('/\son\w+=("|\').*?\1/i', '', $sanitized);
+        $sanitized = preg_replace('/\son\w+=\S+/i', '', $sanitized);
+        $sanitized = preg_replace('/javascript:/i', '', $sanitized);
+
+        return (string) $sanitized;
     }
 }

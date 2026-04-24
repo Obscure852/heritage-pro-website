@@ -39,6 +39,7 @@ class ExternalDiscussionDirectRequest extends FormRequest
     {
         $validator->after(function ($validator): void {
             $recipientType = (string) $this->input('recipient_type');
+            $channel = $this->currentChannel();
             $requiredFields = [
                 'user' => 'recipient_user_id',
                 'lead' => 'lead_id',
@@ -50,13 +51,30 @@ class ExternalDiscussionDirectRequest extends FormRequest
                 $validator->errors()->add($requiredFields[$recipientType], 'Select a recipient for this channel.');
             }
 
-            if ($recipientType === 'manual' && blank($this->input('recipient_email')) && blank($this->input('recipient_phone'))) {
-                $validator->errors()->add('recipient_email', 'Manual recipients require an email address or phone number.');
+            if ($channel === 'email' && filled($this->input('integration_id'))) {
+                $validator->errors()->add('integration_id', 'Email discussions do not use CRM integrations.');
+            }
+
+            if ($recipientType === 'manual' && $channel === 'email' && blank($this->input('recipient_email'))) {
+                $validator->errors()->add('recipient_email', 'Manual email recipients require an email address.');
+            }
+
+            if ($recipientType === 'manual' && $channel === 'whatsapp' && blank($this->input('recipient_phone'))) {
+                $validator->errors()->add('recipient_phone', 'Manual WhatsApp recipients require a phone number.');
             }
 
             if (filled($this->input('source_type')) && blank($this->input('source_id'))) {
                 $validator->errors()->add('source_id', 'A source record is required when a source type is supplied.');
             }
         });
+    }
+
+    private function currentChannel(): string
+    {
+        if ($this->routeIs('crm.discussions.whatsapp.*')) {
+            return 'whatsapp';
+        }
+
+        return 'email';
     }
 }

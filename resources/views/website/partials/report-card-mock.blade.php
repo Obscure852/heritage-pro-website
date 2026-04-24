@@ -2,7 +2,7 @@
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 2px solid var(--brand-indigo-500);">
         <div style="width: 40px; height: 40px; border-radius: 8px; background: var(--brand-gradient);"></div>
         <div>
-            <div style="font-family: var(--font-display); font-size: 14px; font-weight: 700;">Thornhill Preparatory School</div>
+            <div style="font-family: var(--font-display); font-size: 14px; font-weight: 700;">Francistown Senior School</div>
             <div style="font-size: 10px; color: var(--fg-3);">End of Term 2 Report · Form 3R · 2025</div>
         </div>
         <div style="margin-left: auto; font-size: 10px; color: var(--fg-3); text-align: right;">

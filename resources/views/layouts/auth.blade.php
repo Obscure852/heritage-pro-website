@@ -19,7 +19,7 @@
             --auth-surface: rgba(255, 255, 255, 0.96);
             --auth-surface-soft: rgba(248, 250, 252, 0.94);
             --auth-stage-padding: clamp(18px, 3vw, 30px);
-            --auth-shell-width: 1020px;
+            --auth-shell-width: 1160px;
             --auth-shell-min-height: 440px;
         }
 

@@ -43,6 +43,30 @@ class CrmShellUtilitiesTest extends TestCase
             ->assertSee(route('crm.leads.create'), false);
     }
 
+    public function test_discussion_sound_preview_button_is_admin_only(): void
+    {
+        $admin = $this->createUser([
+            'email' => 'sound-admin@example.com',
+            'role' => 'admin',
+        ]);
+
+        $rep = $this->createUser([
+            'email' => 'sound-rep@example.com',
+            'role' => 'rep',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('crm.dashboard'))
+            ->assertOk()
+            ->assertSee('id="crm-presence-sound-preview"', false);
+
+        $this->actingAs($rep)
+            ->get(route('crm.dashboard'))
+            ->assertOk()
+            ->assertDontSee('id="crm-presence-sound-preview"', false)
+            ->assertSee('crm-presence-sound-toggle', false);
+    }
+
     public function test_global_search_returns_grouped_results_and_respects_rep_scope(): void
     {
         $rep = $this->createUser([

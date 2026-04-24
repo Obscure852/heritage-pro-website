@@ -18,6 +18,9 @@ class Kernel extends ConsoleKernel {
         // Leave management
         $schedule->command('leave:escalate-overdue')->hourly();
         $schedule->command('leave:approval-reminder')->dailyAt('09:00');
+
+        // CRM calendar reminders
+        $schedule->command('crm:calendar-reminders')->everyMinute()->withoutOverlapping();
     }
 
     protected function commands() {

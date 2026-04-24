@@ -1698,13 +1698,48 @@ body.crm-body .mm-active .active i {
 }
 
 .staff-presence-launcher {
-    width: 220px;
+    width: 306px;
+}
+
+.staff-presence-trigger-shell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 38px;
+    padding: 0 8px 0 0;
+    border: 1px solid #e9ebef;
+    border-radius: 3px;
+    background: #fff;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.staff-presence-trigger-shell:hover,
+.staff-presence-trigger-shell.is-open {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
 }
 
 .staff-presence-trigger {
     justify-content: space-between;
     gap: 10px;
     width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 36px;
+    height: 36px;
+    padding: 0 0 0 12px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.staff-presence-trigger:hover,
+.staff-presence-trigger.is-open {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
 }
 
 .staff-presence-trigger-copy {
@@ -1800,6 +1835,54 @@ body.crm-body .mm-active .active i {
     font-size: 11px;
 }
 
+.staff-presence-sound-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+    flex-shrink: 0;
+}
+
+.staff-presence-sound-preview {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 3px;
+}
+
+.staff-presence-sound-toggle i {
+    font-size: 18px;
+}
+
+.staff-presence-sound-toggle:hover {
+    border-color: transparent;
+    background: rgba(226, 232, 240, 0.68);
+    box-shadow: none;
+}
+
+.staff-presence-sound-preview i {
+    font-size: 16px;
+    color: #0891b2;
+}
+
+.staff-presence-sound-toggle.is-enabled {
+    border-color: transparent;
+    background: rgba(219, 234, 254, 0.72);
+    color: #1d4ed8;
+}
+
+.staff-presence-sound-toggle.is-muted {
+    border-color: transparent;
+    color: #475569;
+}
+
 .staff-presence-sound-control {
     margin: 12px 18px 0;
     padding: 12px;
@@ -1812,39 +1895,6 @@ body.crm-body .mm-active .active i {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-}
-
-.staff-presence-sound-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    border-radius: 3px;
-}
-
-.staff-presence-sound-preview {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    border-radius: 3px;
-}
-
-.staff-presence-sound-toggle i {
-    font-size: 16px;
-}
-
-.staff-presence-sound-preview i {
-    font-size: 16px;
-    color: #0891b2;
-}
-
-.staff-presence-sound-toggle.is-enabled {
-    border-color: #bfdbfe;
-    color: #1d4ed8;
-}
-
-.staff-presence-sound-toggle.is-muted {
-    border-color: #cbd5e1;
-    color: #475569;
 }
 
 .staff-presence-sound-status {

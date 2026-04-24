@@ -8,7 +8,7 @@
 
 <div class="crm-field full">
     <label for="{{ $inputId }}">{{ $title }}</label>
-    <div class="crm-dropzone" data-dropzone>
+    <div class="crm-dropzone crm-discussion-dropzone" data-dropzone>
         <input
             id="{{ $inputId }}"
             name="{{ $inputName }}"
@@ -18,10 +18,17 @@
             multiple
             data-dropzone-input
         >
-        <div class="crm-dropzone-copy">
-            <span class="crm-dropzone-icon"><i class="fas fa-cloud-upload-alt"></i></span>
-            <strong>Drag and drop files here</strong>
-            <p>{{ $hint }}</p>
+        <div class="crm-discussion-dropzone-head">
+            <span class="crm-discussion-dropzone-icon"><i class="bx bx-paperclip"></i></span>
+            <div class="crm-discussion-dropzone-copy">
+                <strong>{{ $title }}</strong>
+                <p>{{ $hint }}</p>
+            </div>
+            <span class="crm-discussion-dropzone-trigger">Choose files</span>
+        </div>
+        <div class="crm-discussion-dropzone-meta">
+            <span><i class="bx bx-move"></i> Drag and drop</span>
+            <span><i class="bx bx-file"></i> PDF, DOC, DOCX, images</span>
         </div>
         <div class="crm-dropzone-list" data-dropzone-list>
             <div class="crm-dropzone-empty">No files selected yet.</div>

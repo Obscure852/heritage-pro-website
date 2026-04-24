@@ -101,18 +101,13 @@
             <p class="lead center heritage-modules-intro-copy">A practical operating system for schools and tertiary institutions, with modules that support daily work instead of fragmenting it.</p>
 
             <div class="modules-grid">
-                <div class="module-tile"><h4>Admissions</h4><p>Online applications, screening, document capture, and onboarding workflows.</p></div>
-                <div class="module-tile"><h4>Academics Manager</h4><p>Classes, programmes, subjects, module setup, staff allocation, and academic structures.</p></div>
-                <div class="module-tile"><h4>Invigilation Roster</h4><p>Exam session staffing, venue planning, and readiness coordination.</p></div>
-                <div class="module-tile"><h4>Scheme of Work</h4><p>Teaching coverage, curriculum pacing, and instructional visibility.</p></div>
-                <div class="module-tile"><h4>Learning Space</h4><p>LMS content, assignments, tests, discussion, and learner progress tracking.</p></div>
-                <div class="module-tile"><h4>Timetable</h4><p>Daily class organisation, lecturer schedules, and conflict reduction.</p></div>
-                <div class="module-tile"><h4>Assessments</h4><p>Mark capture, analysis, report cards, transcripts, and publishing.</p></div>
-                <div class="module-tile"><h4>Attendance</h4><p>Student and staff attendance with summary reporting and operational follow-up.</p></div>
-                <div class="module-tile"><h4>Fees Administration</h4><p>Charges, receipts, statements, and sponsor-aware payment analysis.</p></div>
-                <div class="module-tile"><h4>Human Resources</h4><p>Staff qualifications, leave, reviews, and institutional workforce records.</p></div>
-                <div class="module-tile"><h4>Communications</h4><p>Announcements, reminders, SMS, email, and targeted outreach.</p></div>
-                <div class="module-tile"><h4>Analytics & Security</h4><p>Dashboards, permissions, backups, audit visibility, and platform oversight.</p></div>
+                @foreach ($site['modules'] as $module)
+                    <div class="module-tile">
+                        <div class="icon">@include('website.partials.icon', ['name' => $module['icon'] ?? 'users', 'size' => 22])</div>
+                        <h4>{{ $module['title'] }}</h4>
+                        <p>{{ $module['description'] }}</p>
+                    </div>
+                @endforeach
             </div>
         </div>
     </section>

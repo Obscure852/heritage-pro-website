@@ -46,7 +46,7 @@
             </div>
             <div class="form-field">
                 <label>Institution</label>
-                <input type="text" name="institution" placeholder="Thornhill Preparatory School" value="{{ old('institution') }}" @class(['is-invalid' => $formErrors->has('institution')])>
+                <input type="text" name="institution" placeholder="Francistown Senior School" value="{{ old('institution') }}" @class(['is-invalid' => $formErrors->has('institution')])>
                 @if ($formErrors->has('institution'))
                     <div class="field-error">{{ $formErrors->first('institution') }}</div>
                 @endif
@@ -54,7 +54,7 @@
             <div class="form-row">
                 <div class="form-field">
                     <label>Work email</label>
-                    <input type="email" name="work_email" placeholder="tebogo@thornhill.ac.bw" value="{{ old('work_email') }}" @class(['is-invalid' => $formErrors->has('work_email')])>
+                    <input type="email" name="work_email" placeholder="admin@francistown.seniorschool.info" value="{{ old('work_email') }}" @class(['is-invalid' => $formErrors->has('work_email')])>
                     @if ($formErrors->has('work_email'))
                         <div class="field-error">{{ $formErrors->first('work_email') }}</div>
                     @endif

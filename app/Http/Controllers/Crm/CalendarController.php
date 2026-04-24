@@ -29,6 +29,11 @@ class CalendarController extends CrmController
     {
         $crmUser = $this->crmUser();
         $visibleCalendars = $this->calendarService->visibleCalendarsFor($crmUser);
+        $defaultCalendar = $visibleCalendars->first(function (CrmCalendar $calendar) use ($crmUser) {
+            return $calendar->can_edit
+                && $calendar->type === 'personal'
+                && (int) $calendar->owner_id === (int) $crmUser->id;
+        }) ?: $visibleCalendars->first(fn (CrmCalendar $calendar) => $calendar->can_edit);
         $selectedDate = $request->filled('date')
             ? Carbon::parse((string) $request->query('date'))->startOfDay()
             : now()->startOfDay();
@@ -84,6 +89,7 @@ class CalendarController extends CrmController
         return view('crm.calendar.index', [
             'visibleCalendars' => $visibleCalendars,
             'selectedCalendarIds' => $selectedCalendarIds,
+            'defaultCalendarId' => $defaultCalendar?->id,
             'selectedDate' => $selectedDate,
             'defaultView' => (string) $request->query('view', 'timeGridWeek'),
             'miniMonthWeeks' => $this->miniMonthWeeks($selectedDate),
@@ -112,7 +118,7 @@ class CalendarController extends CrmController
                 ->where('active', true)
                 ->whereIn('role', array_keys(config('heritage_crm.roles', [])))
                 ->orderBy('email')
-                ->get(['id', 'firstname', 'lastname', 'username', 'email', 'role', 'active']),
+                ->get($this->calendarService->userSelectColumns(true)),
         ]);
     }
 
@@ -188,15 +194,18 @@ class CalendarController extends CrmController
         });
 
         $event->load([
-            'calendar.owner:id,firstname,lastname,username,email,role',
-            'owner:id,firstname,lastname,username,email,role',
+            'calendar.owner:' . $this->calendarService->userRelationshipSelect(),
+            'owner:' . $this->calendarService->userRelationshipSelect(),
+            'createdBy:' . $this->calendarService->userRelationshipSelect(),
             'lead:id,company_name',
             'customer:id,company_name',
             'contact:id,name,email,phone,lead_id,customer_id',
             'request:id,title,owner_id,lead_id,customer_id',
-            'attendees.user:id,firstname,lastname,username,email,role',
+            'attendees.user:' . $this->calendarService->userRelationshipSelect(),
             'attendees.contact:id,name,email',
         ]);
+
+        $this->calendarService->sendEventInvitations($event);
 
         return response()->json([
             'message' => 'Calendar event created successfully.',
@@ -239,13 +248,13 @@ class CalendarController extends CrmController
         });
 
         $crmCalendarEvent->refresh()->load([
-            'calendar.owner:id,firstname,lastname,username,email,role',
-            'owner:id,firstname,lastname,username,email,role',
+            'calendar.owner:' . $this->calendarService->userRelationshipSelect(),
+            'owner:' . $this->calendarService->userRelationshipSelect(),
             'lead:id,company_name',
             'customer:id,company_name',
             'contact:id,name,email,phone,lead_id,customer_id',
             'request:id,title,owner_id,lead_id,customer_id',
-            'attendees.user:id,firstname,lastname,username,email,role',
+            'attendees.user:' . $this->calendarService->userRelationshipSelect(),
             'attendees.contact:id,name,email',
         ]);
 
@@ -270,13 +279,13 @@ class CalendarController extends CrmController
         ]);
 
         $crmCalendarEvent->refresh()->load([
-            'calendar.owner:id,firstname,lastname,username,email,role',
-            'owner:id,firstname,lastname,username,email,role',
+            'calendar.owner:' . $this->calendarService->userRelationshipSelect(),
+            'owner:' . $this->calendarService->userRelationshipSelect(),
             'lead:id,company_name',
             'customer:id,company_name',
             'contact:id,name,email,phone,lead_id,customer_id',
             'request:id,title,owner_id,lead_id,customer_id',
-            'attendees.user:id,firstname,lastname,username,email,role',
+            'attendees.user:' . $this->calendarService->userRelationshipSelect(),
             'attendees.contact:id,name,email',
         ]);
 
@@ -344,6 +353,7 @@ class CalendarController extends CrmController
                             'contact_id' => $attendee->contact_id,
                             'name' => $attendee->display_name ?: $attendee->user?->name ?: $attendee->contact?->name,
                             'email' => $attendee->email ?: $attendee->user?->email ?: $attendee->contact?->email,
+                            'response_status' => $attendee->response_status,
                         ];
                     })->values()->all()
                     : [],

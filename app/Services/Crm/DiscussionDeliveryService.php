@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -1107,8 +1108,8 @@ class DiscussionDeliveryService
                 'recipient_id' => $target->id,
                 'user_id' => $target->id,
                 'label' => $target->name,
-                'email' => ($payload['recipient_email'] ?? null) ?: $target->email,
-                'phone' => ($payload['recipient_phone'] ?? null) ?: $target->phone,
+                'email' => $target->email,
+                'phone' => $target->phone,
             ];
         }
 
@@ -1122,8 +1123,8 @@ class DiscussionDeliveryService
                 'recipient_id' => $lead->id,
                 'user_id' => null,
                 'label' => $lead->company_name,
-                'email' => ($payload['recipient_email'] ?? null) ?: ($primaryContact?->email ?: $lead->email),
-                'phone' => ($payload['recipient_phone'] ?? null) ?: ($primaryContact?->phone ?: $lead->phone),
+                'email' => $primaryContact?->email ?: $lead->email,
+                'phone' => $primaryContact?->phone ?: $lead->phone,
             ];
         }
 
@@ -1137,8 +1138,8 @@ class DiscussionDeliveryService
                 'recipient_id' => $customer->id,
                 'user_id' => null,
                 'label' => $customer->company_name,
-                'email' => ($payload['recipient_email'] ?? null) ?: ($primaryContact?->email ?: $customer->email),
-                'phone' => ($payload['recipient_phone'] ?? null) ?: ($primaryContact?->phone ?: $customer->phone),
+                'email' => $primaryContact?->email ?: $customer->email,
+                'phone' => $primaryContact?->phone ?: $customer->phone,
             ];
         }
 
@@ -1151,8 +1152,8 @@ class DiscussionDeliveryService
                 'recipient_id' => $contact->id,
                 'user_id' => null,
                 'label' => $contact->name,
-                'email' => ($payload['recipient_email'] ?? null) ?: $contact->email,
-                'phone' => ($payload['recipient_phone'] ?? null) ?: $contact->phone,
+                'email' => $contact->email,
+                'phone' => $contact->phone,
             ];
         }
 
@@ -1393,7 +1394,7 @@ class DiscussionDeliveryService
     ): string {
         if ($thread->channel === 'email' && filled($thread->recipient_email)) {
             try {
-                Mail::raw($message->body, function ($mail) use ($artifact, $message, $thread): void {
+                Mail::html(DiscussionMessage::emailBodyAsHtml((string) $message->body), function ($mail) use ($artifact, $message, $thread): void {
                     $mail->to($thread->recipient_email)
                         ->subject($thread->subject);
 
@@ -1421,7 +1422,15 @@ class DiscussionDeliveryService
                 });
 
                 return 'sent';
-            } catch (Throwable) {
+            } catch (Throwable $exception) {
+                Log::error('CRM email discussion dispatch failed.', [
+                    'thread_id' => $thread->id,
+                    'message_id' => $message->id,
+                    'recipient_email' => $thread->recipient_email,
+                    'exception' => $exception::class,
+                    'message' => $exception->getMessage(),
+                ]);
+
                 return 'failed';
             }
         }

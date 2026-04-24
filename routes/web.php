@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\PublicWebsiteController;
+use App\Http\Controllers\Crm\CalendarAvailabilityController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +18,9 @@ Route::controller(PublicWebsiteController::class)->group(function () {
 });
 
 Route::get('/sign-in', fn () => redirect()->route('login'))->name('website.sign-in');
+Route::get('/crm/calendar/availability/{crmCalendarEventAttendee}/{response}', CalendarAvailabilityController::class)
+    ->middleware('signed')
+    ->name('crm.calendar.attendees.availability');
 
 Auth::routes(['register' => false]);
 //Users/thatoobuseng/Sites/Heritage Website

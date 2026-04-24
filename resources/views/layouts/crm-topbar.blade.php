@@ -53,18 +53,31 @@
         <div class="d-flex align-items-center">
             @include('crm.attendance.partials.clock-button')
 
-            <div class="staff-presence-launcher me-2" id="crm-presence-launcher">
-                <button type="button" class="btn header-item staff-presence-trigger" id="crm-presence-trigger"
-                    aria-haspopup="true" aria-expanded="false">
-                    <span class="staff-presence-trigger-copy">
-                        <span class="staff-presence-dot"></span>
-                        <span class="staff-presence-trigger-label">Online CRM Users</span>
-                    </span>
-                    <span class="staff-presence-trigger-count" id="crm-presence-count">0</span>
-                    <span class="staff-presence-trigger-unread" id="crm-presence-unread-badge" hidden>0</span>
-                </button>
+	            <div class="staff-presence-launcher me-2" id="crm-presence-launcher">
+	                <div class="staff-presence-trigger-shell" data-crm-panel-shell>
+	                    <button type="button" class="btn header-item staff-presence-trigger" id="crm-presence-trigger"
+	                        aria-haspopup="true" aria-expanded="false">
+	                        <span class="staff-presence-trigger-copy">
+	                            <span class="staff-presence-dot"></span>
+	                            <span class="staff-presence-trigger-label">Online CRM Users</span>
+	                        </span>
+	                        <span class="staff-presence-trigger-count" id="crm-presence-count">0</span>
+	                        <span class="staff-presence-trigger-unread" id="crm-presence-unread-badge" hidden>0</span>
+	                    </button>
+	                    <button
+	                        type="button"
+	                        class="btn header-item staff-presence-sound-toggle {{ $crmUser->crm_discussion_sound_enabled ? 'is-enabled' : 'is-muted' }}"
+	                        id="crm-presence-sound-toggle"
+	                        data-enabled="{{ $crmUser->crm_discussion_sound_enabled ? 'true' : 'false' }}"
+	                        aria-pressed="{{ $crmUser->crm_discussion_sound_enabled ? 'true' : 'false' }}"
+	                        aria-label="{{ $crmUser->crm_discussion_sound_enabled ? 'Mute discussion sounds' : 'Unmute discussion sounds' }}"
+	                        title="{{ $crmUser->crm_discussion_sound_enabled ? 'Mute discussion sounds' : 'Unmute discussion sounds' }}"
+	                    >
+	                        <i class="bx {{ $crmUser->crm_discussion_sound_enabled ? 'bx-volume-full' : 'bx-volume-mute' }}"></i>
+	                    </button>
+	                </div>
 
-                <div class="crm-floating-panel staff-presence-panel" id="crm-presence-panel" hidden>
+	                <div class="crm-floating-panel staff-presence-panel" id="crm-presence-panel" hidden>
                     <div class="staff-presence-panel-header">
                         <div>
                             <strong>Online CRM users</strong>
@@ -82,29 +95,21 @@
                         Use the launcher to see who is active now, review unread discussions, and jump straight into the right thread.
                     </div>
 
-                    <div class="staff-presence-sound-control">
-                        <div class="staff-presence-sound-actions">
-                            <button
-                                type="button"
-                                class="btn btn-light crm-btn-light btn-sm staff-presence-sound-toggle {{ $crmUser->crm_discussion_sound_enabled ? 'is-enabled' : 'is-muted' }}"
-                                id="crm-presence-sound-toggle"
-                                data-enabled="{{ $crmUser->crm_discussion_sound_enabled ? 'true' : 'false' }}"
-                                aria-pressed="{{ $crmUser->crm_discussion_sound_enabled ? 'true' : 'false' }}"
-                            >
-                                <i class="bx {{ $crmUser->crm_discussion_sound_enabled ? 'bx-volume-full' : 'bx-volume-mute' }}"></i>
-                                <span>{{ $crmUser->crm_discussion_sound_enabled ? 'Sound on' : 'Sound off' }}</span>
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-light crm-btn-light btn-sm staff-presence-sound-preview"
-                                id="crm-presence-sound-preview"
-                            >
-                                <i class="bx bx-play-circle"></i>
-                                <span>Test sound</span>
-                            </button>
-                        </div>
-                        <span class="staff-presence-sound-status" id="crm-presence-sound-status">
-                            {{ $crmUser->crm_discussion_sound_enabled
+	                    <div class="staff-presence-sound-control">
+	                        @if ($crmUser->isAdmin())
+	                            <div class="staff-presence-sound-actions">
+	                                <button
+	                                    type="button"
+	                                    class="btn btn-light crm-btn-light btn-sm staff-presence-sound-preview"
+	                                    id="crm-presence-sound-preview"
+	                                >
+	                                    <i class="bx bx-play-circle"></i>
+	                                    <span>Test sound</span>
+	                                </button>
+	                            </div>
+	                        @endif
+	                        <span class="staff-presence-sound-status" id="crm-presence-sound-status">
+	                            {{ $crmUser->crm_discussion_sound_enabled
                                 ? 'Sound plays for new unread activity only, not for the thread you already have open.'
                                 : 'Discussion sounds are muted for this account.' }}
                         </span>

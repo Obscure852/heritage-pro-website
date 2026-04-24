@@ -32,7 +32,7 @@ function Features() {
               <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#D6DAE2" }}/>
               <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#D6DAE2" }}/>
               <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#D6DAE2" }}/>
-              <div className="url" style={{ flex: 1, marginLeft: 18, fontSize: 11, color: "var(--fg-3)", fontFamily: "var(--font-mono)", background: "#fff", padding: "4px 10px", borderRadius: 6, border: "1px solid var(--border-1)", maxWidth: 280 }}>demo.heritagepro.net</div>
+              <div className="url" style={{ flex: 1, marginLeft: 18, fontSize: 11, color: "var(--fg-3)", fontFamily: "var(--font-mono)", background: "#fff", padding: "4px 10px", borderRadius: 6, border: "1px solid var(--border-1)", maxWidth: 280, textDecoration: "none" }}>app.heritagepro.net</div>
             </div>
             <StudentRecordMock/>
           </div>
@@ -75,22 +75,40 @@ function Features() {
         </div>
 
         <h3 className="center" style={{ marginTop: 120, marginBottom: 14, fontSize: 32 }}>Every module, working in concert.</h3>
-        <p className="lead center" style={{ maxWidth: 620, margin: "0 auto" }}>A complete administrative operating system — twelve modules, one database, one login.</p>
+        <p className="lead center" style={{ maxWidth: 620, margin: "0 auto" }}>A complete administrative operating system across 30 modules, one database, and one login.</p>
 
         <div className="modules-grid">
           {[
-            { icon: "users", t: "Student records", d: "Biographic, academic, health, and guardian data in one unified profile." },
-            { icon: "clipboard", t: "Admissions", d: "Applications, waitlists, entrance tests, and class placement workflow." },
-            { icon: "book", t: "Academics", d: "Subjects, syllabi, continuous assessment, and examination schedules." },
-            { icon: "calendar", t: "Attendance", d: "Bell-schedule aware, with biometric, RFID, or manual capture." },
-            { icon: "credit", t: "Fees &amp; billing", d: "Invoicing, receipts, sponsor billing, and bank reconciliation." },
-            { icon: "megaphone", t: "Parent comms", d: "SMS, email, and WhatsApp broadcasts with delivery receipts." },
-            { icon: "bio", t: "Report cards", d: "Branded, compliant report cards for BGCSE, JCE, and Cambridge." },
-            { icon: "grad", t: "Exams &amp; grading", d: "Moderation, remark requests, and secure examination workflows." },
-            { icon: "lib", t: "Library", d: "Catalogue, loans, reservations, and overdue reminders by SMS." },
-            { icon: "bus", t: "Transport", d: "Route &amp; stop management, vehicle tracking, and driver rosters." },
-            { icon: "shield", t: "Roles &amp; audit", d: "Granular permissions, single sign-on, and tamper-evident logs." },
-            { icon: "cpu", t: "Analytics", d: "Dashboards for heads, boards, and regional offices — in real time." },
+            { icon: "shield", t: "Core Platform &amp; Authentication", d: "Secure login, role-based access, permissions, session control, and audit-ready platform foundations." },
+            { icon: "cpu", t: "Dashboard &amp; Analytics", d: "Institution dashboards, operational metrics, academic insights, and at-risk visibility." },
+            { icon: "users", t: "Student Management", d: "Student profiles, transfers, guardians, health records, histories, and lifecycle tracking." },
+            { icon: "clipboard", t: "Admissions Module", d: "Online applications, screening, document capture, selection, enrollment, and placement workflows." },
+            { icon: "book", t: "Academic Structure Management", d: "Grades, classes, subjects, departments, programmes, teacher allocation, and academic setup." },
+            { icon: "bio", t: "Assessment Engine (Multi-School Type)", d: "Assessment capture and grading across junior, senior, primary, reception, and college workflows." },
+            { icon: "grad", t: "Finals &amp; Graduation Module", d: "Final examination analysis, graduation readiness, progression, awards, and result publishing." },
+            { icon: "calendar", t: "Activities and Events Module", d: "Activities, event calendars, rosters, eligibility checks, attendance, and results tracking." },
+            { icon: "credit", t: "Fee Management System", d: "Charges, invoices, receipts, discounts, refunds, statements, and payment analysis." },
+            { icon: "calendar", t: "Attendance Module (Students)", d: "Daily student registers, attendance codes, summaries, and compliance-ready reporting." },
+            { icon: "bio", t: "Staff Attendance &amp; Biometric Integration", d: "Staff shifts, biometric device sync, corrections, holiday rules, and monthly exports." },
+            { icon: "calendar", t: "Timetable Generation Engine", d: "Timetable constraints, room allocation, teacher schedules, generation, and conflict checks." },
+            { icon: "lib", t: "Library Management System", d: "Catalogues, borrowers, loans, reservations, inventory, fines, and library reporting." },
+            { icon: "book", t: "Learning Management System (LMS)", d: "Learning content, assignments, online tests, discussion forums, and progress tracking." },
+            { icon: "grad", t: "Staff Personal Development Plans (PDP)", d: "PDP templates, targets, reviews, evidence, progress tracking, and staff development records." },
+            { icon: "clipboard", t: "Schemes of Work &amp; Lesson Planning", d: "Scheme planning, lesson plans, curriculum pacing, approvals, and teaching coverage visibility." },
+            { icon: "calendar", t: "Leave Management System", d: "Leave types, balances, requests, approvals, statements, and policy-based staff leave control." },
+            { icon: "users", t: "Student Welfare &amp; Counseling", d: "Health incidents, support records, communications, interventions, and welfare follow-up." },
+            { icon: "clipboard", t: "Document Management System", d: "Institutional documents, sharing, approvals, expiry tracking, audit logs, and secure storage." },
+            { icon: "megaphone", t: "Communications Engine (SMS, Email, WhatsApp)", d: "Messaging templates, campaigns, bulk communication, delivery tracking, and targeted outreach." },
+            { icon: "megaphone", t: "Notification System", d: "In-app alerts, reminders, status updates, system notifications, and user-facing activity prompts." },
+            { icon: "users", t: "Contact &amp; Sponsor Management", d: "Contacts, guardians, sponsors, sponsor-student links, communication records, and billing context." },
+            { icon: "bus", t: "Asset Management", d: "Asset registers, assignments, audits, maintenance, disposals, and institutional inventory control." },
+            { icon: "grad", t: "House Management &amp; Analysis", d: "House allocation, awards, performance analysis, student grouping, and team visibility." },
+            { icon: "cpu", t: "Reporting &amp; Data Export Engine", d: "PDF and Excel exports, report cards, institutional summaries, analytics, and custom reporting." },
+            { icon: "shield", t: "System Administration &amp; Settings", d: "School setup, terms, grades, thresholds, integrations, permissions, and platform configuration." },
+            { icon: "cpu", t: "Multi-School Mode Provisioning", d: "Different school configurations, product modes, and deployment settings from one platform foundation." },
+            { icon: "users", t: "Student &amp; Sponsor Portals", d: "Portal access for students and sponsors with records, notices, documents, and account visibility." },
+            { icon: "mail", t: "Staff Direct Messaging", d: "In-app staff messaging, discussion threads, attachments, mentions, and internal communication." },
+            { icon: "calendar", t: "Invigilation Roster", d: "Exam invigilator scheduling, venue planning, staff allocation, and readiness coordination." },
           ].map((m, i) => (
             <div key={i} className="module-tile">
               <div className="icon"><Icon name={m.icon} size={22}/></div>
@@ -146,7 +164,7 @@ function ReportCardMock() {
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, paddingBottom: 14, borderBottom: "2px solid var(--brand-indigo-500)" }}>
         <div style={{ width: 40, height: 40, borderRadius: 8, background: "var(--brand-gradient)" }}/>
         <div>
-          <div style={{ fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 700 }}>Thornhill Preparatory School</div>
+          <div style={{ fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 700 }}>Francistown Senior School</div>
           <div style={{ fontSize: 10, color: "var(--fg-3)" }}>End of Term 2 Report · Form 3R · 2025</div>
         </div>
         <div style={{ marginLeft: "auto", fontSize: 10, color: "var(--fg-3)", textAlign: "right" }}>
@@ -241,7 +259,7 @@ function Testimonials() {
             <p>"Before Heritage Pro, report cards took us three weeks. Now I generate and send them the evening exams end. Parents appreciate it; staff are free to teach."</p>
             <div className="author">
               <div className="avatar">TM</div>
-              <div><b>Tebogo Molefe</b><span>Head Teacher · Thornhill Prep</span></div>
+              <div><b>Tebogo Molefe</b><span>Head Teacher · Francistown Senior School</span></div>
             </div>
           </div>
           <div className="testimonial featured">
@@ -282,11 +300,11 @@ function Cases() {
           <div className="case-card">
             <div className="case-cover schools">
               <span className="case-tag">Secondary</span>
-              <div className="case-kicker">Thornhill Prep</div>
+              <div className="case-kicker">Francistown Senior School</div>
             </div>
             <div className="case-body">
               <h4>3 weeks of report cards, reduced to 48 hours.</h4>
-              <p>Thornhill replaced four legacy systems with Heritage Pro Schools and cut end-of-term admin from 21 days to 2.</p>
+              <p>Francistown Senior School runs academic administration, reporting, and operational follow-up through Heritage Pro.</p>
               <div className="case-metrics">
                 <div className="case-metric"><b>-90%</b><span>Admin time</span></div>
                 <div className="case-metric"><b>+18%</b><span>Parent NPS</span></div>

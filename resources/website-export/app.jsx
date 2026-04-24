@@ -112,7 +112,7 @@ function Blog() {
             <div className="blog-cover a"/>
             <span className="blog-tag">Playbook</span>
             <h4>Cutting report-card turnaround from 3 weeks to 48 hours</h4>
-            <p>A step-by-step operating rhythm for heads of department — built from how Thornhill Prep did it.</p>
+            <p>A step-by-step operating rhythm for heads of department, based on a senior school reporting cycle.</p>
             <div className="blog-meta">8 min read · Apr 2025</div>
           </article>
           <article className="blog-card">
@@ -164,12 +164,12 @@ function Contact() {
           </div>
           <div className="form-field">
             <label>Institution</label>
-            <input type="text" placeholder="Thornhill Preparatory School"/>
+            <input type="text" placeholder="Francistown Senior School"/>
           </div>
           <div className="form-row">
             <div className="form-field">
               <label>Work email</label>
-              <input type="email" placeholder="tebogo@thornhill.ac.bw"/>
+              <input type="email" placeholder="admin@francistown.seniorschool.info"/>
             </div>
             <div className="form-field">
               <label>Phone</label>

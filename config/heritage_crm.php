@@ -515,6 +515,11 @@ return [
         'busy_only' => 'Busy only',
         'private' => 'Private',
     ],
+    'calendar_attendee_response_statuses' => [
+        'available' => 'Available',
+        'tentative' => 'Tentative',
+        'unavailable' => 'Unavailable',
+    ],
     'calendar_reminder_minutes' => [
         5 => '5 minutes before',
         15 => '15 minutes before',

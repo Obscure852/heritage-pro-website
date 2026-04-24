@@ -712,10 +712,36 @@
             }
 
             document.querySelectorAll('form').forEach(function (form) {
-                form.addEventListener('submit', function () {
-                    var submitBtn = form.querySelector('button[type="submit"].btn-loading');
+                form.addEventListener('submit', function (event) {
+                    var submitBtn = event.submitter;
+
+                    if (!submitBtn || !submitBtn.classList.contains('btn-loading')) {
+                        submitBtn = form.querySelector('button[type="submit"].btn-loading');
+
+                        if (!submitBtn && form.id) {
+                            submitBtn = document.querySelector('button[type="submit"].btn-loading[form="' + form.id + '"]');
+                        }
+                    }
 
                     if (submitBtn) {
+                        if (submitBtn.classList.contains('loading')) {
+                            event.preventDefault();
+                            return;
+                        }
+
+                        form.querySelectorAll('input[data-generated-submitter="true"]').forEach(function (input) {
+                            input.remove();
+                        });
+
+                        if (submitBtn.name && submitBtn.value) {
+                            var hiddenSubmitter = document.createElement('input');
+                            hiddenSubmitter.type = 'hidden';
+                            hiddenSubmitter.name = submitBtn.name;
+                            hiddenSubmitter.value = submitBtn.value;
+                            hiddenSubmitter.setAttribute('data-generated-submitter', 'true');
+                            form.appendChild(hiddenSubmitter);
+                        }
+
                         submitBtn.classList.add('loading');
                         submitBtn.disabled = true;
                     }
@@ -1215,6 +1241,11 @@
                 panel.hidden = true;
                 trigger.classList.remove('is-open');
                 trigger.setAttribute('aria-expanded', 'false');
+
+                var panelShell = trigger.closest('[data-crm-panel-shell]');
+                if (panelShell) {
+                    panelShell.classList.remove('is-open');
+                }
             }
 
             function showPanel(panel, trigger) {
@@ -1225,6 +1256,11 @@
                 panel.hidden = false;
                 trigger.classList.add('is-open');
                 trigger.setAttribute('aria-expanded', 'true');
+
+                var panelShell = trigger.closest('[data-crm-panel-shell]');
+                if (panelShell) {
+                    panelShell.classList.add('is-open');
+                }
             }
 
             function wireFloatingPanel(triggerId, panelId, options) {
@@ -1380,6 +1416,8 @@
             var discussionSoundSeeded = false;
             var knownUnreadActivityKeys = {};
             var pendingUnreadActivityKeys = {};
+            var unreadFetchRequest = null;
+            var unreadRefreshTimer = null;
 
             function escapeHtml(value) {
                 return String(value || '')
@@ -1435,13 +1473,16 @@
                     return;
                 }
 
+                var toggleLabel = discussionSoundEnabled ? 'Mute discussion sounds' : 'Unmute discussion sounds';
                 presenceSoundToggle.setAttribute('data-enabled', discussionSoundEnabled ? 'true' : 'false');
                 presenceSoundToggle.setAttribute('aria-pressed', discussionSoundEnabled ? 'true' : 'false');
+                presenceSoundToggle.setAttribute('aria-label', toggleLabel);
+                presenceSoundToggle.setAttribute('title', toggleLabel);
                 presenceSoundToggle.classList.toggle('is-enabled', discussionSoundEnabled);
                 presenceSoundToggle.classList.toggle('is-muted', !discussionSoundEnabled);
                 presenceSoundToggle.innerHTML = discussionSoundEnabled
-                    ? '<i class="bx bx-volume-full"></i><span>Sound on</span>'
-                    : '<i class="bx bx-volume-mute"></i><span>Sound off</span>';
+                    ? '<i class="bx bx-volume-full"></i>'
+                    : '<i class="bx bx-volume-mute"></i>';
 
                 if (presenceSoundStatus) {
                     presenceSoundStatus.textContent = discussionSoundEnabled
@@ -1681,7 +1722,11 @@
             }
 
             function fetchUnreadThreads() {
-                return fetch('{{ route('crm.presence.unread-count') }}', {
+                if (unreadFetchRequest) {
+                    return unreadFetchRequest;
+                }
+
+                unreadFetchRequest = fetch('{{ route('crm.presence.unread-count') }}', {
                     headers: {
                         'Accept': 'application/json'
                     },
@@ -1694,7 +1739,25 @@
                     })
                     .catch(function () {
                         renderUnreadThreads({ count: 0, threads: [] });
+                    })
+                    .finally(function () {
+                        unreadFetchRequest = null;
                     });
+
+                return unreadFetchRequest;
+            }
+
+            function requestUnreadThreadsRefresh(delay) {
+                var wait = typeof delay === 'number' ? delay : 0;
+
+                if (unreadRefreshTimer) {
+                    window.clearTimeout(unreadRefreshTimer);
+                }
+
+                unreadRefreshTimer = window.setTimeout(function () {
+                    unreadRefreshTimer = null;
+                    fetchUnreadThreads();
+                }, wait);
             }
 
             var presencePanelHandle = wireFloatingPanel('crm-presence-trigger', 'crm-presence-panel', {
@@ -1731,7 +1794,10 @@
             if (presenceSoundToggle) {
                 syncDiscussionSoundToggle(discussionSoundEnabled);
 
-                presenceSoundToggle.addEventListener('click', function () {
+                presenceSoundToggle.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+
                     var nextEnabled = !(presenceSoundToggle.getAttribute('data-enabled') === 'true');
 
                     if (soundPreferenceRequest) {
@@ -1774,6 +1840,14 @@
             }
 
             registerDiscussionSoundUnlock();
+
+            window.addEventListener('crm:discussion-thread-updated', function (event) {
+                if (!event.detail || !event.detail.hasNewMessages) {
+                    return;
+                }
+
+                requestUnreadThreadsRefresh(120);
+            });
 
             function sendHeartbeat() {
                 fetch('{{ route('crm.presence.heartbeat') }}', {

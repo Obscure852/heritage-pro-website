@@ -8,6 +8,7 @@ use App\Models\CrmInvoice;
 use App\Models\CrmProduct;
 use App\Models\CrmQuote;
 use App\Models\Customer;
+use App\Models\DiscussionCampaign;
 use App\Models\DiscussionThread;
 use App\Models\Lead;
 use App\Models\User;
@@ -300,6 +301,101 @@ class CrmCommercialDocumentDeliveryTest extends TestCase
         $this->assertCount(1, $thread->messages);
 
         Storage::disk('documents')->assertExists($artifact->path);
+    }
+
+    public function test_email_bulk_send_creates_sent_threads_for_selected_internal_users(): void
+    {
+        $sender = $this->createUser([
+            'email' => 'bulk-email-sender@example.com',
+            'role' => 'admin',
+        ]);
+
+        $recipient = $this->createUser([
+            'email' => 'bulk-email-recipient@example.com',
+            'role' => 'manager',
+        ]);
+
+        $this->actingAs($sender)
+            ->post(route('crm.discussions.email.bulk.store'), [
+                'subject' => 'April product update',
+                'body' => '<p>Please review the latest product update.</p>',
+                'notes' => 'Quarterly CRM bulletin',
+                'recipient_user_ids' => [$recipient->id],
+                'intent' => 'send',
+            ])
+            ->assertRedirect();
+
+        $campaign = DiscussionCampaign::query()->with('recipients')->firstOrFail();
+        $thread = DiscussionThread::query()->firstOrFail();
+
+        $this->assertSame('email', $campaign->channel);
+        $this->assertSame('sent', $campaign->status);
+        $this->assertCount(1, $campaign->recipients);
+        $this->assertSame('email', $thread->channel);
+        $this->assertSame($recipient->id, $thread->recipient_user_id);
+        $this->assertSame($recipient->email, $thread->recipient_email);
+        $this->assertSame('sent', $thread->delivery_status);
+
+        $this->assertDatabaseHas('crm_discussion_messages', [
+            'thread_id' => $thread->id,
+            'user_id' => $sender->id,
+            'channel' => 'email',
+            'direction' => 'outbound',
+            'delivery_status' => 'sent',
+        ]);
+    }
+
+    public function test_direct_email_send_renders_the_standard_crm_success_alert(): void
+    {
+        $sender = $this->createUser([
+            'email' => 'direct-email-sender@example.com',
+            'role' => 'admin',
+        ]);
+
+        $recipient = $this->createUser([
+            'email' => 'direct-email-recipient@example.com',
+            'role' => 'manager',
+        ]);
+
+        $this->actingAs($sender)
+            ->followingRedirects()
+            ->post(route('crm.discussions.email.direct.store'), [
+                'subject' => 'Direct product update',
+                'recipient_type' => 'user',
+                'recipient_user_id' => $recipient->id,
+                'body' => '<p>Please review the direct email update.</p>',
+                'notes' => 'Direct email test',
+                'intent' => 'send',
+            ])
+            ->assertOk()
+            ->assertSee('Action completed')
+            ->assertSee('Email message sent successfully.');
+    }
+
+    public function test_bulk_email_send_renders_the_standard_crm_success_alert(): void
+    {
+        $sender = $this->createUser([
+            'email' => 'bulk-email-alert-sender@example.com',
+            'role' => 'admin',
+        ]);
+
+        $recipient = $this->createUser([
+            'email' => 'bulk-email-alert-recipient@example.com',
+            'role' => 'manager',
+        ]);
+
+        $this->actingAs($sender)
+            ->followingRedirects()
+            ->post(route('crm.discussions.email.bulk.store'), [
+                'subject' => 'Bulk bulletin',
+                'body' => '<p>Please review the latest bulk bulletin.</p>',
+                'notes' => 'Bulk email alert test',
+                'recipient_user_ids' => [$recipient->id],
+                'intent' => 'send',
+            ])
+            ->assertOk()
+            ->assertSee('Action completed')
+            ->assertSee('Email bulk message sent successfully.');
     }
 
     private function createQuote(array $attributes = []): CrmQuote

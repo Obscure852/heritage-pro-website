@@ -1,6 +1,3 @@
-@php
-    $moduleIcons = ['users', 'clipboard', 'book', 'calendar', 'credit', 'megaphone', 'bio', 'grad', 'lib', 'bus', 'shield', 'cpu'];
-@endphp
 <section id="features" class="section features">
     <div class="container">
         <div class="center" style="max-width: 720px; margin: 0 auto;">
@@ -62,12 +59,12 @@
         </div>
 
         <h3 class="center" style="margin-top: 120px; margin-bottom: 14px; font-size: 32px;">Every module, working in concert.</h3>
-        <p class="lead center" style="max-width: 620px; margin: 0 auto;">A complete administrative operating system — twelve modules, one database, one login.</p>
+        <p class="lead center" style="max-width: 620px; margin: 0 auto;">A complete administrative operating system across 30 modules, one database, and one login.</p>
 
         <div class="modules-grid">
             @foreach ($site['modules'] as $index => $module)
                 <div class="module-tile">
-                    <div class="icon">@include('website.partials.icon', ['name' => $moduleIcons[$index] ?? 'users', 'size' => 22])</div>
+                    <div class="icon">@include('website.partials.icon', ['name' => $module['icon'] ?? 'users', 'size' => 22])</div>
                     <h4>{{ $module['title'] }}</h4>
                     <p>{{ $module['description'] }}</p>
                 </div>

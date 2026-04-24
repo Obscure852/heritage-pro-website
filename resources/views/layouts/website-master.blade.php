@@ -68,7 +68,10 @@
             grid-template-columns: 1fr;
           }
 
-          .logo-strip .fake-logo.heritage-logo-pill,
+          .logo-strip .fake-logo.heritage-logo-pill {
+            min-width: max-content;
+          }
+
           #customers-page-content .client-pill {
             min-width: 240px;
           }
@@ -240,10 +243,10 @@
         }
 
         .logo-strip .logo-marquee-shell {
-          border: 1px solid var(--border-1);
-          border-radius: 22px;
-          background: #fff;
-          box-shadow: var(--shadow-sm);
+          border: 0;
+          border-radius: 0;
+          background: transparent;
+          box-shadow: none;
         }
 
         #customers-page-content .client-marquee {
@@ -286,7 +289,6 @@
           background: linear-gradient(270deg, #F7F8FB 0%, rgba(247, 248, 251, 0) 100%);
         }
 
-        .logo-strip .logo-row.heritage-logo-marquee-track,
         #customers-page-content .client-marquee-track {
           display: flex;
           align-items: center;
@@ -298,7 +300,17 @@
           animation: heritageClientMarquee 28s linear infinite;
         }
 
-        .logo-strip .fake-logo.heritage-logo-pill,
+        .logo-strip .logo-row.heritage-logo-marquee-track {
+          display: flex;
+          align-items: center;
+          gap: 36px;
+          width: max-content;
+          padding: 8px 0;
+          flex-wrap: nowrap;
+          justify-content: flex-start;
+          animation: heritageClientMarquee 28s linear infinite;
+        }
+
         #customers-page-content .client-pill {
           display: flex;
           align-items: center;
@@ -308,6 +320,20 @@
           border-radius: 16px;
           border: 1px solid var(--border-1);
           background: #F7F8FB;
+          white-space: nowrap;
+          flex: 0 0 auto;
+          opacity: 1;
+        }
+
+        .logo-strip .fake-logo.heritage-logo-pill {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          min-width: max-content;
+          padding: 0;
+          border: 0;
+          border-radius: 0;
+          background: transparent;
           white-space: nowrap;
           flex: 0 0 auto;
           opacity: 1;

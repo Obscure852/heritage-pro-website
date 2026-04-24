@@ -562,7 +562,11 @@ class CrmPageRenderTest extends TestCase
 
         $this->actingAs($admin)
             ->get(route('crm.discussions.email.direct.create'))
-            ->assertOk();
+            ->assertOk()
+            ->assertDontSee('label for="integration_id"', false)
+            ->assertDontSee('Recipient phone')
+            ->assertSee('data-email-editor', false)
+            ->assertSee('data-email-editor-error', false);
 
         $this->actingAs($admin)
             ->get(route('crm.discussions.email.direct.edit', $emailDraftDiscussion))
@@ -577,7 +581,10 @@ class CrmPageRenderTest extends TestCase
 
         $this->actingAs($admin)
             ->get(route('crm.discussions.email.bulk.create'))
-            ->assertOk();
+            ->assertOk()
+            ->assertDontSee('label for="integration_id"', false)
+            ->assertSee('data-email-editor', false)
+            ->assertSee('data-email-editor-error', false);
 
         $this->actingAs($admin)
             ->get(route('crm.discussions.email.bulk.edit', $emailCampaign))

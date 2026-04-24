@@ -38,6 +38,10 @@ class ExternalDiscussionCampaignRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator): void {
+            if ($this->routeIs('crm.discussions.email.*') && filled($this->input('integration_id'))) {
+                $validator->errors()->add('integration_id', 'Email campaigns do not use CRM integrations.');
+            }
+
             $hasRecipients = collect([
                 $this->input('recipient_user_ids', []),
                 $this->input('lead_ids', []),

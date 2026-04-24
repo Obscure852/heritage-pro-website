@@ -55,14 +55,13 @@
                 <p class="lead">Whether the institution is a junior school, senior school, or college, Heritage Pro supports the operational workflows that matter most every day.</p>
             </div>
             <div class="modules-grid">
-                <div class="module-tile"><h4>Admissions & Enrollment</h4><p>Applications, screening, documents, selection, and onboarding workflows.</p></div>
-                <div class="module-tile"><h4>Student Lifecycle</h4><p>Profiles, registrations, progression, transfers, graduation, and long-term records.</p></div>
-                <div class="module-tile"><h4>Academics</h4><p>Classes, programmes, modules, subject allocation, grading, and academic structures.</p></div>
-                <div class="module-tile"><h4>Assessments</h4><p>Score capture, grading, publishing, transcripts, reports, and performance analysis.</p></div>
-                <div class="module-tile"><h4>Attendance</h4><p>Student and staff attendance, summaries, and biometric-ready automation.</p></div>
-                <div class="module-tile"><h4>Learning Space</h4><p>LMS content, assignments, online tests, discussion forums, and progress tracking.</p></div>
-                <div class="module-tile"><h4>Institution Services</h4><p>Library, documents, approvals, scheduling, assets, sponsorships, and alumni.</p></div>
-                <div class="module-tile"><h4>Analytics & Security</h4><p>Dashboards, role-based access, backups, reporting, and platform administration.</p></div>
+                @foreach ($site['modules'] as $module)
+                    <div class="module-tile">
+                        <div class="icon">@include('website.partials.icon', ['name' => $module['icon'] ?? 'users', 'size' => 22])</div>
+                        <h4>{{ $module['title'] }}</h4>
+                        <p>{{ $module['description'] }}</p>
+                    </div>
+                @endforeach
             </div>
         </div>
     </section>

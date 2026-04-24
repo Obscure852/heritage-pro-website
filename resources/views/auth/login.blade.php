@@ -2,7 +2,7 @@
 
 @section('title', 'Sign In')
 @section('auth_heading', 'Sign in to the CRM')
-@section('auth_copy', 'Use your staff email address and password to access the CRM workspace, customer operations, product modules, and staff directory.')
+@section('auth_copy', 'Use your staff email address and password to access the CRM workspace.')
 @section('auth_media_heading', 'Secure CRM access')
 @section('auth_media_copy', 'One staff sign-in for the CRM dashboard, commercial workspace, team directory, requests, and customer activity.')
 

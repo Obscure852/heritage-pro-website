@@ -432,6 +432,11 @@
             font-weight: 600;
         }
 
+        .crm-calendar-attendee-status {
+            color: #64748b;
+            font-weight: 700;
+        }
+
         .crm-calendar-status-scheduled .fc-title,
         .crm-calendar-status-scheduled .fc-list-item-title {
             font-weight: 600;
@@ -786,7 +791,9 @@
                                 <select class="form-select" id="crm-calendar-form-calendar" name="calendar_id" required>
                                     @foreach ($visibleCalendars as $calendar)
                                         @if ($calendar->can_edit)
-                                            <option value="{{ $calendar->id }}">{{ $calendar->name }} ({{ ucfirst($calendar->viewer_permission) }})</option>
+                                            <option value="{{ $calendar->id }}" {{ (int) $calendar->id === (int) $defaultCalendarId ? 'selected' : '' }}>
+                                                {{ $calendar->name }} ({{ ucfirst($calendar->viewer_permission) }})
+                                            </option>
                                         @endif
                                     @endforeach
                                 </select>
@@ -898,6 +905,7 @@
                                         <option value="{{ $owner->id }}">{{ $owner->name }}</option>
                                     @endforeach
                                 </select>
+                                <div class="crm-calendar-modal-attendees" id="crm-calendar-attendee-statuses" aria-live="polite"></div>
                             </div>
 
                             <div>
@@ -1021,6 +1029,7 @@
             var titleEl = document.getElementById('crm-calendar-title');
             var defaultView = @json($defaultView);
             var agendaWindowDays = {{ (int) config('heritage_crm.calendar.agenda_days', 14) }};
+            var attendeeResponseLabels = @json(config('heritage_crm.calendar_attendee_response_statuses', []));
             var initialDate = @json($selectedDate->toDateString());
             var lastCalendarView = ['timeGridDay', 'timeGridWeek', 'dayGridMonth'].indexOf(defaultView) !== -1 ? defaultView : 'timeGridWeek';
             var isAgendaMode = defaultView === 'agenda';
@@ -1044,6 +1053,7 @@
             var contactField = document.getElementById('crm-calendar-form-contact');
             var requestField = document.getElementById('crm-calendar-form-request');
             var ownerField = document.getElementById('crm-calendar-form-owner');
+            var attendeeStatuses = document.getElementById('crm-calendar-attendee-statuses');
             var selectedEventId = null;
             var selectedEventData = null;
             var calendarFilterCheckboxes = Array.from(document.querySelectorAll('.crm-calendar-filter-checkbox'));
@@ -1161,6 +1171,29 @@
                 readonlyMeta.innerHTML = '';
             }
 
+            function renderAttendeeStatuses(attendees) {
+                attendeeStatuses.innerHTML = '';
+
+                if (!attendees || !attendees.length) {
+                    return;
+                }
+
+                attendees.forEach(function (attendee) {
+                    var pill = document.createElement('span');
+                    var name = document.createElement('span');
+                    var status = document.createElement('span');
+
+                    pill.className = 'crm-calendar-attendee-pill';
+                    name.textContent = attendee.name || attendee.email || 'Attendee';
+                    status.className = 'crm-calendar-attendee-status';
+                    status.textContent = attendeeResponseLabels[attendee.response_status] || 'Pending';
+
+                    pill.appendChild(name);
+                    pill.appendChild(status);
+                    attendeeStatuses.appendChild(pill);
+                });
+            }
+
             function setReadonlyView(eventData) {
                 readonlyView.classList.remove('hidden');
                 readonlyMessage.textContent = eventData.extendedProps && eventData.extendedProps.visibility === 'private'
@@ -1183,6 +1216,7 @@
                 selectedEventId = null;
                 selectedEventData = null;
                 clearReadonlyView();
+                renderAttendeeStatuses([]);
                 eventForm.classList.remove('crm-calendar-hidden');
                 deleteButton.classList.add('crm-calendar-hidden');
                 completeButton.classList.add('crm-calendar-hidden');
@@ -1263,6 +1297,8 @@
                 Array.from(document.getElementById('crm-calendar-form-attendees').options).forEach(function (option) {
                     option.selected = (eventData.extendedProps.attendee_user_ids || []).map(String).indexOf(option.value) !== -1;
                 });
+
+                renderAttendeeStatuses(eventData.extendedProps.attendees || []);
 
                 Array.from(document.getElementById('crm-calendar-form-reminders').options).forEach(function (option) {
                     option.selected = (eventData.extendedProps.reminders || []).map(String).indexOf(option.value) !== -1;
