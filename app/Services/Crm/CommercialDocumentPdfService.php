@@ -64,7 +64,7 @@ class CommercialDocumentPdfService
             $type === 'quote' ? 'pdf.crm.commercial.quote' : 'pdf.crm.commercial.invoice',
             [
                 'document' => $document,
-                'accountName' => $document->customer?->company_name ?: $document->lead?->company_name ?: 'Unassigned account',
+                'accountName' => $document->customer?->company_name ?: $document->lead?->company_name ?: $document->contact?->name ?: 'Unassigned account',
             ]
         )->setPaper('a4')->output();
 

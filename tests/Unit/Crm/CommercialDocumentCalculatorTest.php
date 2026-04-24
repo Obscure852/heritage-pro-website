@@ -51,4 +51,33 @@ class CommercialDocumentCalculatorTest extends TestCase
 
         (new CommercialDocumentCalculator())->discountAmount(100, 'bogus', 10);
     }
+
+    public function test_it_applies_document_tax_after_discounts_and_allocates_without_rounding_drift(): void
+    {
+        $calculator = new CommercialDocumentCalculator();
+
+        $result = $calculator->calculate([
+            [
+                'quantity' => 1,
+                'unit_price' => 99.99,
+                'discount_type' => 'none',
+                'discount_value' => 0,
+                'tax_rate' => 0,
+            ],
+            [
+                'quantity' => 2,
+                'unit_price' => 50,
+                'discount_type' => 'fixed',
+                'discount_value' => 10,
+                'tax_rate' => 0,
+            ],
+        ], 'none', 0, 2, 'document', 14);
+
+        $this->assertSame('document', $result['tax_scope']);
+        $this->assertSame(14.0, $result['document_tax_rate']);
+        $this->assertSame(189.99, $result['subtotal_amount']);
+        $this->assertSame(26.6, $result['tax_amount']);
+        $this->assertSame(216.59, $result['total_amount']);
+        $this->assertSame(26.6, round(array_sum(array_column($result['lines'], 'tax_amount')), 2));
+    }
 }

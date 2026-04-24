@@ -81,7 +81,7 @@ class CrmCommercialFoundationTest extends TestCase
             ->assertOk()
             ->assertSee('Dashboard')
             ->assertSee(route('crm.products.catalog.index'), false)
-            ->assertSee(route('crm.settings.commercial'), false)
+            ->assertSee(route('crm.products.settings'), false)
             ->assertDontSee(route('crm.users.index'), false);
 
         $this->actingAs($finance)
@@ -90,12 +90,12 @@ class CrmCommercialFoundationTest extends TestCase
 
         $this->actingAs($finance)
             ->get(route('crm.settings.index'))
-            ->assertRedirect(route('crm.settings.commercial'));
+            ->assertForbidden();
 
         $this->actingAs($finance)
-            ->get(route('crm.settings.commercial'))
+            ->get(route('crm.products.settings'))
             ->assertOk()
-            ->assertSee('Commercial');
+            ->assertSee('Products Settings');
     }
 
     public function test_commercial_foundation_seeds_defaults_and_exposes_expected_relationships(): void

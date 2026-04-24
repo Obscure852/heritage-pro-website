@@ -23,6 +23,7 @@ class QuoteUpsertRequest extends FormRequest
             'subject' => ['nullable', 'string', 'max:255'],
             'quote_date' => ['required', 'date'],
             'valid_until' => ['required', 'date', 'after_or_equal:quote_date'],
+            'document_tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'document_discount_type' => ['required', Rule::in(array_keys(config('heritage_crm.commercial_discount_types', [])))],
             'document_discount_value' => ['nullable', 'numeric', 'min:0', 'max:999999999.99'],
             'notes' => ['nullable', 'string', 'max:5000'],
@@ -60,6 +61,7 @@ class QuoteUpsertRequest extends FormRequest
             'subject' => trim((string) $this->input('subject')),
             'notes' => trim((string) $this->input('notes')),
             'terms' => trim((string) $this->input('terms')),
+            'document_tax_rate' => $this->input('document_tax_rate'),
             'document_discount_value' => $this->input('document_discount_value', 0),
             'items' => $items,
         ]);

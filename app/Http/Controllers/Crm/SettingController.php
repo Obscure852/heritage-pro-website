@@ -16,7 +16,7 @@ class SettingController extends CrmController
         if (! $this->crmUser()->canManageCrmSettings()) {
             $this->authorizeCommercialSettings();
 
-            return redirect()->route('crm.settings.commercial');
+            return redirect()->route('crm.products.settings');
         }
 
         return $this->renderIndex($request, 'overview');

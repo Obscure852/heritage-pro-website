@@ -30,6 +30,8 @@ class CrmInvoice extends Model
         'currency_symbol',
         'currency_position',
         'currency_precision',
+        'tax_scope',
+        'document_tax_rate',
         'document_discount_type',
         'document_discount_value',
         'document_discount_amount',
@@ -47,6 +49,7 @@ class CrmInvoice extends Model
     protected $casts = [
         'invoice_date' => 'date',
         'currency_precision' => 'integer',
+        'document_tax_rate' => 'decimal:2',
         'document_discount_value' => 'decimal:2',
         'document_discount_amount' => 'decimal:2',
         'subtotal_amount' => 'decimal:2',

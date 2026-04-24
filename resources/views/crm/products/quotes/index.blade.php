@@ -2,7 +2,7 @@
 
 @section('title', 'CRM Quotes')
 @section('crm_heading', 'Products')
-@section('crm_subheading', 'Prepare, review, and track quotes against leads or customers from inside the CRM workspace.')
+@section('crm_subheading', 'Prepare, review, and track quotes for leads, customer renewals, or direct contacts from inside the CRM workspace.')
 
 @section('crm_header_stats')
     @include('crm.partials.header-stat', ['value' => number_format($draftCount), 'label' => 'Draft'])
@@ -87,7 +87,7 @@
                                         <strong><a href="{{ route('crm.products.quotes.show', $quote) }}">{{ $quote->quote_number }}</a></strong>
                                         <span class="crm-muted">{{ $quote->subject ?: 'No subject' }} · {{ $quote->items_count }} line(s) · {{ $quote->quote_date?->format('d M Y') }}</span>
                                     </td>
-                                    <td>{{ $quote->customer?->company_name ?: $quote->lead?->company_name ?: 'Unassigned' }}</td>
+                                    <td>{{ $quote->customer?->company_name ?: $quote->lead?->company_name ?: ($quote->contact ? 'Direct contact' : 'Unassigned') }}</td>
                                     <td>{{ $quote->contact?->name ?: 'No contact' }}</td>
                                     <td>
                                         <span class="crm-pill {{ in_array($quote->status, ['accepted', 'sent'], true) ? 'success' : ($quote->status === 'draft' ? 'primary' : 'muted') }}">

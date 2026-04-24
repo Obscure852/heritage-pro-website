@@ -10,6 +10,13 @@
         @case('play')
             <polygon points="5 3 19 12 5 21 5 3"/>
             @break
+        @case('sun')
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+            @break
+        @case('moon')
+            <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/>
+            @break
         @case('chevron')
             <path d="M6 9l6 6 6-6"/>
             @break

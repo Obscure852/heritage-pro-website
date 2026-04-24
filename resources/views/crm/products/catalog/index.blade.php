@@ -107,8 +107,9 @@
                                     <td>{{ $productTypes[$product->type] ?? ucfirst($product->type) }}</td>
                                     <td>{{ $billingFrequencies[$product->billing_frequency] ?? ucfirst($product->billing_frequency) }}</td>
                                     <td>
-                                        {{ number_format((float) $product->default_unit_price, 2) }}
-                                        <span class="crm-muted">{{ number_format((float) $product->default_tax_rate, 2) }}% tax</span>
+                                        @php($adjustedUnitPrice = (float) $product->default_unit_price * (1 + ((float) $product->cpi_increase_rate / 100)))
+                                        {{ number_format($adjustedUnitPrice, 2) }}
+                                        <span class="crm-muted">{{ number_format((float) $product->default_unit_price, 2) }} base · {{ number_format((float) $product->cpi_increase_rate, 2) }}% CPI · {{ number_format((float) $product->default_tax_rate, 2) }}% tax</span>
                                     </td>
                                     <td>
                                         <span class="crm-pill {{ $product->active ? 'success' : 'muted' }}">

@@ -48,12 +48,28 @@
                         <strong>{{ $customer->phone ?: 'Not set' }}</strong>
                     </div>
                     <div class="crm-meta-row">
+                        <span>Fax</span>
+                        <strong>{{ $customer->fax ?: 'Not set' }}</strong>
+                    </div>
+                    <div class="crm-meta-row">
                         <span>Website</span>
                         <strong>{{ $customer->website ?: 'Not set' }}</strong>
                     </div>
                     <div class="crm-meta-row">
                         <span>Country</span>
                         <strong>{{ $customer->country ?: 'Not set' }}</strong>
+                    </div>
+                    <div class="crm-meta-row">
+                        <span>Region</span>
+                        <strong>{{ $customer->region ?: 'Not set' }}</strong>
+                    </div>
+                    <div class="crm-meta-row">
+                        <span>Location</span>
+                        <strong>{{ $customer->location ?: 'Not set' }}</strong>
+                    </div>
+                    <div class="crm-meta-row">
+                        <span>P.O. Box address</span>
+                        <strong>{{ $customer->postal_address ?: 'Not set' }}</strong>
                     </div>
                     <div class="crm-meta-row">
                         <span>Status</span>

@@ -24,10 +24,4 @@
             <span>Imports</span>
         </a>
     @endif
-    @if ($crmUser->canManageCommercialSettings())
-        <a href="{{ route('crm.settings.commercial') }}" @class(['crm-tab', 'is-active' => ($activeSection ?? '') === 'commercial'])>
-            <i class="bx bx-credit-card-front"></i>
-            <span>Commercial</span>
-        </a>
-    @endif
 </div>

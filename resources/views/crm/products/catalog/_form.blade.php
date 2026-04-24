@@ -31,11 +31,29 @@
         </div>
         <div class="crm-field">
             <label for="default_unit_label">Unit label</label>
-            <input id="default_unit_label" name="default_unit_label" value="{{ old('default_unit_label', $product->default_unit_label ?? 'unit') }}" placeholder="Enter unit label" required>
+            @php
+                $selectedUnitLabel = old('default_unit_label', $product->default_unit_label ?? 'unit');
+                $hasSelectedUnit = $productUnits->contains('label', $selectedUnitLabel);
+            @endphp
+            <select id="default_unit_label" name="default_unit_label" required>
+                @if (! $hasSelectedUnit && filled($selectedUnitLabel))
+                    <option value="{{ $selectedUnitLabel }}" selected>{{ $selectedUnitLabel }} · inactive/custom</option>
+                @endif
+                @foreach ($productUnits as $unit)
+                    <option value="{{ $unit->label }}" @selected($selectedUnitLabel === $unit->label)>{{ $unit->name }} · {{ $unit->label }}</option>
+                @endforeach
+                @if ($productUnits->isEmpty())
+                    <option value="unit" @selected($selectedUnitLabel === 'unit')>Unit · unit</option>
+                @endif
+            </select>
         </div>
         <div class="crm-field">
             <label for="default_unit_price">Default unit price</label>
             <input id="default_unit_price" name="default_unit_price" type="number" step="0.01" min="0" value="{{ old('default_unit_price', isset($product) ? number_format((float) $product->default_unit_price, 2, '.', '') : '0.00') }}" required>
+        </div>
+        <div class="crm-field">
+            <label for="cpi_increase_rate">CPI increase (%)</label>
+            <input id="cpi_increase_rate" name="cpi_increase_rate" type="number" step="0.01" min="0" max="100" value="{{ old('cpi_increase_rate', isset($product) ? number_format((float) $product->cpi_increase_rate, 2, '.', '') : '0.00') }}">
         </div>
         <div class="crm-field">
             <label for="default_tax_rate">Default tax rate (%)</label>

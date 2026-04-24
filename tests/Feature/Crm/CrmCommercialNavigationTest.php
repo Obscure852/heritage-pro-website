@@ -48,7 +48,8 @@ class CrmCommercialNavigationTest extends TestCase
             ->get(route('crm.dashboard'))
             ->assertOk()
             ->assertSee(route('crm.products.catalog.index'), false)
-            ->assertSee(route('crm.settings.commercial'), false)
+            ->assertSee(route('crm.products.settings'), false)
+            ->assertDontSee(route('crm.settings.commercial'), false)
             ->assertDontSee(route('crm.users.index'), false);
 
         $this->actingAs($manager)
@@ -56,14 +57,14 @@ class CrmCommercialNavigationTest extends TestCase
             ->assertOk()
             ->assertSee(route('crm.products.catalog.index'), false)
             ->assertDontSee(route('crm.settings.index'), false)
-            ->assertDontSee(route('crm.settings.commercial'), false);
+            ->assertDontSee(route('crm.products.settings'), false);
 
         $this->actingAs($rep)
             ->get(route('crm.dashboard'))
             ->assertOk()
             ->assertSee(route('crm.products.catalog.index'), false)
             ->assertDontSee(route('crm.settings.index'), false)
-            ->assertDontSee(route('crm.settings.commercial'), false);
+            ->assertDontSee(route('crm.products.settings'), false);
     }
 
     public function test_rep_quote_and_invoice_indexes_only_show_owned_documents(): void

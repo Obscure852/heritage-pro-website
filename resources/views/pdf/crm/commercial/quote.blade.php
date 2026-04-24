@@ -78,7 +78,7 @@
                         <td>{{ number_format((float) $item->quantity, 2) }}</td>
                         <td>{{ $document->currency_code }} {{ number_format((float) $item->unit_price, 2) }}</td>
                         <td>{{ ucfirst($item->discount_type) }} · {{ number_format((float) $item->discount_value, 2) }}</td>
-                        <td>{{ number_format((float) $item->tax_rate, 2) }}%</td>
+                        <td>{{ $document->tax_scope === 'document' ? 'Document' : number_format((float) $item->tax_rate, 2) . '%' }}</td>
                         <td>{{ $document->currency_code }} {{ number_format((float) $item->total_amount, 2) }}</td>
                     </tr>
                 @endforeach
@@ -95,7 +95,7 @@
                 <td style="text-align: right;">{{ $document->currency_code }} {{ number_format((float) $document->document_discount_amount, 2) }}</td>
             </tr>
             <tr>
-                <td>Tax</td>
+                <td>Tax{{ $document->tax_scope === 'document' ? ' (' . number_format((float) $document->document_tax_rate, 2) . '% document)' : '' }}</td>
                 <td style="text-align: right;">{{ $document->currency_code }} {{ number_format((float) $document->tax_amount, 2) }}</td>
             </tr>
             <tr class="grand">

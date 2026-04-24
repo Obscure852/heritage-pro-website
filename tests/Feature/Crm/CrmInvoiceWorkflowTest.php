@@ -87,6 +87,7 @@ class CrmInvoiceWorkflowTest extends TestCase
             'currency_id' => $currency->id,
             'subject' => 'Enterprise Renewal Invoice',
             'invoice_date' => now()->toDateString(),
+            'document_tax_rate' => '14.00',
             'document_discount_type' => 'percent',
             'document_discount_value' => '10',
             'notes' => 'Internal billing note',
@@ -139,9 +140,11 @@ class CrmInvoiceWorkflowTest extends TestCase
                 'discount_value' => 50,
                 'tax_rate' => 0,
             ],
-        ], 'percent', 10, 2);
+        ], 'percent', 10, 2, 'document', 14);
 
         $this->assertSame('draft', $invoice->status);
+        $this->assertSame('document', $invoice->tax_scope);
+        $this->assertSame('14.00', number_format((float) $invoice->document_tax_rate, 2, '.', ''));
         $this->assertNotNull($invoice->invoice_number);
         $this->assertSame($repOwner->id, $invoice->owner_id);
         $this->assertSame($lead->id, $invoice->lead_id);
@@ -171,6 +174,7 @@ class CrmInvoiceWorkflowTest extends TestCase
             'item_name' => 'Implementation Workshop',
             'unit_label' => 'session',
             'discount_type' => 'fixed',
+            'tax_rate' => '14.00',
         ]);
     }
 
@@ -208,6 +212,7 @@ class CrmInvoiceWorkflowTest extends TestCase
             'billing_frequency' => 'annual',
             'default_unit_label' => 'package',
             'default_unit_price' => 1000,
+            'cpi_increase_rate' => 5,
             'default_tax_rate' => 0,
             'active' => true,
         ]);
@@ -230,7 +235,7 @@ class CrmInvoiceWorkflowTest extends TestCase
                         'item_description' => 'Annual support package',
                         'unit_label' => 'package',
                         'quantity' => '1',
-                        'unit_price' => '1000.00',
+                        'unit_price' => '1050.00',
                         'tax_rate' => '0.00',
                         'discount_type' => 'none',
                         'discount_value' => '0.00',
@@ -242,14 +247,16 @@ class CrmInvoiceWorkflowTest extends TestCase
         $invoice = CrmInvoice::query()->with('items')->firstOrFail();
         $originalItem = $invoice->items->firstOrFail();
 
-        $this->assertSame('1000.00', number_format((float) $originalItem->unit_price, 2, '.', ''));
+        $this->assertSame('1050.00', number_format((float) $originalItem->unit_price, 2, '.', ''));
+        $this->assertSame('line', $invoice->tax_scope);
 
         $product->update([
             'default_unit_price' => 3250,
+            'cpi_increase_rate' => 8,
             'default_tax_rate' => 12,
         ]);
 
-        $this->assertSame('1000.00', number_format((float) $invoice->fresh()->items()->first()->unit_price, 2, '.', ''));
+        $this->assertSame('1050.00', number_format((float) $invoice->fresh()->items()->first()->unit_price, 2, '.', ''));
 
         $this->actingAs($finance)
             ->patch(route('crm.products.invoices.update', $invoice), [
@@ -267,7 +274,7 @@ class CrmInvoiceWorkflowTest extends TestCase
                         'item_description' => 'Annual support package',
                         'unit_label' => 'package',
                         'quantity' => '2',
-                        'unit_price' => '1000.00',
+                        'unit_price' => '1050.00',
                         'tax_rate' => '0.00',
                         'discount_type' => 'none',
                         'discount_value' => '0.00',
@@ -280,8 +287,8 @@ class CrmInvoiceWorkflowTest extends TestCase
         $updatedItem = $updatedInvoice->items->firstOrFail();
 
         $this->assertSame('Support Renewal Invoice Updated', $updatedInvoice->subject);
-        $this->assertSame('1000.00', number_format((float) $updatedItem->unit_price, 2, '.', ''));
-        $this->assertSame('2000.00', number_format((float) $updatedInvoice->total_amount, 2, '.', ''));
+        $this->assertSame('1050.00', number_format((float) $updatedItem->unit_price, 2, '.', ''));
+        $this->assertSame('2100.00', number_format((float) $updatedInvoice->total_amount, 2, '.', ''));
     }
 
     public function test_invoice_status_transitions_are_finance_owned_and_follow_expected_lifecycle(): void

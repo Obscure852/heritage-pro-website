@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Crm;
 
 use App\Http\Requests\Crm\ProductUpsertRequest;
 use App\Models\CrmProduct;
+use App\Models\CrmProductUnit;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -127,6 +128,7 @@ class ProductController extends CrmController
             'product' => $crmProduct,
             'productTypes' => config('heritage_crm.commercial_product_types', []),
             'billingFrequencies' => config('heritage_crm.commercial_billing_frequencies', []),
+            'productUnits' => CrmProductUnit::query()->active()->ordered()->get(),
         ];
     }
 
@@ -134,6 +136,7 @@ class ProductController extends CrmController
     {
         $payload = $request->validated();
         $payload['active'] = $request->has('active') ? $request->boolean('active') : true;
+        $payload['cpi_increase_rate'] = $payload['cpi_increase_rate'] ?? 0;
         $payload['default_tax_rate'] = $payload['default_tax_rate'] ?? 0;
 
         return $payload;

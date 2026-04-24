@@ -28,7 +28,11 @@ class CrmLeadConversionTest extends TestCase
             'status' => 'qualified',
             'email' => 'info@unifiedcollege.example',
             'phone' => '+267 000 0000',
+            'fax' => '+267 000 0001',
             'country' => 'Botswana',
+            'region' => 'South-East',
+            'location' => 'Gaborone',
+            'postal_address' => 'P.O. Box 100',
         ]);
 
         $contact = Contact::query()->create([
@@ -64,10 +68,48 @@ class CrmLeadConversionTest extends TestCase
         $this->assertNotNull($customer);
         $this->assertSame('converted', $lead->status);
         $this->assertNotNull($lead->converted_at);
+        $this->assertSame('+267 000 0001', $customer->fax);
+        $this->assertSame('South-East', $customer->region);
+        $this->assertSame('Gaborone', $customer->location);
+        $this->assertSame('P.O. Box 100', $customer->postal_address);
         $this->assertNull($contact->lead_id);
         $this->assertSame($customer->id, $contact->customer_id);
         $this->assertSame($lead->id, $request->lead_id);
         $this->assertSame($customer->id, $request->customer_id);
+    }
+
+    public function test_admin_can_create_lead_with_fax_and_country_select_value(): void
+    {
+        $admin = $this->createUser([
+            'email' => 'lead-create-admin@example.com',
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('crm.leads.store'), [
+                'owner_id' => $admin->id,
+                'company_name' => 'Fax Enabled Lead',
+                'industry' => 'education',
+                'email' => 'fax.lead@example.com',
+                'phone' => '+267 100 2000',
+                'fax' => '+267 100 2001',
+                'country' => 'BW',
+                'region' => 'South-East',
+                'location' => 'Gaborone',
+                'postal_address' => 'P.O. Box 200',
+                'status' => 'active',
+                'notes' => 'Created from lead form.',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('leads', [
+            'company_name' => 'Fax Enabled Lead',
+            'industry' => 'Education',
+            'fax' => '+267 100 2001',
+            'country' => 'Botswana',
+            'region' => 'South-East',
+            'location' => 'Gaborone',
+            'postal_address' => 'P.O. Box 200',
+        ]);
     }
 
     public function test_admin_can_import_customer_and_create_source_lead(): void
@@ -83,7 +125,11 @@ class CrmLeadConversionTest extends TestCase
                 'industry' => 'Education',
                 'email' => 'legacy@example.com',
                 'phone' => '+267 111 2222',
+                'fax' => '+267 111 2223',
                 'country' => 'Botswana',
+                'region' => 'Central',
+                'location' => 'Serowe',
+                'postal_address' => 'Private Bag 10',
                 'status' => 'onboarding',
                 'purchased_at' => '2026-04-01',
                 'notes' => 'Imported from legacy account list.',
@@ -96,6 +142,14 @@ class CrmLeadConversionTest extends TestCase
         $this->assertSame('Legacy Campus', $lead->company_name);
         $this->assertSame('converted', $lead->status);
         $this->assertNotNull($lead->converted_at);
+        $this->assertSame('+267 111 2223', $customer->fax);
+        $this->assertSame('Central', $customer->region);
+        $this->assertSame('Serowe', $customer->location);
+        $this->assertSame('Private Bag 10', $customer->postal_address);
+        $this->assertSame('+267 111 2223', $lead->fax);
+        $this->assertSame('Central', $lead->region);
+        $this->assertSame('Serowe', $lead->location);
+        $this->assertSame('Private Bag 10', $lead->postal_address);
         $this->assertSame('onboarding', $customer->status);
         $this->assertSame($lead->id, $customer->lead_id);
     }

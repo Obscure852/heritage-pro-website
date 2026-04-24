@@ -59,12 +59,28 @@
                         <strong>{{ $lead->phone ?: 'Not set' }}</strong>
                     </div>
                     <div class="crm-meta-row">
+                        <span>Fax</span>
+                        <strong>{{ $lead->fax ?: 'Not set' }}</strong>
+                    </div>
+                    <div class="crm-meta-row">
                         <span>Website</span>
                         <strong>{{ $lead->website ?: 'Not set' }}</strong>
                     </div>
                     <div class="crm-meta-row">
                         <span>Country</span>
                         <strong>{{ $lead->country ?: 'Not set' }}</strong>
+                    </div>
+                    <div class="crm-meta-row">
+                        <span>Region</span>
+                        <strong>{{ $lead->region ?: 'Not set' }}</strong>
+                    </div>
+                    <div class="crm-meta-row">
+                        <span>Location</span>
+                        <strong>{{ $lead->location ?: 'Not set' }}</strong>
+                    </div>
+                    <div class="crm-meta-row">
+                        <span>P.O. Box address</span>
+                        <strong>{{ $lead->postal_address ?: 'Not set' }}</strong>
                     </div>
                     <div class="crm-meta-row">
                         <span>Owner</span>

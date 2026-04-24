@@ -34,7 +34,7 @@
                 <div class="crm-filter-grid">
                     <div class="crm-field">
                         <label for="q">Search</label>
-                        <input id="q" name="q" value="{{ $filters['q'] }}" placeholder="Institution, sector, email, phone">
+                        <input id="q" name="q" value="{{ $filters['q'] }}" placeholder="Institution, sector, email, phone, region, P.O. Box">
                     </div>
                     <div class="crm-field">
                         <label for="owner_id">Owner</label>
@@ -95,7 +95,7 @@
                                 <tr>
                                     <td>
                                         <strong><a href="{{ route('crm.leads.show', $lead) }}">{{ $lead->company_name }}</a></strong>
-                                        <span class="crm-muted">{{ $lead->country ?: 'No country set' }}</span>
+                                        <span class="crm-muted">{{ collect([$lead->country, $lead->region, $lead->location, $lead->postal_address])->filter()->implode(' · ') ?: 'No location set' }}</span>
                                     </td>
                                     <td>{{ $lead->owner?->name ?: 'Unassigned' }}</td>
                                     <td>

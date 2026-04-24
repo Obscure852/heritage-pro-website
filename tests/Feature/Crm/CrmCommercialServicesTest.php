@@ -90,6 +90,46 @@ class CrmCommercialServicesTest extends TestCase
         $this->assertSame(now()->addDays(14)->toDateString(), $validated['valid_until']);
     }
 
+    public function test_validation_service_accepts_contact_only_quote_payload(): void
+    {
+        $owner = $this->createUser([
+            'email' => 'validator-contact-quote@example.com',
+            'role' => 'rep',
+        ]);
+
+        $contact = Contact::query()->create([
+            'owner_id' => $owner->id,
+            'name' => 'Direct Validation Contact',
+            'email' => 'direct.validation@example.com',
+            'is_primary' => false,
+        ]);
+
+        $stage = SalesStage::query()->firstOrFail();
+        $request = CrmRequest::query()->create([
+            'owner_id' => $owner->id,
+            'contact_id' => $contact->id,
+            'sales_stage_id' => $stage->id,
+            'type' => 'sales',
+            'title' => 'Direct Validation Request',
+            'outcome' => 'pending',
+        ]);
+
+        $validated = app(CommercialDocumentValidationService::class)->validateQuote([
+            'owner_id' => $owner->id,
+            'contact_id' => $contact->id,
+            'request_id' => $request->id,
+            'quote_number' => 'QT-00009',
+            'status' => 'draft',
+            'quote_date' => now()->toDateString(),
+            'valid_until' => now()->addDays(14)->toDateString(),
+        ]);
+
+        $this->assertArrayNotHasKey('lead_id', $validated);
+        $this->assertArrayNotHasKey('customer_id', $validated);
+        $this->assertSame($contact->id, $validated['contact_id']);
+        $this->assertSame($request->id, $validated['request_id']);
+    }
+
     public function test_validation_service_accepts_valid_invoice_payload(): void
     {
         $owner = $this->createUser([

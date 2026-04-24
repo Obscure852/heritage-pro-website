@@ -5,11 +5,11 @@ return [
         'default_title' => 'Heritage Pro — Intelligent school management for Africa',
     ],
     'nav' => [
+        ['label' => 'About', 'route' => 'website.about'],
         ['label' => 'Products', 'route' => 'website.products'],
         ['label' => 'Features', 'route' => 'website.features'],
         ['label' => 'Customers', 'route' => 'website.customers'],
         ['label' => 'Pricing', 'route' => 'website.pricing'],
-        ['label' => 'About', 'route' => 'website.about'],
         ['label' => 'Team', 'route' => 'website.team'],
         ['label' => 'FAQ', 'route' => 'website.faq'],
     ],
@@ -17,7 +17,7 @@ return [
         'home' => [
             'title' => 'Heritage Pro — Intelligent school management for Africa',
             'hero' => [
-                'eyebrow' => 'Built in Botswana · Trusted across Southern Africa',
+                'eyebrow' => '',
                 'title' => 'The intelligent operating system for every school, college, and institution.',
                 'lead' => 'Heritage Pro unifies admissions, academics, attendance, fees, communications, and reporting on a single, secure platform — built for K-12, secondary schools, and tertiary institutions.',
                 'secondary_label' => 'See the product',

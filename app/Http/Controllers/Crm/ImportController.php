@@ -40,6 +40,11 @@ class ImportController extends CrmController
         return $this->renderEntityPage('leads');
     }
 
+    public function customers(): View
+    {
+        return $this->renderEntityPage('customers');
+    }
+
     public function contacts(): View
     {
         return $this->renderEntityPage('contacts');

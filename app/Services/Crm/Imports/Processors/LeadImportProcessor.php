@@ -4,9 +4,12 @@ namespace App\Services\Crm\Imports\Processors;
 
 use App\Models\CrmImportRun;
 use App\Models\CrmImportRunRow;
+use App\Models\CrmSector;
 use App\Models\Lead;
 use App\Models\User;
 use App\Services\Crm\Imports\Contracts\CrmImportEntityProcessor;
+use App\Support\CountryList;
+use Illuminate\Validation\Rule;
 
 class LeadImportProcessor extends AbstractCrmImportProcessor implements CrmImportEntityProcessor
 {
@@ -25,23 +28,31 @@ class LeadImportProcessor extends AbstractCrmImportProcessor implements CrmImpor
             'owner_id' => $owner?->id ?: $initiator->id,
             'owner_email' => $ownerEmail,
             'company_name' => $this->normalizeString($row['company_name'] ?? null),
-            'industry' => $this->normalizeString($row['industry'] ?? null),
+            'industry' => CrmSector::normalizeName($this->normalizeString($row['industry'] ?? null)),
             'website' => $this->normalizeString($row['website'] ?? null),
             'email' => $this->normalizeString($row['email'] ?? null),
             'phone' => $this->normalizeString($row['phone'] ?? null),
-            'country' => $this->normalizeString($row['country'] ?? null),
-            'status' => $this->normalizeString($row['status'] ?? null) ?: 'active',
+            'fax' => $this->normalizeString($row['fax'] ?? null),
+            'country' => CountryList::normalizeName($this->normalizeString($row['country'] ?? null)),
+            'region' => $this->normalizeString($row['region'] ?? null),
+            'location' => $this->normalizeString($row['location'] ?? null),
+            'postal_address' => $this->normalizeString($row['postal_address'] ?? null),
+            'status' => $this->normalizeLeadStatus($row['status'] ?? null) ?: 'active',
             'notes' => $this->normalizeString($row['notes'] ?? null),
         ];
 
         $errors = $this->validationErrors($payload, [
             'import_reference' => ['required', 'string', 'max:160'],
             'company_name' => ['required', 'string', 'max:160'],
-            'industry' => ['nullable', 'string', 'max:120'],
+            'industry' => ['nullable', 'string', 'max:120', Rule::in(CrmSector::activeNames())],
             'website' => ['nullable', 'url', 'max:255'],
             'email' => ['nullable', 'email', 'max:160'],
             'phone' => ['nullable', 'string', 'max:60'],
-            'country' => ['nullable', 'string', 'max:120'],
+            'fax' => ['nullable', 'string', 'max:60'],
+            'country' => ['nullable', 'string', 'max:120', Rule::in(CountryList::names())],
+            'region' => ['nullable', 'string', 'max:120'],
+            'location' => ['nullable', 'string', 'max:160'],
+            'postal_address' => ['nullable', 'string', 'max:255'],
             'status' => ['required', 'in:active,qualified,lost'],
             'notes' => ['nullable', 'string', 'max:5000'],
         ]);
@@ -75,7 +86,11 @@ class LeadImportProcessor extends AbstractCrmImportProcessor implements CrmImpor
             'website' => $payload['website'],
             'email' => $payload['email'],
             'phone' => $payload['phone'],
+            'fax' => $payload['fax'],
             'country' => $payload['country'],
+            'region' => $payload['region'],
+            'location' => $payload['location'],
+            'postal_address' => $payload['postal_address'],
             'notes' => $payload['notes'],
         ];
 
@@ -108,5 +123,28 @@ class LeadImportProcessor extends AbstractCrmImportProcessor implements CrmImpor
             'action' => 'create',
             'record_id' => $lead->id,
         ];
+    }
+
+    private function normalizeLeadStatus(mixed $value): ?string
+    {
+        $status = $this->normalizeString($value);
+
+        if ($status === null) {
+            return null;
+        }
+
+        $canonical = strtolower(str_replace([' ', '-', '_'], '', $status));
+
+        foreach (config('heritage_crm.lead_statuses', []) as $key => $label) {
+            if ($canonical === strtolower(str_replace([' ', '-', '_'], '', (string) $key))
+                || $canonical === strtolower(str_replace([' ', '-', '_'], '', (string) $label))) {
+                return (string) $key;
+            }
+        }
+
+        return match ($canonical) {
+            'new', 'open', 'prospect', 'pipeline' => 'active',
+            default => $status,
+        };
     }
 }

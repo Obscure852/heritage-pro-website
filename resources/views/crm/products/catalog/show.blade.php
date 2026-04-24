@@ -45,10 +45,14 @@
             </div>
         </section>
 
-        <div class="crm-grid cols-3">
+        <div class="crm-grid cols-4">
             <div class="crm-metric">
                 <span>Default unit price</span>
                 <strong>{{ number_format((float) $product->default_unit_price, 2) }}</strong>
+            </div>
+            <div class="crm-metric">
+                <span>CPI adjusted price</span>
+                <strong>{{ number_format((float) $product->default_unit_price * (1 + ((float) $product->cpi_increase_rate / 100)), 2) }}</strong>
             </div>
             <div class="crm-metric">
                 <span>Linked quote lines</span>
@@ -89,6 +93,14 @@
                     <div class="crm-meta-row">
                         <span>Unit price</span>
                         <strong>{{ number_format((float) $product->default_unit_price, 2) }}</strong>
+                    </div>
+                    <div class="crm-meta-row">
+                        <span>CPI increase</span>
+                        <strong>{{ number_format((float) $product->cpi_increase_rate, 2) }}%</strong>
+                    </div>
+                    <div class="crm-meta-row">
+                        <span>CPI adjusted unit price</span>
+                        <strong>{{ number_format((float) $product->default_unit_price * (1 + ((float) $product->cpi_increase_rate / 100)), 2) }}</strong>
                     </div>
                     <div class="crm-meta-row">
                         <span>Default tax rate</span>

@@ -1,9 +1,25 @@
 <?php
 
+use App\Http\Controllers\Crm\CommercialSettingController;
 use App\Http\Controllers\Crm\InvoiceController;
 use App\Http\Controllers\Crm\ProductController;
 use App\Http\Controllers\Crm\QuoteController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/products/settings', [CommercialSettingController::class, 'index'])->name('products.settings');
+Route::patch('/products/settings', [CommercialSettingController::class, 'update'])->name('products.settings.update');
+Route::post('/products/settings/currencies', [CommercialSettingController::class, 'storeCurrency'])->name('products.settings.currencies.store');
+Route::get('/products/settings/currencies/{currency}/edit', [CommercialSettingController::class, 'editCurrency'])->name('products.settings.edit-currency');
+Route::patch('/products/settings/currencies/{currency}', [CommercialSettingController::class, 'updateCurrency'])->name('products.settings.currencies.update');
+Route::delete('/products/settings/currencies/{currency}', [CommercialSettingController::class, 'destroyCurrency'])->name('products.settings.currencies.destroy');
+Route::post('/products/settings/units', [CommercialSettingController::class, 'storeUnit'])->name('products.settings.units.store');
+Route::get('/products/settings/units/{unit}/edit', [CommercialSettingController::class, 'editUnit'])->name('products.settings.edit-unit');
+Route::patch('/products/settings/units/{unit}', [CommercialSettingController::class, 'updateUnit'])->name('products.settings.units.update');
+Route::delete('/products/settings/units/{unit}', [CommercialSettingController::class, 'destroyUnit'])->name('products.settings.units.destroy');
+Route::post('/products/settings/sectors', [CommercialSettingController::class, 'storeSector'])->name('products.settings.sectors.store');
+Route::get('/products/settings/sectors/{sector}/edit', [CommercialSettingController::class, 'editSector'])->name('products.settings.edit-sector');
+Route::patch('/products/settings/sectors/{sector}', [CommercialSettingController::class, 'updateSector'])->name('products.settings.sectors.update');
+Route::delete('/products/settings/sectors/{sector}', [CommercialSettingController::class, 'destroySector'])->name('products.settings.sectors.destroy');
 
 Route::get('/products/catalog', [ProductController::class, 'index'])->name('products.catalog.index');
 Route::get('/products/catalog/create', [ProductController::class, 'create'])->name('products.catalog.create');

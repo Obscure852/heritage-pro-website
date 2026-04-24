@@ -22,6 +22,7 @@ class CrmProduct extends Model
         'billing_frequency',
         'default_unit_label',
         'default_unit_price',
+        'cpi_increase_rate',
         'default_tax_rate',
         'active',
         'notes',
@@ -29,6 +30,7 @@ class CrmProduct extends Model
 
     protected $casts = [
         'default_unit_price' => 'decimal:2',
+        'cpi_increase_rate' => 'decimal:2',
         'default_tax_rate' => 'decimal:2',
         'active' => 'boolean',
     ];

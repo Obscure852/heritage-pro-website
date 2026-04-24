@@ -551,6 +551,8 @@
 
 
 :root {
+  color-scheme: light;
+
   /* ===== Brand ========================================================= */
   --brand-indigo-50:  #EEF0FB;
   --brand-indigo-100: #DCE0F5;
@@ -716,6 +718,63 @@
   --container-wide:   1400px;
 }
 
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  --brand-indigo-50:  #20264F;
+  --brand-indigo-100: #2A316A;
+  --brand-indigo-200: #3C4691;
+  --brand-indigo-300: #6873D8;
+  --brand-indigo-400: #8F9BFF;
+  --brand-indigo-500: #AAB5FF;
+  --brand-indigo-600: #C7D2FE;
+  --brand-indigo-700: #DFE6FF;
+  --brand-indigo-800: #182056;
+  --brand-indigo-900: #111746;
+
+  --brand-primary: var(--brand-indigo-500);
+  --brand-primary-hover: var(--brand-indigo-400);
+  --brand-primary-press: var(--brand-indigo-300);
+  --brand-gradient: linear-gradient(135deg, #5964D6 0%, #434DB0 55%, #29327D 100%);
+  --brand-gradient-soft: linear-gradient(135deg, rgba(143, 155, 255, 0.2) 0%, rgba(67, 77, 176, 0.12) 100%);
+
+  --success-50:  rgba(42, 168, 112, 0.18);
+  --success-100: rgba(42, 168, 112, 0.26);
+  --warning-50:  rgba(230, 148, 20, 0.18);
+  --warning-100: rgba(230, 148, 20, 0.26);
+  --danger-50:   rgba(217, 70, 70, 0.18);
+  --danger-100:  rgba(217, 70, 70, 0.26);
+  --info-50:     rgba(46, 122, 224, 0.18);
+  --info-100:    rgba(46, 122, 224, 0.26);
+
+  --fg-1: #F7F9FF;
+  --fg-2: #D7DEEE;
+  --fg-3: #9CA8BE;
+  --fg-4: #6F7B94;
+  --fg-link: var(--brand-indigo-500);
+
+  --bg-page: #0B1020;
+  --bg-surface: #121A32;
+  --bg-subtle: #18213E;
+  --bg-muted: #202B4B;
+  --bg-inverse: #F7F8FB;
+  --bg-brand-tint: rgba(170, 181, 255, 0.12);
+
+  --border-1: rgba(148, 163, 184, 0.18);
+  --border-2: rgba(148, 163, 184, 0.28);
+  --border-3: rgba(148, 163, 184, 0.38);
+  --border-focus: var(--brand-indigo-500);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.28);
+  --shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.18);
+  --shadow-md: 0 16px 36px rgba(0, 0, 0, 0.24);
+  --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.28);
+  --shadow-xl: 0 36px 80px rgba(0, 0, 0, 0.35);
+  --shadow-brand: 0 14px 30px rgba(67, 77, 176, 0.34);
+  --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.24);
+  --ring-focus: 0 0 0 3px rgba(170, 181, 255, 0.28);
+}
+
 /* =========================================================================
    Semantic element styles — consumable directly by simple HTML or used as
    a reference for component styles.
@@ -822,7 +881,7 @@ html, body { margin: 0; padding: 0; }
 body {
   font-family: var(--font-body);
   color: var(--fg-1);
-  background: #F7F8FB;
+  background: var(--bg-page);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -880,6 +939,38 @@ p.lead { font-size: 17px; color: var(--fg-3); line-height: 1.55; }
 .nav-links a { color: var(--fg-2); font-size: 13px; font-weight: 500; }
 .nav-links a:hover { color: var(--brand-indigo-500); }
 .nav-cta { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  background: var(--bg-surface);
+  color: var(--fg-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  transition: all 180ms var(--ease-out);
+}
+.theme-toggle:hover {
+  border-color: var(--brand-indigo-400);
+  color: var(--brand-indigo-500);
+  transform: translateY(-1px);
+}
+.theme-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+}
+.theme-toggle-icon {
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+html[data-theme="dark"] .theme-toggle-icon-sun,
+html:not([data-theme="dark"]) .theme-toggle-icon-moon {
+  display: inline-flex;
+}
 
 /* ---------- Hero ---------- */
 .hero { padding: 72px 0 96px; background: linear-gradient(180deg, var(--brand-indigo-50) 0%, transparent 60%); }
@@ -930,6 +1021,28 @@ p.lead { font-size: 17px; color: var(--fg-3); line-height: 1.55; }
 .window-chrome .url,
 .window-chrome .url:hover {
   text-decoration: none;
+}
+.browser-light-surface {
+  --fg-1: #141822;
+  --fg-2: #373D4B;
+  --fg-3: #6B7385;
+  --fg-4: #8C95A8;
+  --bg-subtle: #F5F7FA;
+  --bg-muted: #EDF0F5;
+  --border-1: #E2E7EF;
+  --border-2: #D3D9E3;
+  --brand-indigo-50: #EEF0FB;
+  --brand-indigo-100: #DCE0F5;
+  --brand-indigo-500: #434DB0;
+  --brand-indigo-600: #3B43A0;
+  --brand-indigo-700: #323A8C;
+  --success-50: #E8F7EF;
+  --success-700: #166E49;
+  --warning-50: #FFF4E0;
+  --warning-600: #BF7A0F;
+  --danger-50: #FDECEC;
+  --danger-700: #8E2626;
+  color: var(--fg-1);
 }
 
 /* ---------- Mini dashboard mock (reused in multiple sections) ---------- */
@@ -1288,6 +1401,145 @@ p.lead { font-size: 17px; color: var(--fg-3); line-height: 1.55; }
 .tweaks-opts label { display: flex; gap: 8px; align-items: center; font-size: 12px; color: rgba(255,255,255,0.85); cursor: pointer; padding: 6px 8px; border-radius: 6px; }
 .tweaks-opts label:hover { background: rgba(255,255,255,0.05); }
 .tweaks-opts input { accent-color: var(--accent-gold-300); }
+
+/* ---------- Dark mode ---------- */
+html[data-theme="dark"] .nav {
+  background: rgba(11, 16, 32, 0.9);
+}
+
+html[data-theme="dark"] .hero {
+  background:
+    radial-gradient(circle at 18% 0%, rgba(170, 181, 255, 0.22), transparent 34%),
+    linear-gradient(180deg, #101832 0%, var(--bg-page) 72%);
+}
+
+html[data-theme="dark"] .hero.dark {
+  background: var(--brand-gradient);
+}
+
+html[data-theme="dark"] .products,
+html[data-theme="dark"] .features,
+html[data-theme="dark"] .testimonials,
+html[data-theme="dark"] .cases,
+html[data-theme="dark"] .pricing,
+html[data-theme="dark"] .faq,
+html[data-theme="dark"] .blog,
+html[data-theme="dark"] .logo-strip {
+  background: var(--bg-page);
+}
+
+html[data-theme="dark"] .hero-media,
+html[data-theme="dark"] .feature-mock,
+html[data-theme="dark"] .product-card,
+html[data-theme="dark"] .module-tile,
+html[data-theme="dark"] .testimonial,
+html[data-theme="dark"] .case-card,
+html[data-theme="dark"] .price-card,
+html[data-theme="dark"] .faq-item,
+html[data-theme="dark"] .contact-form,
+html[data-theme="dark"] .mini-stat,
+html[data-theme="dark"] .mini-chart,
+html[data-theme="dark"] .mini-table {
+  background: var(--bg-surface);
+}
+
+html[data-theme="dark"] .hero-media,
+html[data-theme="dark"] .feature-mock {
+  box-shadow: 0 34px 70px -30px rgba(0, 0, 0, 0.68), 0 12px 34px -18px rgba(0, 0, 0, 0.52);
+}
+
+html[data-theme="dark"] .hero-media .window-chrome,
+html[data-theme="dark"] .feature-mock .window-chrome {
+  background: var(--bg-subtle);
+}
+
+html[data-theme="dark"] .hero-media .window-chrome .url,
+html[data-theme="dark"] .feature-mock .window-chrome .url {
+  background: var(--bg-page);
+  color: var(--fg-3);
+}
+
+html[data-theme="dark"] .mini-side,
+html[data-theme="dark"] .mini-nav-item.active,
+html[data-theme="dark"] .module-tile .icon {
+  background: var(--bg-subtle);
+}
+
+html[data-theme="dark"] .mini-chart .bar {
+  background: rgba(170, 181, 255, 0.18);
+}
+
+html[data-theme="dark"] .mini-table-row code,
+html[data-theme="dark"] code {
+  background: var(--bg-muted);
+  color: var(--fg-2);
+}
+
+html[data-theme="dark"] .btn-secondary {
+  color: var(--fg-1);
+  border-color: var(--border-2);
+}
+
+html[data-theme="dark"] .btn-primary {
+  background: #5964D6;
+  color: #fff;
+}
+
+html[data-theme="dark"] .btn-primary:hover {
+  background: #6570CF;
+}
+
+html[data-theme="dark"] .btn-white {
+  background: var(--bg-surface);
+  color: var(--brand-indigo-500);
+  border-color: var(--border-2);
+}
+
+html[data-theme="dark"] .btn-white:hover,
+html[data-theme="dark"] .theme-toggle:hover {
+  background: var(--bg-subtle);
+}
+
+html[data-theme="dark"] .form-field label {
+  color: var(--fg-2);
+}
+
+html[data-theme="dark"] .form-field input,
+html[data-theme="dark"] .form-field select,
+html[data-theme="dark"] .form-field textarea {
+  background: var(--bg-page);
+  color: var(--fg-1);
+}
+
+html[data-theme="dark"] .form-field input::placeholder,
+html[data-theme="dark"] .form-field textarea::placeholder {
+  color: var(--fg-4);
+}
+
+html[data-theme="dark"] .fake-logo {
+  opacity: 0.72;
+}
+
+html[data-theme="dark"] .fake-logo .mark {
+  background: var(--bg-muted);
+  color: var(--fg-1);
+}
+
+html[data-theme="dark"] .fake-logo span {
+  color: var(--fg-2);
+}
+
+html[data-theme="dark"] .contact-alert {
+  border-color: rgba(170, 181, 255, 0.28);
+  background: rgba(170, 181, 255, 0.12);
+  color: var(--fg-2);
+}
+
+html[data-theme="dark"] .contact-alert.error {
+  border-color: rgba(217, 70, 70, 0.32);
+  background: rgba(217, 70, 70, 0.14);
+  color: #FCA5A5;
+}
 
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {

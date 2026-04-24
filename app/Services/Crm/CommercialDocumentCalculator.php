@@ -10,8 +10,13 @@ class CommercialDocumentCalculator
         array $lines,
         string $documentDiscountType = 'none',
         float|int|string|null $documentDiscountValue = 0,
-        int $precision = 2
+        int $precision = 2,
+        string $taxScope = 'line',
+        float|int|string|null $documentTaxRate = 0
     ): array {
+        $taxScope = $taxScope === 'document' ? 'document' : 'line';
+        $documentTaxRate = max(0, $this->decimal($documentTaxRate));
+
         $normalizedLines = array_values(array_map(function (array $line) use ($precision) {
             $grossAmount = $this->round(
                 $this->decimal($line['quantity'] ?? 0) * $this->decimal($line['unit_price'] ?? 0),
@@ -82,8 +87,32 @@ class CommercialDocumentCalculator
             ];
         }
 
+        if ($taxScope === 'document') {
+            $taxAmount = $this->round($subtotalAmount * ($documentTaxRate / 100), $precision);
+            $allocatedDocumentTaxes = $this->allocateAmount(
+                array_column($calculatedLines, 'net_amount'),
+                $taxAmount,
+                $precision
+            );
+
+            $totalAmount = 0.0;
+
+            foreach ($calculatedLines as $index => $calculatedLine) {
+                $lineTaxAmount = $allocatedDocumentTaxes[$index] ?? 0.0;
+                $lineTotalAmount = $this->round($calculatedLine['net_amount'] + $lineTaxAmount, $precision);
+
+                $calculatedLines[$index]['tax_rate'] = $documentTaxRate;
+                $calculatedLines[$index]['tax_amount'] = $lineTaxAmount;
+                $calculatedLines[$index]['total_amount'] = $lineTotalAmount;
+
+                $totalAmount = $this->round($totalAmount + $lineTotalAmount, $precision);
+            }
+        }
+
         return [
             'lines' => $calculatedLines,
+            'tax_scope' => $taxScope,
+            'document_tax_rate' => $taxScope === 'document' ? $documentTaxRate : 0.0,
             'document_discount_type' => $documentDiscountType,
             'document_discount_value' => $this->decimal($documentDiscountValue),
             'document_discount_amount' => $documentDiscountAmount,

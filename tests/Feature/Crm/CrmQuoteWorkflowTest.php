@@ -83,6 +83,7 @@ class CrmQuoteWorkflowTest extends TestCase
             'subject' => 'Enterprise Quote',
             'quote_date' => now()->toDateString(),
             'valid_until' => now()->addDays(14)->toDateString(),
+            'document_tax_rate' => '14.00',
             'document_discount_type' => 'percent',
             'document_discount_value' => '10',
             'notes' => 'Internal note',
@@ -135,9 +136,11 @@ class CrmQuoteWorkflowTest extends TestCase
                 'discount_value' => 50,
                 'tax_rate' => 0,
             ],
-        ], 'percent', 10, 2);
+        ], 'percent', 10, 2, 'document', 14);
 
         $this->assertSame('draft', $quote->status);
+        $this->assertSame('document', $quote->tax_scope);
+        $this->assertSame('14.00', number_format((float) $quote->document_tax_rate, 2, '.', ''));
         $this->assertNotNull($quote->quote_number);
         $this->assertSame($lead->id, $quote->lead_id);
         $this->assertNull($quote->customer_id);
@@ -166,7 +169,79 @@ class CrmQuoteWorkflowTest extends TestCase
             'item_name' => 'Implementation Workshop',
             'unit_label' => 'session',
             'discount_type' => 'fixed',
+            'tax_rate' => '14.00',
         ]);
+    }
+
+    public function test_rep_can_create_quote_directly_for_a_contact(): void
+    {
+        $rep = $this->createUser([
+            'email' => 'rep-quote-contact@example.com',
+            'role' => 'rep',
+        ]);
+
+        $contact = Contact::query()->create([
+            'owner_id' => $rep->id,
+            'name' => 'Direct Quote Contact',
+            'email' => 'direct.quote.contact@example.com',
+            'is_primary' => false,
+        ]);
+
+        $salesStage = SalesStage::query()->firstOrCreate([
+            'slug' => 'direct-proposal',
+        ], [
+            'name' => 'Direct Proposal',
+            'position' => 2,
+            'is_active' => true,
+            'is_won' => false,
+            'is_lost' => false,
+        ]);
+
+        $crmRequest = CrmRequest::query()->create([
+            'owner_id' => $rep->id,
+            'contact_id' => $contact->id,
+            'sales_stage_id' => $salesStage->id,
+            'type' => 'sales',
+            'title' => 'Direct Contact Opportunity',
+            'outcome' => 'pending',
+        ]);
+
+        $currency = CrmCommercialCurrency::query()->where('code', 'BWP')->firstOrFail();
+
+        $this->actingAs($rep)
+            ->post(route('crm.products.quotes.store'), [
+                'contact_id' => $contact->id,
+                'request_id' => $crmRequest->id,
+                'currency_id' => $currency->id,
+                'subject' => 'Direct Contact Quote',
+                'quote_date' => now()->toDateString(),
+                'valid_until' => now()->addDays(10)->toDateString(),
+                'document_discount_type' => 'none',
+                'document_discount_value' => '0',
+                'items' => [[
+                    'product_id' => null,
+                    'item_name' => 'Advisory Session',
+                    'item_description' => 'Direct commercial engagement',
+                    'unit_label' => 'session',
+                    'quantity' => '1',
+                    'unit_price' => '750.00',
+                    'tax_rate' => '14.00',
+                    'discount_type' => 'none',
+                    'discount_value' => '0.00',
+                ]],
+            ])
+            ->assertRedirect();
+
+        $quote = CrmQuote::query()->with('items')->firstOrFail();
+
+        $this->assertSame($rep->id, $quote->owner_id);
+        $this->assertNull($quote->lead_id);
+        $this->assertNull($quote->customer_id);
+        $this->assertSame($contact->id, $quote->contact_id);
+        $this->assertSame($crmRequest->id, $quote->request_id);
+        $this->assertSame('line', $quote->tax_scope);
+        $this->assertSame('Direct Contact Quote', $quote->subject);
+        $this->assertSame('855.00', number_format((float) $quote->total_amount, 2, '.', ''));
     }
 
     public function test_rep_can_update_customer_quote_without_mutating_snapshotted_price_from_catalog_changes(): void
@@ -198,6 +273,7 @@ class CrmQuoteWorkflowTest extends TestCase
             'billing_frequency' => 'annual',
             'default_unit_label' => 'package',
             'default_unit_price' => 1000,
+            'cpi_increase_rate' => 5,
             'default_tax_rate' => 0,
             'active' => true,
         ]);
@@ -221,7 +297,7 @@ class CrmQuoteWorkflowTest extends TestCase
                         'item_description' => 'Annual support package',
                         'unit_label' => 'package',
                         'quantity' => '1',
-                        'unit_price' => '1000.00',
+                        'unit_price' => '1050.00',
                         'tax_rate' => '0.00',
                         'discount_type' => 'none',
                         'discount_value' => '0.00',
@@ -233,14 +309,16 @@ class CrmQuoteWorkflowTest extends TestCase
         $quote = CrmQuote::query()->with('items')->firstOrFail();
         $originalItem = $quote->items->firstOrFail();
 
-        $this->assertSame('1000.00', number_format((float) $originalItem->unit_price, 2, '.', ''));
+        $this->assertSame('1050.00', number_format((float) $originalItem->unit_price, 2, '.', ''));
+        $this->assertSame('line', $quote->tax_scope);
 
         $product->update([
             'default_unit_price' => 3250,
+            'cpi_increase_rate' => 8,
             'default_tax_rate' => 12,
         ]);
 
-        $this->assertSame('1000.00', number_format((float) $quote->fresh()->items()->first()->unit_price, 2, '.', ''));
+        $this->assertSame('1050.00', number_format((float) $quote->fresh()->items()->first()->unit_price, 2, '.', ''));
 
         $this->actingAs($rep)
             ->patch(route('crm.products.quotes.update', $quote), [
@@ -259,7 +337,7 @@ class CrmQuoteWorkflowTest extends TestCase
                         'item_description' => 'Annual support package',
                         'unit_label' => 'package',
                         'quantity' => '2',
-                        'unit_price' => '1000.00',
+                        'unit_price' => '1050.00',
                         'tax_rate' => '0.00',
                         'discount_type' => 'none',
                         'discount_value' => '0.00',
@@ -272,8 +350,8 @@ class CrmQuoteWorkflowTest extends TestCase
         $updatedItem = $updatedQuote->items->firstOrFail();
 
         $this->assertSame('Support Renewal Updated', $updatedQuote->subject);
-        $this->assertSame('1000.00', number_format((float) $updatedItem->unit_price, 2, '.', ''));
-        $this->assertSame('2000.00', number_format((float) $updatedQuote->total_amount, 2, '.', ''));
+        $this->assertSame('1050.00', number_format((float) $updatedItem->unit_price, 2, '.', ''));
+        $this->assertSame('2100.00', number_format((float) $updatedQuote->total_amount, 2, '.', ''));
     }
 
     public function test_quote_status_transitions_follow_the_expected_lifecycle(): void

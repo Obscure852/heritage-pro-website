@@ -1,4 +1,4 @@
-<div style="padding: 20px; background: #fff;">
+<div class="browser-light-surface" style="padding: 20px; background: #fff;">
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
         <div style="font-family: var(--font-display); font-size: 16px; font-weight: 700;">Fees — Term 2</div>
         <span style="margin-left: auto; padding: 4px 10px; font-size: 11px; font-weight: 700; border-radius: 999px; background: var(--success-50); color: var(--success-700);">● 78% collected</span>

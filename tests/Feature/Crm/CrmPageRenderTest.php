@@ -99,7 +99,7 @@ class CrmPageRenderTest extends TestCase
             ->assertOk();
 
         $this->actingAs($admin)
-            ->get(route('crm.settings.commercial'))
+            ->get(route('crm.products.settings'))
             ->assertOk();
 
         $this->actingAs($admin)

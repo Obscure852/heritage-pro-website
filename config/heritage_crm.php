@@ -81,7 +81,7 @@ return [
             'caption' => 'Catalog, quotes, and invoices',
             'icon' => 'bx bx-package',
             'route' => 'crm.products.catalog.index',
-            'match' => ['crm.products.*'],
+            'match' => ['crm.products.*', 'crm.settings.commercial*'],
             'default_permissions' => [
                 'admin' => 'admin',
                 'finance' => 'admin',
@@ -106,6 +106,32 @@ return [
                     'route' => 'crm.products.invoices.index',
                     'match' => ['crm.products.invoices.*'],
                     'roles' => ['admin', 'finance', 'manager', 'rep'],
+                ],
+                [
+                    'label' => 'Settings',
+                    'route' => 'crm.products.settings',
+                    'match' => ['crm.products.settings*', 'crm.settings.commercial*'],
+                    'minimum_permission' => 'admin',
+                ],
+            ],
+            'route_permissions' => [
+                [
+                    'match' => [
+                        'crm.products.settings*',
+                        'crm.settings.commercial*',
+                        'crm.products.catalog.create',
+                        'crm.products.catalog.store',
+                        'crm.products.catalog.edit',
+                        'crm.products.catalog.update',
+                        'crm.products.catalog.status',
+                        'crm.products.invoices.create',
+                        'crm.products.invoices.store',
+                        'crm.products.invoices.edit',
+                        'crm.products.invoices.update',
+                        'crm.products.invoices.status',
+                        'crm.products.invoices.share.*',
+                    ],
+                    'level' => 'admin',
                 ],
             ],
         ],
@@ -387,7 +413,6 @@ return [
             'match' => ['crm.settings.*'],
             'default_permissions' => [
                 'admin' => 'admin',
-                'finance' => 'edit',
             ],
             'children' => [
                 [
@@ -408,12 +433,6 @@ return [
                     'match' => ['crm.settings.imports*'],
                     'minimum_permission' => 'admin',
                 ],
-                [
-                    'label' => 'Commercial',
-                    'route' => 'crm.settings.commercial',
-                    'match' => ['crm.settings.commercial*'],
-                    'minimum_permission' => 'view',
-                ],
             ],
             'route_permissions' => [
                 [
@@ -426,15 +445,8 @@ return [
                 [
                     'match' => [
                         'crm.settings.index',
-                        'crm.settings.commercial',
                     ],
                     'level' => 'view',
-                ],
-                [
-                    'match' => [
-                        'crm.settings.commercial.*',
-                    ],
-                    'level' => 'edit',
                 ],
             ],
         ],
@@ -561,6 +573,7 @@ return [
     'commercial_billing_frequencies' => [
         'one_time' => 'One-time',
         'monthly' => 'Monthly',
+        'quarterly' => 'Quarterly',
         'annual' => 'Annual',
         'custom' => 'Custom',
     ],
@@ -659,9 +672,17 @@ return [
                 'label' => 'Leads',
                 'description' => 'Import institutional leads using a stable external reference for repeat upserts.',
                 'template_filename' => 'crm-leads-import-template.xlsx',
-                'headings' => ['import_reference', 'owner_email', 'company_name', 'industry', 'website', 'email', 'phone', 'country', 'status', 'notes'],
+                'headings' => ['import_reference', 'owner_email', 'company_name', 'industry', 'website', 'email', 'phone', 'fax', 'country', 'region', 'location', 'postal_address', 'status', 'notes'],
                 'required' => ['import_reference', 'company_name'],
                 'match_key' => 'import_reference',
+            ],
+            'customers' => [
+                'label' => 'Customers',
+                'description' => 'Import customer accounts by institution name and create a linked converted source lead when needed.',
+                'template_filename' => 'crm-customers-import-template.xlsx',
+                'headings' => ['owner_email', 'company_name', 'industry', 'website', 'email', 'phone', 'fax', 'country', 'region', 'location', 'postal_address', 'status', 'purchased_at', 'notes'],
+                'required' => ['company_name'],
+                'match_key' => 'company_name',
             ],
             'contacts' => [
                 'label' => 'Contacts',

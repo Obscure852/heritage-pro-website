@@ -4,6 +4,7 @@ namespace App\Services\Crm\Imports;
 
 use App\Services\Crm\Imports\Contracts\CrmImportEntityProcessor;
 use App\Services\Crm\Imports\Processors\ContactImportProcessor;
+use App\Services\Crm\Imports\Processors\CustomerImportProcessor;
 use App\Services\Crm\Imports\Processors\LeadImportProcessor;
 use App\Services\Crm\Imports\Processors\UserImportProcessor;
 use InvalidArgumentException;
@@ -13,6 +14,7 @@ class CrmImportProcessorResolver
     public function __construct(
         private readonly UserImportProcessor $userImportProcessor,
         private readonly LeadImportProcessor $leadImportProcessor,
+        private readonly CustomerImportProcessor $customerImportProcessor,
         private readonly ContactImportProcessor $contactImportProcessor
     ) {
     }
@@ -22,6 +24,7 @@ class CrmImportProcessorResolver
         return match ($entity) {
             'users' => $this->userImportProcessor,
             'leads' => $this->leadImportProcessor,
+            'customers' => $this->customerImportProcessor,
             'contacts' => $this->contactImportProcessor,
             default => throw new InvalidArgumentException('Unknown CRM import entity [' . $entity . '].'),
         };

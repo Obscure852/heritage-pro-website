@@ -1,3 +1,10 @@
+@php
+    $selectedCountry = old('country', $lead->country ?? 'Botswana');
+    $countryNames = collect($countries ?? [])->pluck('name')->all();
+    $sectorNames = collect($sectors ?? [])->pluck('name')->all();
+    $selectedSector = old('industry', $lead->industry ?? ($sectorNames[0] ?? null));
+@endphp
+
 <form method="POST" action="{{ $action }}" class="crm-form">
     @csrf
     @if (! empty($method))
@@ -11,7 +18,15 @@
         </div>
         <div class="crm-field">
             <label for="industry">Sector</label>
-            <input id="industry" name="industry" value="{{ old('industry', $lead->industry ?? 'Education') }}" placeholder="Enter sector, e.g. Education">
+            <select id="industry" name="industry">
+                <option value="">Select a sector</option>
+                @if ($selectedSector && ! in_array($selectedSector, $sectorNames, true))
+                    <option value="{{ $selectedSector }}" selected>{{ $selectedSector }}</option>
+                @endif
+                @foreach ($sectors ?? [] as $sector)
+                    <option value="{{ $sector->name }}" @selected($selectedSector === $sector->name)>{{ $sector->name }}</option>
+                @endforeach
+            </select>
         </div>
         <div class="crm-field">
             <label for="website">Website</label>
@@ -26,8 +41,32 @@
             <input id="phone" name="phone" value="{{ old('phone', $lead->phone ?? '') }}" placeholder="Enter phone number">
         </div>
         <div class="crm-field">
+            <label for="fax">Fax</label>
+            <input id="fax" name="fax" value="{{ old('fax', $lead->fax ?? '') }}" placeholder="Enter fax number">
+        </div>
+        <div class="crm-field">
             <label for="country">Country</label>
-            <input id="country" name="country" value="{{ old('country', $lead->country ?? 'Botswana') }}" placeholder="Enter country">
+            <select id="country" name="country">
+                <option value="">Select a country</option>
+                @if ($selectedCountry && ! in_array($selectedCountry, $countryNames, true))
+                    <option value="{{ $selectedCountry }}" selected>{{ $selectedCountry }}</option>
+                @endif
+                @foreach ($countries ?? [] as $country)
+                    <option value="{{ $country['name'] }}" @selected($selectedCountry === $country['name'])>{{ $country['name'] }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="crm-field">
+            <label for="region">Region</label>
+            <input id="region" name="region" value="{{ old('region', $lead->region ?? '') }}" placeholder="Enter region">
+        </div>
+        <div class="crm-field">
+            <label for="location">Location</label>
+            <input id="location" name="location" value="{{ old('location', $lead->location ?? '') }}" placeholder="Enter location">
+        </div>
+        <div class="crm-field">
+            <label for="postal_address">P.O. Box address</label>
+            <input id="postal_address" name="postal_address" value="{{ old('postal_address', $lead->postal_address ?? '') }}" placeholder="Enter postal address">
         </div>
         <div class="crm-field">
             <label for="owner_id">Owner</label>

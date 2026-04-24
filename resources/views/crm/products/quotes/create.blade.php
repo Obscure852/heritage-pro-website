@@ -2,7 +2,7 @@
 
 @section('title', 'Create Quote')
 @section('crm_heading', 'Create Quote')
-@section('crm_subheading', 'Build a commercial quote for a lead or customer using catalog defaults and custom line items.')
+@section('crm_subheading', 'Build a commercial quote for a lead, customer renewal, or direct contact using catalog defaults and custom line items.')
 
 @section('crm_actions')
     <a href="{{ route('crm.products.quotes.index') }}" class="btn btn-light crm-btn-light">

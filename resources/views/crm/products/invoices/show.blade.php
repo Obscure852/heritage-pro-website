@@ -136,6 +136,10 @@
                         <strong>{{ $invoice->currency_code }} · {{ $invoice->currency_symbol }} · {{ ucfirst($invoice->currency_position) }}</strong>
                     </div>
                     <div class="crm-meta-row">
+                        <span>Tax scope</span>
+                        <strong>{{ $invoice->tax_scope === 'document' ? 'Document tax · ' . number_format((float) $invoice->document_tax_rate, 2) . '%' : 'Line tax' }}</strong>
+                    </div>
+                    <div class="crm-meta-row">
                         <span>Document discount</span>
                         <strong>{{ $discountTypes[$invoice->document_discount_type] ?? ucfirst($invoice->document_discount_type) }} · {{ number_format((float) $invoice->document_discount_value, 2) }}</strong>
                     </div>
@@ -212,7 +216,7 @@
                                     <td>{{ number_format((float) $item->quantity, 2) }}</td>
                                     <td>{{ $invoice->currency_code }} {{ number_format((float) $item->unit_price, 2) }}</td>
                                     <td>{{ $discountTypes[$item->discount_type] ?? ucfirst($item->discount_type) }} · {{ number_format((float) $item->discount_value, 2) }}</td>
-                                    <td>{{ number_format((float) $item->tax_rate, 2) }}% · {{ $invoice->currency_code }} {{ number_format((float) $item->tax_amount, 2) }}</td>
+                                    <td>{{ $invoice->tax_scope === 'document' ? 'Document' : number_format((float) $item->tax_rate, 2) . '%' }} · {{ $invoice->currency_code }} {{ number_format((float) $item->tax_amount, 2) }}</td>
                                     <td>{{ $invoice->currency_code }} {{ number_format((float) $item->total_amount, 2) }}</td>
                                 </tr>
                             @endforeach

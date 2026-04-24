@@ -42,6 +42,24 @@
                     </div>
                 @endif
 
+                @if (in_array('purchased_at', $importDefinition['headings'], true))
+                    <div class="crm-help mt-3">
+                        Purchase date must use <strong>DD/MM/YYYY</strong> when entered as text in the spreadsheet. Native Excel date cells are also accepted.
+                    </div>
+                @endif
+
+                @if (in_array('country', $importDefinition['headings'], true))
+                    <div class="crm-help mt-3">
+                        Country values must match the CRM country list. Country names or two-letter country codes are accepted.
+                    </div>
+                @endif
+
+                @if (in_array('industry', $importDefinition['headings'], true))
+                    <div class="crm-help mt-3">
+                        Sector values must match an active sector in Products Settings.
+                    </div>
+                @endif
+
                 <div class="crm-import-guide">
                     @foreach ($importDefinition['headings'] as $heading)
                         <div class="crm-import-guide-item">

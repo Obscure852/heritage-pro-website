@@ -44,6 +44,11 @@ class CrmImportTest extends TestCase
             ->assertSee('Leads import columns');
 
         $this->actingAs($admin)
+            ->get(route('crm.settings.imports.customers'))
+            ->assertOk()
+            ->assertSee('Customers import columns');
+
+        $this->actingAs($admin)
             ->get(route('crm.settings.imports.contacts'))
             ->assertOk()
             ->assertSee('Contacts import columns');
@@ -53,10 +58,26 @@ class CrmImportTest extends TestCase
             $this->downloadedHeadings($admin, 'users')
         );
 
+        $leadHeadings = $this->downloadedHeadings($admin, 'leads');
+
         $this->assertSame(
             config('heritage_crm.imports.entities.leads.headings'),
-            $this->downloadedHeadings($admin, 'leads')
+            $leadHeadings
         );
+        $this->assertContains('fax', config('heritage_crm.imports.entities.leads.headings'));
+        $this->assertSame('fax', $leadHeadings[7]);
+        $this->assertSame('postal_address', $leadHeadings[11]);
+
+        $customerHeadings = $this->downloadedHeadings($admin, 'customers');
+
+        $this->assertSame(
+            config('heritage_crm.imports.entities.customers.headings'),
+            $customerHeadings
+        );
+        $this->assertSame('fax', $customerHeadings[6]);
+        $this->assertContains('region', $customerHeadings);
+        $this->assertContains('location', $customerHeadings);
+        $this->assertSame('postal_address', $customerHeadings[10]);
 
         $this->assertSame(
             config('heritage_crm.imports.entities.contacts.headings'),
@@ -278,7 +299,7 @@ class CrmImportTest extends TestCase
         $this->assertSame('completed', $secondRun->fresh()->status);
 
         $leadRun = $this->previewImport($admin, 'leads', [
-            ['LEAD-001', $admin->email, 'Immediate Lead', 'Education', '', '', '', 'Botswana', 'active', 'Imported directly'],
+            ['LEAD-001', $admin->email, 'Immediate Lead', 'Education', '', '', '', '', 'Botswana', 'South-East', 'Gaborone', 'P.O. Box 1', 'active', 'Imported directly'],
         ]);
 
         $this->actingAs($admin)
@@ -427,8 +448,8 @@ class CrmImportTest extends TestCase
         $originalConvertedAt = $lead->converted_at;
 
         $run = $this->previewImport($admin, 'leads', [
-            ['LEAD-CONVERTED', $admin->email, 'Converted Lead Updated', 'Education', '', 'converted@example.com', '+267 111 2222', 'Botswana', 'lost', 'Should stay converted'],
-            ['LEAD-NEW', $admin->email, 'New Pipeline Lead', 'Education', '', 'new@example.com', '+267 333 4444', 'Botswana', 'qualified', 'New import'],
+            ['LEAD-CONVERTED', $admin->email, 'Converted Lead Updated', 'Education', '', 'converted@example.com', '+267 111 2222', '+267 111 2223', 'Botswana', 'South-East', 'Gaborone', 'P.O. Box 12', 'lost', 'Should stay converted'],
+            ['LEAD-NEW', $admin->email, 'New Pipeline Lead', 'education', '', 'new@example.com', '+267 333 4444', '', 'Botswana', 'Central', 'Serowe', 'Private Bag 8', 'New', 'New import'],
         ]);
 
         $this->processRun($run);
@@ -437,10 +458,60 @@ class CrmImportTest extends TestCase
         $newLead = Lead::query()->where('import_reference', 'LEAD-NEW')->firstOrFail();
 
         $this->assertSame('Converted Lead Updated', $lead->company_name);
+        $this->assertSame('+267 111 2223', $lead->fax);
         $this->assertSame('converted', $lead->status);
         $this->assertTrue($lead->converted_at?->eq($originalConvertedAt));
-        $this->assertSame('qualified', $newLead->status);
+        $this->assertSame('active', $newLead->status);
+        $this->assertSame('Education', $newLead->industry);
+        $this->assertSame('Central', $newLead->region);
+        $this->assertSame('Serowe', $newLead->location);
+        $this->assertSame('Private Bag 8', $newLead->postal_address);
         $this->assertNull($newLead->converted_at);
+    }
+
+    public function test_customer_import_upserts_accounts_and_creates_source_leads(): void
+    {
+        Storage::fake('documents');
+        $admin = $this->createUser();
+
+        $existing = Customer::query()->create([
+            'owner_id' => $admin->id,
+            'company_name' => 'Existing Customer',
+            'status' => 'inactive',
+        ]);
+
+        $run = $this->previewImport($admin, 'customers', [
+            [$admin->email, 'Existing Customer', 'Education', 'https://existing.example.com', 'existing@example.com', '+267 111 0000', '+267 111 0001', 'Botswana', 'South-East', 'Gaborone', 'P.O. Box 22', 'active', '01/04/2026', 'Updated existing customer'],
+            [$admin->email, 'New Customer', 'education', '', 'new.customer@example.com', '+267 222 0000', '', 'BW', 'Central', 'Serowe', 'Private Bag 9', 'onboarding', '', 'New customer import'],
+        ]);
+
+        $this->processRun($run);
+
+        $existing->refresh();
+        $newCustomer = Customer::query()->where('company_name', 'New Customer')->firstOrFail();
+
+        $this->assertSame('active', $existing->status);
+        $this->assertSame('+267 111 0001', $existing->fax);
+        $this->assertSame('South-East', $existing->region);
+        $this->assertSame('Gaborone', $existing->location);
+        $this->assertSame('P.O. Box 22', $existing->postal_address);
+        $this->assertSame('2026-04-01', $existing->purchased_at?->toDateString());
+        $this->assertNotNull($existing->lead_id);
+
+        $sourceLead = Lead::query()->findOrFail($existing->lead_id);
+        $this->assertSame('converted', $sourceLead->status);
+        $this->assertSame('+267 111 0001', $sourceLead->fax);
+        $this->assertSame('South-East', $sourceLead->region);
+        $this->assertSame('Gaborone', $sourceLead->location);
+        $this->assertSame('P.O. Box 22', $sourceLead->postal_address);
+
+        $this->assertSame('onboarding', $newCustomer->status);
+        $this->assertSame('Education', $newCustomer->industry);
+        $this->assertSame('Botswana', $newCustomer->country);
+        $this->assertSame('Central', $newCustomer->region);
+        $this->assertSame('Serowe', $newCustomer->location);
+        $this->assertSame('Private Bag 9', $newCustomer->postal_address);
+        $this->assertNotNull($newCustomer->lead_id);
     }
 
     public function test_contact_import_updates_by_reference_links_entities_and_keeps_one_primary_contact(): void

@@ -1,11 +1,14 @@
 @php
     $secondaryHref = $hero['secondary_href'] ?? (isset($hero['secondary_route']) ? route($hero['secondary_route']) : '#');
+    $hasEyebrow = !empty($hero['eyebrow']);
 @endphp
 <section class="hero">
     <div class="container hero-inner">
         <div>
-            <span class="eyebrow">{{ $hero['eyebrow'] }}</span>
-            <h1 style="margin-top: 16px;">{{ $hero['title'] }}</h1>
+            @if ($hasEyebrow)
+                <span class="eyebrow">{{ $hero['eyebrow'] }}</span>
+            @endif
+            <h1 style="margin-top: {{ $hasEyebrow ? '16px' : '0' }};">{{ $hero['title'] }}</h1>
             <p class="lead">{{ $hero['lead'] }}</p>
             <div class="hero-cta">
                 <a href="#contact" class="btn btn-primary btn-lg">Book a demo @include('website.partials.icon', ['name' => 'arrow', 'size' => 16])</a>

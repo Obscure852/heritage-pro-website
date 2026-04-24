@@ -57,12 +57,16 @@ class CrmGlobalSearchService
         }
 
         $records = $this->scopeOwned($user, Lead::query())
-            ->select(['id', 'company_name', 'country', 'status', 'owner_id'])
+            ->select(['id', 'company_name', 'country', 'location', 'postal_address', 'region', 'status', 'owner_id'])
             ->where(function (Builder $builder) use ($query) {
                 $builder->where('company_name', 'like', "%{$query}%")
                     ->orWhere('email', 'like', "%{$query}%")
                     ->orWhere('phone', 'like', "%{$query}%")
-                    ->orWhere('country', 'like', "%{$query}%");
+                    ->orWhere('fax', 'like', "%{$query}%")
+                    ->orWhere('country', 'like', "%{$query}%")
+                    ->orWhere('location', 'like', "%{$query}%")
+                    ->orWhere('postal_address', 'like', "%{$query}%")
+                    ->orWhere('region', 'like', "%{$query}%");
             })
             ->orderBy('company_name')
             ->limit($this->limit())
@@ -74,6 +78,9 @@ class CrmGlobalSearchService
                 'secondary' => trim(implode(' • ', array_filter([
                     config('heritage_crm.lead_statuses.' . $lead->status, ucfirst($lead->status)),
                     $lead->country,
+                    $lead->region,
+                    $lead->location,
+                    $lead->postal_address,
                 ]))),
                 'icon' => 'bx bxs-school',
                 'url' => route('crm.leads.show', $lead),
@@ -88,12 +95,16 @@ class CrmGlobalSearchService
         }
 
         $records = $this->scopeOwned($user, Customer::query())
-            ->select(['id', 'company_name', 'country', 'status', 'owner_id'])
+            ->select(['id', 'company_name', 'country', 'location', 'postal_address', 'region', 'status', 'owner_id'])
             ->where(function (Builder $builder) use ($query) {
                 $builder->where('company_name', 'like', "%{$query}%")
                     ->orWhere('email', 'like', "%{$query}%")
                     ->orWhere('phone', 'like', "%{$query}%")
-                    ->orWhere('country', 'like', "%{$query}%");
+                    ->orWhere('fax', 'like', "%{$query}%")
+                    ->orWhere('country', 'like', "%{$query}%")
+                    ->orWhere('location', 'like', "%{$query}%")
+                    ->orWhere('postal_address', 'like', "%{$query}%")
+                    ->orWhere('region', 'like', "%{$query}%");
             })
             ->orderBy('company_name')
             ->limit($this->limit())
@@ -105,6 +116,9 @@ class CrmGlobalSearchService
                 'secondary' => trim(implode(' • ', array_filter([
                     config('heritage_crm.customer_statuses.' . $customer->status, ucfirst($customer->status)),
                     $customer->country,
+                    $customer->region,
+                    $customer->location,
+                    $customer->postal_address,
                 ]))),
                 'icon' => 'bx bx-building-house',
                 'url' => route('crm.customers.show', $customer),
@@ -215,7 +229,7 @@ class CrmGlobalSearchService
                 'label' => $quote->quote_number,
                 'secondary' => trim(implode(' • ', array_filter([
                     config('heritage_crm.quote_statuses.' . $quote->status, ucfirst($quote->status)),
-                    $quote->customer?->company_name ?: $quote->lead?->company_name,
+                    $quote->customer?->company_name ?: $quote->lead?->company_name ?: ($quote->contact ? 'Direct contact' : null),
                     $quote->contact?->name,
                 ]))),
                 'icon' => 'bx bx-receipt',

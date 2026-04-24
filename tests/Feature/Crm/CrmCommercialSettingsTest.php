@@ -3,6 +3,8 @@
 namespace Tests\Feature\Crm;
 
 use App\Models\CrmCommercialCurrency;
+use App\Models\CrmProductUnit;
+use App\Models\CrmSector;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -20,12 +22,29 @@ class CrmCommercialSettingsTest extends TestCase
         ]);
 
         $this->actingAs($finance)
-            ->get(route('crm.settings.commercial'))
+            ->get(route('crm.products.settings'))
             ->assertOk()
-            ->assertSee('Save commercial settings');
+            ->assertSee('Save product settings')
+            ->assertSee('Document defaults')
+            ->assertSee('Currencies')
+            ->assertSee('Units')
+            ->assertSee('Sectors')
+            ->assertSee('data-bs-target="#documentDefaultsModal"', false)
+            ->assertDontSee('data-bs-target="#currencyModal"', false);
 
         $this->actingAs($finance)
-            ->post(route('crm.settings.commercial.currencies.store'), [
+            ->get(route('crm.products.settings', ['tab' => 'currencies']))
+            ->assertOk()
+            ->assertSee('Configured currencies')
+            ->assertSee('data-bs-target="#currencyModal"', false)
+            ->assertSee('<table class="crm-table">', false);
+
+        $this->actingAs($finance)
+            ->get(route('crm.settings.commercial'))
+            ->assertRedirect(route('crm.products.settings'));
+
+        $this->actingAs($finance)
+            ->post(route('crm.products.settings.currencies.store'), [
                 'code' => 'usd',
                 'name' => 'United States Dollar',
                 'symbol' => '$',
@@ -33,7 +52,7 @@ class CrmCommercialSettingsTest extends TestCase
                 'precision' => 2,
                 'is_active' => '1',
             ])
-            ->assertRedirect(route('crm.settings.commercial'));
+            ->assertRedirect(route('crm.products.settings', ['tab' => 'currencies']));
 
         $usd = CrmCommercialCurrency::query()->where('code', 'USD')->firstOrFail();
 
@@ -44,7 +63,7 @@ class CrmCommercialSettingsTest extends TestCase
         ]);
 
         $this->actingAs($finance)
-            ->patch(route('crm.settings.commercial.update'), [
+            ->patch(route('crm.products.settings.update'), [
                 'default_currency_id' => $usd->id,
                 'quote_prefix' => 'QTE',
                 'quote_next_sequence' => 12,
@@ -53,7 +72,7 @@ class CrmCommercialSettingsTest extends TestCase
                 'default_tax_rate' => '16.50',
                 'allow_document_discounts' => '1',
             ])
-            ->assertRedirect(route('crm.settings.commercial'));
+            ->assertRedirect(route('crm.products.settings'));
 
         $this->assertDatabaseHas('crm_commercial_settings', [
             'default_currency_id' => $usd->id,
@@ -67,7 +86,7 @@ class CrmCommercialSettingsTest extends TestCase
         ]);
 
         $this->actingAs($finance)
-            ->patch(route('crm.settings.commercial.currencies.update', $usd), [
+            ->patch(route('crm.products.settings.currencies.update', $usd), [
                 'code' => 'USD',
                 'name' => 'US Dollar',
                 'symbol' => '$',
@@ -75,11 +94,130 @@ class CrmCommercialSettingsTest extends TestCase
                 'precision' => 2,
                 'is_active' => '1',
             ])
-            ->assertRedirect(route('crm.settings.commercial.edit-currency', $usd));
+            ->assertRedirect(route('crm.products.settings.edit-currency', $usd));
 
         $this->assertDatabaseHas('crm_commercial_currencies', [
             'id' => $usd->id,
             'name' => 'US Dollar',
+        ]);
+
+        $bwp = CrmCommercialCurrency::query()->where('code', 'BWP')->firstOrFail();
+
+        $this->actingAs($finance)
+            ->delete(route('crm.products.settings.currencies.destroy', $bwp))
+            ->assertRedirect(route('crm.products.settings', ['tab' => 'currencies']));
+
+        $this->assertDatabaseHas('crm_commercial_currencies', [
+            'id' => $bwp->id,
+            'is_active' => false,
+        ]);
+
+        $this->assertDatabaseHas('crm_product_units', [
+            'label' => 'license',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($finance)
+            ->get(route('crm.products.settings', ['tab' => 'units']))
+            ->assertOk()
+            ->assertSee('Configured units')
+            ->assertSee('License')
+            ->assertSee('data-bs-target="#unitModal"', false)
+            ->assertSee('<table class="crm-table">', false);
+
+        $this->actingAs($finance)
+            ->post(route('crm.products.settings.units.store'), [
+                'name' => 'Term',
+                'label' => 'term',
+                'sort_order' => 115,
+                'is_active' => '1',
+            ])
+            ->assertRedirect(route('crm.products.settings', ['tab' => 'units']));
+
+        $term = CrmProductUnit::query()->where('label', 'term')->firstOrFail();
+
+        $this->assertDatabaseHas('crm_product_units', [
+            'id' => $term->id,
+            'name' => 'Term',
+            'label' => 'term',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($finance)
+            ->delete(route('crm.products.settings.units.destroy', $term))
+            ->assertRedirect(route('crm.products.settings', ['tab' => 'units']));
+
+        $this->assertDatabaseHas('crm_product_units', [
+            'id' => $term->id,
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($finance)
+            ->patch(route('crm.products.settings.units.update', $term), [
+                'name' => 'Term block',
+                'label' => 'term',
+                'sort_order' => 116,
+            ])
+            ->assertRedirect(route('crm.products.settings.edit-unit', $term));
+
+        $this->assertDatabaseHas('crm_product_units', [
+            'id' => $term->id,
+            'name' => 'Term block',
+            'sort_order' => 116,
+            'is_active' => false,
+        ]);
+
+        $this->assertDatabaseHas('crm_sectors', [
+            'name' => 'Education',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($finance)
+            ->get(route('crm.products.settings', ['tab' => 'sectors']))
+            ->assertOk()
+            ->assertSee('Configured sectors')
+            ->assertSee('Education')
+            ->assertSee('data-bs-target="#sectorModal"', false)
+            ->assertSee('<table class="crm-table">', false);
+
+        $this->actingAs($finance)
+            ->post(route('crm.products.settings.sectors.store'), [
+                'name' => 'Independent School',
+                'sort_order' => 15,
+                'is_active' => '1',
+            ])
+            ->assertRedirect(route('crm.products.settings', ['tab' => 'sectors']));
+
+        $sector = CrmSector::query()->where('name', 'Independent School')->firstOrFail();
+
+        $this->assertDatabaseHas('crm_sectors', [
+            'id' => $sector->id,
+            'name' => 'Independent School',
+            'sort_order' => 15,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($finance)
+            ->delete(route('crm.products.settings.sectors.destroy', $sector))
+            ->assertRedirect(route('crm.products.settings', ['tab' => 'sectors']));
+
+        $this->assertDatabaseHas('crm_sectors', [
+            'id' => $sector->id,
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($finance)
+            ->patch(route('crm.products.settings.sectors.update', $sector), [
+                'name' => 'Independent Schools',
+                'sort_order' => 16,
+            ])
+            ->assertRedirect(route('crm.products.settings.edit-sector', $sector));
+
+        $this->assertDatabaseHas('crm_sectors', [
+            'id' => $sector->id,
+            'name' => 'Independent Schools',
+            'sort_order' => 16,
+            'is_active' => false,
         ]);
     }
 
@@ -93,7 +231,7 @@ class CrmCommercialSettingsTest extends TestCase
         $defaultCurrency = CrmCommercialCurrency::query()->where('code', 'BWP')->firstOrFail();
 
         $this->actingAs($finance)
-            ->patch(route('crm.settings.commercial.currencies.update', $defaultCurrency), [
+            ->patch(route('crm.products.settings.currencies.update', $defaultCurrency), [
                 'code' => 'BWP',
                 'name' => 'Botswana Pula',
                 'symbol' => 'P',
@@ -101,7 +239,12 @@ class CrmCommercialSettingsTest extends TestCase
                 'precision' => 2,
                 'is_active' => '0',
             ])
-            ->assertRedirect(route('crm.settings.commercial.edit-currency', $defaultCurrency))
+            ->assertRedirect(route('crm.products.settings.edit-currency', $defaultCurrency))
+            ->assertSessionHasErrors('currency');
+
+        $this->actingAs($finance)
+            ->delete(route('crm.products.settings.currencies.destroy', $defaultCurrency))
+            ->assertRedirect(route('crm.products.settings', ['tab' => 'currencies']))
             ->assertSessionHasErrors('currency');
 
         $this->assertDatabaseHas('crm_commercial_currencies', [
@@ -116,13 +259,16 @@ class CrmCommercialSettingsTest extends TestCase
             'email' => 'manager-commercial-settings@example.com',
             'role' => 'manager',
         ]);
+        $currency = CrmCommercialCurrency::query()->where('code', 'BWP')->firstOrFail();
+        $unit = CrmProductUnit::query()->firstOrFail();
+        $sector = CrmSector::query()->firstOrFail();
 
         $this->actingAs($manager)
-            ->get(route('crm.settings.commercial'))
+            ->get(route('crm.products.settings'))
             ->assertForbidden();
 
         $this->actingAs($manager)
-            ->patch(route('crm.settings.commercial.update'), [
+            ->patch(route('crm.products.settings.update'), [
                 'default_currency_id' => CrmCommercialCurrency::query()->where('code', 'BWP')->value('id'),
                 'quote_prefix' => 'QT',
                 'quote_next_sequence' => 1,
@@ -132,13 +278,38 @@ class CrmCommercialSettingsTest extends TestCase
             ->assertForbidden();
 
         $this->actingAs($manager)
-            ->post(route('crm.settings.commercial.currencies.store'), [
+            ->post(route('crm.products.settings.currencies.store'), [
                 'code' => 'USD',
                 'name' => 'United States Dollar',
                 'symbol' => '$',
                 'symbol_position' => 'before',
                 'precision' => 2,
             ])
+            ->assertForbidden();
+
+        $this->actingAs($manager)
+            ->delete(route('crm.products.settings.currencies.destroy', $currency))
+            ->assertForbidden();
+
+        $this->actingAs($manager)
+            ->post(route('crm.products.settings.units.store'), [
+                'name' => 'Term',
+                'label' => 'term',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($manager)
+            ->delete(route('crm.products.settings.units.destroy', $unit))
+            ->assertForbidden();
+
+        $this->actingAs($manager)
+            ->post(route('crm.products.settings.sectors.store'), [
+                'name' => 'Independent School',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($manager)
+            ->delete(route('crm.products.settings.sectors.destroy', $sector))
             ->assertForbidden();
     }
 

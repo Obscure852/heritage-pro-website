@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Crm;
 
 use App\Http\Requests\Crm\CustomerUpsertRequest;
+use App\Models\CrmSector;
 use App\Models\Customer;
 use App\Models\Lead;
+use App\Support\CountryList;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -38,7 +40,11 @@ class CustomerController extends CrmController
                             ->orWhere('industry', 'like', '%' . $filters['q'] . '%')
                             ->orWhere('email', 'like', '%' . $filters['q'] . '%')
                             ->orWhere('phone', 'like', '%' . $filters['q'] . '%')
-                            ->orWhere('country', 'like', '%' . $filters['q'] . '%');
+                            ->orWhere('fax', 'like', '%' . $filters['q'] . '%')
+                            ->orWhere('country', 'like', '%' . $filters['q'] . '%')
+                            ->orWhere('location', 'like', '%' . $filters['q'] . '%')
+                            ->orWhere('postal_address', 'like', '%' . $filters['q'] . '%')
+                            ->orWhere('region', 'like', '%' . $filters['q'] . '%');
                     });
                 })
                 ->when($filters['owner_id'] !== '', function ($query) use ($filters) {
@@ -84,7 +90,11 @@ class CustomerController extends CrmController
                 'website' => $data['website'] ?? null,
                 'email' => $data['email'] ?? null,
                 'phone' => $data['phone'] ?? null,
+                'fax' => $data['fax'] ?? null,
                 'country' => $data['country'] ?? null,
+                'location' => $data['location'] ?? null,
+                'postal_address' => $data['postal_address'] ?? null,
+                'region' => $data['region'] ?? null,
                 'status' => 'converted',
                 'converted_at' => $convertedAt,
                 'notes' => $data['notes'] ?? null,
@@ -98,7 +108,11 @@ class CustomerController extends CrmController
                 'website' => $data['website'] ?? null,
                 'email' => $data['email'] ?? null,
                 'phone' => $data['phone'] ?? null,
+                'fax' => $data['fax'] ?? null,
                 'country' => $data['country'] ?? null,
+                'location' => $data['location'] ?? null,
+                'postal_address' => $data['postal_address'] ?? null,
+                'region' => $data['region'] ?? null,
                 'status' => $data['status'],
                 'purchased_at' => $data['purchased_at'] ?? null,
                 'notes' => $data['notes'] ?? null,
@@ -181,6 +195,8 @@ class CustomerController extends CrmController
         return [
             'owners' => $this->owners(),
             'customerStatuses' => config('heritage_crm.customer_statuses'),
+            'countries' => CountryList::all(),
+            'sectors' => CrmSector::query()->active()->ordered()->get(),
         ];
     }
 }

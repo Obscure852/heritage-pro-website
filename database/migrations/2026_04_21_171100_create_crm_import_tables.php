@@ -17,6 +17,7 @@ return new class extends Migration {
             DB::table('crm_import_entity_locks')->insert([
                 ['entity' => 'users', 'created_at' => now(), 'updated_at' => now()],
                 ['entity' => 'leads', 'created_at' => now(), 'updated_at' => now()],
+                ['entity' => 'customers', 'created_at' => now(), 'updated_at' => now()],
                 ['entity' => 'contacts', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }

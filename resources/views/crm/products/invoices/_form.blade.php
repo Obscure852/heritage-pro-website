@@ -39,7 +39,9 @@
                 'name' => $product->name,
                 'description' => $product->description,
                 'unit_label' => $product->default_unit_label,
-                'unit_price' => (float) $product->default_unit_price,
+                'unit_price' => (float) $product->default_unit_price * (1 + ((float) $product->cpi_increase_rate / 100)),
+                'base_unit_price' => (float) $product->default_unit_price,
+                'cpi_increase_rate' => (float) $product->cpi_increase_rate,
                 'tax_rate' => (float) $product->default_tax_rate,
             ],
         ];
@@ -136,6 +138,10 @@
                         <option value="{{ $currency->id }}" @selected((int) $selectedCurrencyId === $currency->id)>{{ $currency->code }} · {{ $currency->name }}</option>
                     @endforeach
                 </select>
+            </div>
+            <div class="crm-field">
+                <label for="document_tax_rate">Document tax rate (%)</label>
+                <input id="document_tax_rate" name="document_tax_rate" type="number" step="0.01" min="0" max="100" value="{{ old('document_tax_rate', number_format((float) ($invoice->document_tax_rate ?? $defaultSelections['document_tax_rate'] ?? $settings->default_tax_rate), 2, '.', '')) }}" data-document-tax-rate>
             </div>
             <div class="crm-field">
                 <label for="invoice_date">Invoice date</label>
@@ -419,6 +425,7 @@
         var contactSelect = form.querySelector('[data-contact-select]');
         var requestSelect = form.querySelector('[data-request-select]');
         var currencySelect = form.querySelector('[data-currency-select]');
+        var documentTaxRate = form.querySelector('[data-document-tax-rate]');
         var documentDiscountType = form.querySelector('[data-document-discount-type]');
         var documentDiscountValue = form.querySelector('[data-document-discount-value]');
         var nextLineIndex = Array.from(lineList.querySelectorAll('[data-invoice-line]')).reduce(function (max, line) {
@@ -579,6 +586,18 @@
             });
         }
 
+        function syncTaxControls() {
+            var useDocumentTax = lineNodes().length > 1;
+
+            lineNodes().forEach(function (line) {
+                var lineTaxRate = line.querySelector('[data-line-tax-rate]');
+
+                if (lineTaxRate) {
+                    lineTaxRate.disabled = useDocumentTax;
+                }
+            });
+        }
+
         function applyProductDefaults(line) {
             var productSelect = line.querySelector('[data-line-product]');
             var product = products[productSelect.value] || null;
@@ -595,6 +614,8 @@
         }
 
         function calculateTotals() {
+            syncTaxControls();
+
             var lines = lineNodes().map(function (line) {
                 var quantity = Number(line.querySelector('[data-line-quantity]').value || 0);
                 var unitPrice = Number(line.querySelector('[data-line-unit-price]').value || 0);
@@ -634,20 +655,36 @@
             var subtotalAmount = 0;
             var taxAmount = 0;
             var totalAmount = 0;
+            var useDocumentTax = lines.length > 1;
+            var documentTaxAmount = 0;
+            var allocatedDocumentTaxes = [];
 
             lines.forEach(function (line, index) {
                 var allocatedDocumentDiscount = allocatedDocumentDiscounts[index] || 0;
                 var totalDiscount = round(line.line_discount_amount + allocatedDocumentDiscount, currentPrecision());
                 var netAmount = round(line.gross_amount - totalDiscount, currentPrecision());
-                var lineTaxAmount = round(netAmount * (line.tax_rate / 100), currentPrecision());
-                var lineTotalAmount = round(netAmount + lineTaxAmount, currentPrecision());
 
+                line.total_discount_amount = totalDiscount;
+                line.net_amount = netAmount;
                 subtotalAmount = round(subtotalAmount + netAmount, currentPrecision());
+            });
+
+            if (useDocumentTax) {
+                documentTaxAmount = round(subtotalAmount * ((Number(documentTaxRate ? documentTaxRate.value : 0) || 0) / 100), currentPrecision());
+                allocatedDocumentTaxes = allocateAmount(lines.map(function (line) { return line.net_amount; }), documentTaxAmount);
+            }
+
+            lines.forEach(function (line, index) {
+                var lineTaxAmount = useDocumentTax
+                    ? (allocatedDocumentTaxes[index] || 0)
+                    : round(line.net_amount * (line.tax_rate / 100), currentPrecision());
+                var lineTotalAmount = round(line.net_amount + lineTaxAmount, currentPrecision());
+
                 taxAmount = round(taxAmount + lineTaxAmount, currentPrecision());
                 totalAmount = round(totalAmount + lineTotalAmount, currentPrecision());
 
                 line.node.querySelector('[data-line-gross]').textContent = formatNumber(line.gross_amount);
-                line.node.querySelector('[data-line-discount]').textContent = formatNumber(totalDiscount);
+                line.node.querySelector('[data-line-discount]').textContent = formatNumber(line.total_discount_amount);
                 line.node.querySelector('[data-line-tax]').textContent = formatNumber(lineTaxAmount);
                 line.node.querySelector('[data-line-total]').textContent = formatNumber(lineTotalAmount);
             });
@@ -726,6 +763,10 @@
         leadSelect.addEventListener('change', syncContextSelects);
         customerSelect.addEventListener('change', syncContextSelects);
         currencySelect.addEventListener('change', calculateTotals);
+
+        if (documentTaxRate) {
+            documentTaxRate.addEventListener('input', calculateTotals);
+        }
 
         if (documentDiscountType) {
             documentDiscountType.addEventListener('change', calculateTotals);

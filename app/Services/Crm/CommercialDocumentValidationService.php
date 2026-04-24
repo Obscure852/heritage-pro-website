@@ -43,11 +43,17 @@ class CommercialDocumentValidationService
                 : ['nullable', 'date'],
         ]);
 
-        $validator->after(function ($validator) use ($payload) {
+        $validator->after(function ($validator) use ($payload, $documentType) {
             $leadId = $payload['lead_id'] ?? null;
             $customerId = $payload['customer_id'] ?? null;
 
-            if ((blank($leadId) && blank($customerId)) || (filled($leadId) && filled($customerId))) {
+            if (filled($leadId) && filled($customerId)) {
+                $validator->errors()->add('account_context', 'Only one of lead_id or customer_id may be selected.');
+
+                return;
+            }
+
+            if (blank($leadId) && blank($customerId) && $documentType !== 'quote') {
                 $validator->errors()->add('account_context', 'Exactly one of lead_id or customer_id is required.');
 
                 return;
@@ -89,6 +95,10 @@ class CommercialDocumentValidationService
 
             if (filled($customerId) && (int) $request->customer_id !== (int) $customerId) {
                 $validator->errors()->add('request_id', 'The linked request must belong to the selected customer.');
+            }
+
+            if (blank($leadId) && blank($customerId) && (int) $request->contact_id !== (int) $contact->id) {
+                $validator->errors()->add('request_id', 'The linked request must belong to the selected contact.');
             }
         });
 

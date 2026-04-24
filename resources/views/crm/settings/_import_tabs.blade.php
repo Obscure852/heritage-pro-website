@@ -1,4 +1,4 @@
-@php($importTabIcons = ['users' => 'bx bx-user', 'leads' => 'bx bx-user-voice', 'contacts' => 'bx bx-id-card'])
+@php($importTabIcons = ['users' => 'bx bx-user', 'leads' => 'bx bx-user-voice', 'customers' => 'bx bx-building-house', 'contacts' => 'bx bx-id-card'])
 
 <div class="crm-tabs">
     @foreach ($entityTabs as $entityKey => $entityDefinition)

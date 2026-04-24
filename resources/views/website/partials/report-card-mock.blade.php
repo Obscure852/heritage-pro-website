@@ -1,4 +1,4 @@
-<div style="padding: 22px; background: #fff;">
+<div class="browser-light-surface" style="padding: 22px; background: #fff;">
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 2px solid var(--brand-indigo-500);">
         <div style="width: 40px; height: 40px; border-radius: 8px; background: var(--brand-gradient);"></div>
         <div>

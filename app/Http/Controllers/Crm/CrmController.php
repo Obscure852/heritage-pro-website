@@ -188,13 +188,15 @@ abstract class CrmController extends Controller
         return $this->scopeOwned($query)->get();
     }
 
-    protected function contactsForSelect(): Collection
+    protected function contactsForSelect(bool $includeUnlinked = false): Collection
     {
         $query = Contact::query()
-            ->select(['id', 'name', 'lead_id', 'customer_id', 'owner_id'])
-            ->where(function ($builder) {
-                $builder->whereNotNull('lead_id')
-                    ->orWhereNotNull('customer_id');
+            ->select(['id', 'name', 'email', 'lead_id', 'customer_id', 'owner_id'])
+            ->when(! $includeUnlinked, function ($builder) {
+                $builder->where(function ($contextQuery) {
+                    $contextQuery->whereNotNull('lead_id')
+                        ->orWhereNotNull('customer_id');
+                });
             })
             ->orderBy('name');
 
@@ -263,7 +265,7 @@ abstract class CrmController extends Controller
         }
     }
 
-    protected function syncedOwnerId(?Lead $lead, ?Customer $customer, ?int $requestedOwnerId): int
+    protected function syncedOwnerId(?Lead $lead, ?Customer $customer, ?int $requestedOwnerId, ?Contact $contact = null): int
     {
         if ($lead?->owner_id) {
             return (int) $lead->owner_id;
@@ -271,6 +273,10 @@ abstract class CrmController extends Controller
 
         if ($customer?->owner_id) {
             return (int) $customer->owner_id;
+        }
+
+        if ($contact?->owner_id) {
+            return (int) $contact->owner_id;
         }
 
         return $this->normalizeOwnerId($requestedOwnerId);

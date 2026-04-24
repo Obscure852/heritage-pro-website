@@ -268,6 +268,10 @@ class InvoiceController extends CrmController
         $documentDiscountValue = $settings->allow_document_discounts
             ? (float) ($payload['document_discount_value'] ?? 0)
             : 0.0;
+        $taxScope = count($linePayload) > 1 ? 'document' : 'line';
+        $documentTaxRate = filled($payload['document_tax_rate'] ?? null)
+            ? (float) $payload['document_tax_rate']
+            : (float) $settings->default_tax_rate;
 
         $calculation = $this->calculator->calculate(
             array_map(function (array $line) {
@@ -281,7 +285,9 @@ class InvoiceController extends CrmController
             }, $linePayload),
             $documentDiscountType,
             $documentDiscountValue,
-            (int) $currency->precision
+            (int) $currency->precision,
+            $taxScope,
+            $documentTaxRate
         );
 
         $invoiceAttributes = [
@@ -298,6 +304,8 @@ class InvoiceController extends CrmController
             'currency_symbol' => $currency->symbol,
             'currency_position' => $currency->symbol_position,
             'currency_precision' => $currency->precision,
+            'tax_scope' => $calculation['tax_scope'],
+            'document_tax_rate' => $taxScope === 'document' ? $calculation['document_tax_rate'] : $documentTaxRate,
             'document_discount_type' => $calculation['document_discount_type'],
             'document_discount_value' => $calculation['document_discount_value'],
             'document_discount_amount' => $calculation['document_discount_amount'],
@@ -448,6 +456,7 @@ class InvoiceController extends CrmController
                     'description',
                     'default_unit_label',
                     'default_unit_price',
+                    'cpi_increase_rate',
                     'default_tax_rate',
                 ]),
             'historicalInactiveProducts' => $historicalInactiveProducts,
@@ -464,6 +473,7 @@ class InvoiceController extends CrmController
                 'request_id' => $selectedRequestId ?: null,
                 'contact_id' => $selectedContactId ?: null,
                 'currency_id' => $settings->default_currency_id,
+                'document_tax_rate' => $crmInvoice?->document_tax_rate ?? $settings->default_tax_rate,
             ],
             'lineItems' => $crmInvoice?->items->map(function ($item) {
                 return [

@@ -239,17 +239,17 @@ class User extends Authenticatable
 
     public function canManageCommercialSettings(): bool
     {
-        return $this->canAccessCrmModule('settings', 'edit');
+        return $this->canAccessCrmModule('products', 'admin');
     }
 
     public function canManageCommercialCatalog(): bool
     {
-        return $this->canManageCommercialSettings();
+        return $this->canAccessCrmModule('products', 'admin');
     }
 
     public function canIssueCommercialInvoices(): bool
     {
-        return $this->canManageCommercialSettings();
+        return $this->canAccessCrmModule('products', 'admin');
     }
 
     public function canManageOperationalRecords(): bool

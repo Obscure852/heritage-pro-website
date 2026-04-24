@@ -34,7 +34,7 @@
                 <div class="crm-filter-grid">
                     <div class="crm-field">
                         <label for="q">Search</label>
-                        <input id="q" name="q" value="{{ $filters['q'] }}" placeholder="Institution, sector, email, phone">
+                        <input id="q" name="q" value="{{ $filters['q'] }}" placeholder="Institution, sector, email, phone, region, P.O. Box">
                     </div>
                     <div class="crm-field">
                         <label for="owner_id">Owner</label>
@@ -96,7 +96,7 @@
                                 <tr>
                                     <td>
                                         <strong><a href="{{ route('crm.customers.show', $customer) }}">{{ $customer->company_name }}</a></strong>
-                                        <span class="crm-muted">{{ $customer->lead?->company_name ? 'Source lead: ' . $customer->lead->company_name : 'Source lead unavailable' }}</span>
+                                        <span class="crm-muted">{{ collect([$customer->country, $customer->region, $customer->location, $customer->postal_address])->filter()->implode(' · ') ?: ($customer->lead?->company_name ? 'Source lead: ' . $customer->lead->company_name : 'Source lead unavailable') }}</span>
                                     </td>
                                     <td>{{ $customer->owner?->name ?: 'Unassigned' }}</td>
                                     <td><span class="crm-pill {{ $customer->status === 'active' ? 'success' : ($customer->status === 'onboarding' ? 'primary' : 'muted') }}">{{ $customerStatuses[$customer->status] ?? ucfirst($customer->status) }}</span></td>

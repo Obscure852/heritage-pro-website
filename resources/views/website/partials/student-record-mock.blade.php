@@ -1,4 +1,4 @@
-<div style="padding: 20px; background: #fff;">
+<div class="browser-light-surface" style="padding: 20px; background: #fff;">
     <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 20px;">
         <div style="width: 56px; height: 56px; border-radius: 999px; background: var(--brand-gradient); color: #fff; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 18px;">BM</div>
         <div>

@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Crm;
 
 use App\Http\Requests\Crm\LeadUpsertRequest;
 use App\Models\CrmRequest;
+use App\Models\CrmSector;
 use App\Models\Customer;
 use App\Models\Lead;
+use App\Support\CountryList;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -39,7 +41,11 @@ class LeadController extends CrmController
                             ->orWhere('industry', 'like', '%' . $filters['q'] . '%')
                             ->orWhere('email', 'like', '%' . $filters['q'] . '%')
                             ->orWhere('phone', 'like', '%' . $filters['q'] . '%')
-                            ->orWhere('country', 'like', '%' . $filters['q'] . '%');
+                            ->orWhere('fax', 'like', '%' . $filters['q'] . '%')
+                            ->orWhere('country', 'like', '%' . $filters['q'] . '%')
+                            ->orWhere('location', 'like', '%' . $filters['q'] . '%')
+                            ->orWhere('postal_address', 'like', '%' . $filters['q'] . '%')
+                            ->orWhere('region', 'like', '%' . $filters['q'] . '%');
                     });
                 })
                 ->when($filters['owner_id'] !== '', function ($query) use ($filters) {
@@ -187,7 +193,11 @@ class LeadController extends CrmController
                 'website' => $lead->website,
                 'email' => $lead->email,
                 'phone' => $lead->phone,
+                'fax' => $lead->fax,
                 'country' => $lead->country,
+                'location' => $lead->location,
+                'postal_address' => $lead->postal_address,
+                'region' => $lead->region,
                 'status' => 'active',
                 'purchased_at' => $convertedAt,
                 'notes' => $lead->notes,
@@ -222,6 +232,8 @@ class LeadController extends CrmController
             'leadStatuses' => collect(config('heritage_crm.lead_statuses'))
                 ->except(['converted'])
                 ->all(),
+            'countries' => CountryList::all(),
+            'sectors' => CrmSector::query()->active()->ordered()->get(),
         ];
     }
 }

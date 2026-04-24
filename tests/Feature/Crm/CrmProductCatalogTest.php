@@ -24,9 +24,10 @@ class CrmProductCatalogTest extends TestCase
                 'code' => 'pro-suite',
                 'name' => 'Pro Suite',
                 'type' => 'license',
-                'billing_frequency' => 'annual',
+                'billing_frequency' => 'quarterly',
                 'default_unit_label' => 'license',
                 'default_unit_price' => '2500.00',
+                'cpi_increase_rate' => '5.00',
                 'default_tax_rate' => '14.00',
                 'active' => '1',
                 'description' => 'Annual CRM platform license.',
@@ -39,6 +40,8 @@ class CrmProductCatalogTest extends TestCase
             'id' => $product->id,
             'code' => 'PRO-SUITE',
             'name' => 'Pro Suite',
+            'billing_frequency' => 'quarterly',
+            'cpi_increase_rate' => '5.00',
             'active' => true,
         ]);
 
@@ -47,9 +50,10 @@ class CrmProductCatalogTest extends TestCase
                 'code' => 'PRO-SUITE',
                 'name' => 'Pro Suite Enterprise',
                 'type' => 'license',
-                'billing_frequency' => 'annual',
+                'billing_frequency' => 'quarterly',
                 'default_unit_label' => 'license',
                 'default_unit_price' => '3500.00',
+                'cpi_increase_rate' => '7.50',
                 'default_tax_rate' => '15.00',
                 'active' => '1',
                 'description' => 'Updated annual CRM platform license.',
@@ -61,8 +65,16 @@ class CrmProductCatalogTest extends TestCase
             'id' => $product->id,
             'name' => 'Pro Suite Enterprise',
             'default_unit_price' => '3500.00',
+            'cpi_increase_rate' => '7.50',
             'default_tax_rate' => '15.00',
         ]);
+
+        $this->actingAs($finance)
+            ->get(route('crm.products.catalog.show', $product))
+            ->assertOk()
+            ->assertSee('Quarterly')
+            ->assertSee('CPI adjusted price')
+            ->assertSee('3,762.50');
 
         $this->actingAs($finance)
             ->patch(route('crm.products.catalog.status', $product), [

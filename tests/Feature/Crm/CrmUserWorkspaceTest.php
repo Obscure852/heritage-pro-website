@@ -398,10 +398,10 @@ class CrmUserWorkspaceTest extends TestCase
 
         $this->actingAs($finance)
             ->get(route('crm.settings.index'))
-            ->assertRedirect(route('crm.settings.commercial'));
+            ->assertForbidden();
 
         $this->actingAs($finance)
-            ->get(route('crm.settings.commercial'))
+            ->get(route('crm.products.settings'))
             ->assertOk();
     }
 

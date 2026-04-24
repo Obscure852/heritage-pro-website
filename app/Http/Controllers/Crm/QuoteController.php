@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Crm;
 
 use App\Http\Requests\Crm\DiscussionThreadStoreRequest;
 use App\Http\Requests\Crm\QuoteUpsertRequest;
+use App\Models\Contact;
 use App\Models\CrmCommercialCurrency;
 use App\Models\CrmProduct;
 use App\Models\CrmQuote;
@@ -245,7 +246,7 @@ class QuoteController extends CrmController
         $this->authorizeLinkedCommercialRecords($lead, $customer, $contact, $crmRequest);
 
         $quotePayload = [
-            'owner_id' => $this->syncedOwnerId($lead, $customer, $existingQuote?->owner_id),
+            'owner_id' => $this->syncedOwnerId($lead, $customer, $existingQuote?->owner_id, $contact),
             'lead_id' => $lead?->id,
             'customer_id' => $customer?->id,
             'contact_id' => $contact?->id,
@@ -271,6 +272,10 @@ class QuoteController extends CrmController
         $documentDiscountValue = $settings->allow_document_discounts
             ? (float) ($payload['document_discount_value'] ?? 0)
             : 0.0;
+        $taxScope = count($linePayload) > 1 ? 'document' : 'line';
+        $documentTaxRate = filled($payload['document_tax_rate'] ?? null)
+            ? (float) $payload['document_tax_rate']
+            : (float) $settings->default_tax_rate;
 
         $calculation = $this->calculator->calculate(
             array_map(function (array $line) {
@@ -284,7 +289,9 @@ class QuoteController extends CrmController
             }, $linePayload),
             $documentDiscountType,
             $documentDiscountValue,
-            (int) $currency->precision
+            (int) $currency->precision,
+            $taxScope,
+            $documentTaxRate
         );
 
         $quoteAttributes = [
@@ -302,6 +309,8 @@ class QuoteController extends CrmController
             'currency_symbol' => $currency->symbol,
             'currency_position' => $currency->symbol_position,
             'currency_precision' => $currency->precision,
+            'tax_scope' => $calculation['tax_scope'],
+            'document_tax_rate' => $taxScope === 'document' ? $calculation['document_tax_rate'] : $documentTaxRate,
             'document_discount_type' => $calculation['document_discount_type'],
             'document_discount_value' => $calculation['document_discount_value'],
             'document_discount_amount' => $calculation['document_discount_amount'],
@@ -440,7 +449,7 @@ class QuoteController extends CrmController
             'quote' => $crmQuote,
             'leads' => $this->leadsForSelect(),
             'customers' => $this->customersForSelect(),
-            'contacts' => $this->contactsForSelect(),
+            'contacts' => $this->quoteContactsForSelect(),
             'salesRequests' => $salesRequests,
             'products' => CrmProduct::query()
                 ->where('active', true)
@@ -452,6 +461,7 @@ class QuoteController extends CrmController
                     'description',
                     'default_unit_label',
                     'default_unit_price',
+                    'cpi_increase_rate',
                     'default_tax_rate',
                 ]),
             'historicalInactiveProducts' => $historicalInactiveProducts,
@@ -468,6 +478,7 @@ class QuoteController extends CrmController
                 'request_id' => $selectedRequestId ?: null,
                 'contact_id' => $selectedContactId ?: null,
                 'currency_id' => $settings->default_currency_id,
+                'document_tax_rate' => $crmQuote?->document_tax_rate ?? $settings->default_tax_rate,
             ],
             'lineItems' => $crmQuote?->items->map(function ($item) {
                 return [
@@ -493,6 +504,19 @@ class QuoteController extends CrmController
                 ->select(['id', 'owner_id', 'lead_id', 'customer_id', 'contact_id', 'title', 'type'])
                 ->where('type', 'sales')
                 ->orderBy('title')
+        )->get();
+    }
+
+    private function quoteContactsForSelect()
+    {
+        return $this->scopeOwned(
+            Contact::query()
+                ->select(['id', 'name', 'email', 'lead_id', 'customer_id', 'owner_id'])
+                ->with([
+                    'lead:id,company_name',
+                    'customer:id,company_name',
+                ])
+                ->orderBy('name')
         )->get();
     }
 

@@ -4,6 +4,16 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $pageTitle ?? config('heritage_website.meta.default_title') }}</title>
+    <script>
+        (() => {
+            try {
+                const savedTheme = window.localStorage.getItem('heritageWebsiteTheme');
+                document.documentElement.dataset.theme = savedTheme === 'dark' ? 'dark' : 'light';
+            } catch (error) {
+                document.documentElement.dataset.theme = 'light';
+            }
+        })();
+    </script>
     <style>
         @include('layouts.website-base-styles')
 
@@ -541,6 +551,62 @@
           box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.08);
         }
 
+        html[data-theme="dark"] #features-page-content .heritage-features-page,
+        html[data-theme="dark"] #customers-page-content .heritage-customers-page,
+        html[data-theme="dark"] #about-page-content .heritage-about-features,
+        html[data-theme="dark"] #about-page-content .heritage-about-cases {
+          background: var(--bg-page);
+        }
+
+        html[data-theme="dark"] #features-page-content .heritage-window-chrome {
+          background: var(--bg-subtle);
+        }
+
+        html[data-theme="dark"] #features-page-content .heritage-window-dot {
+          background: var(--border-3);
+        }
+
+        html[data-theme="dark"] #features-page-content .heritage-window-chrome .url {
+          background: var(--bg-page);
+          color: var(--fg-3);
+        }
+
+        html[data-theme="dark"] #features-page-content .feature-surface,
+        html[data-theme="dark"] #features-page-content .feature-panel,
+        html[data-theme="dark"] #features-page-content .feature-stat,
+        html[data-theme="dark"] #team-page-content .team-card,
+        html[data-theme="dark"] #team-page-content .team-card.lead,
+        html[data-theme="dark"] #team-page-content .team-card.ops,
+        html[data-theme="dark"] #team-page-content .team-card.dev {
+          background: var(--bg-surface);
+        }
+
+        html[data-theme="dark"] .logo-strip .logo-marquee-shell::before,
+        html[data-theme="dark"] #customers-page-content .client-marquee::before {
+          background: linear-gradient(90deg, var(--bg-page) 0%, rgba(11, 16, 32, 0) 100%);
+        }
+
+        html[data-theme="dark"] .logo-strip .logo-marquee-shell::after,
+        html[data-theme="dark"] #customers-page-content .client-marquee::after {
+          background: linear-gradient(270deg, var(--bg-page) 0%, rgba(11, 16, 32, 0) 100%);
+        }
+
+        html[data-theme="dark"] .contact-alert {
+          border-color: rgba(170, 181, 255, 0.28);
+          background: rgba(170, 181, 255, 0.12);
+          color: var(--fg-2);
+        }
+
+        html[data-theme="dark"] .contact-alert.error {
+          border-color: rgba(217, 70, 70, 0.32);
+          background: rgba(217, 70, 70, 0.14);
+          color: #FCA5A5;
+        }
+
+        html[data-theme="dark"] .form-field .field-error {
+          color: #FCA5A5;
+        }
+
         @keyframes heritageClientMarquee {
           from {
             transform: translateX(0);
@@ -581,6 +647,32 @@
                     contactSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 120);
             }
+        }
+
+        const themeToggle = document.querySelector('[data-theme-toggle]');
+
+        const setWebsiteTheme = (theme) => {
+            const nextTheme = theme === 'dark' ? 'dark' : 'light';
+            document.documentElement.dataset.theme = nextTheme;
+
+            try {
+                window.localStorage.setItem('heritageWebsiteTheme', nextTheme);
+            } catch (error) {
+                // Keep the toggle usable even when storage is unavailable.
+            }
+
+            if (themeToggle) {
+                const nextLabel = nextTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+                themeToggle.setAttribute('aria-label', nextLabel);
+                themeToggle.setAttribute('title', nextLabel);
+            }
+        };
+
+        if (themeToggle) {
+            setWebsiteTheme(document.documentElement.dataset.theme);
+            themeToggle.addEventListener('click', () => {
+                setWebsiteTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+            });
         }
     </script>
 </body>

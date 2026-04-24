@@ -133,8 +133,7 @@ function HeroSplit() {
     <section className="hero">
       <div className="container hero-inner">
         <div>
-          <span className="eyebrow">Built in Botswana · Trusted across Southern Africa</span>
-          <h1 style={{ marginTop: 16 }}>The intelligent operating system for every school, college, and institution.</h1>
+          <h1 style={{ marginTop: 0 }}>The intelligent operating system for every school, college, and institution.</h1>
           <p className="lead">Heritage Pro unifies admissions, academics, attendance, fees, communications, and reporting on a single, secure platform — built for K-12, secondary schools, and tertiary institutions.</p>
           <div className="hero-cta">
             <a href="#contact" className="btn btn-primary btn-lg">Book a demo <Icon name="arrow" size={16}/></a>

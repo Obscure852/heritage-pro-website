@@ -2,7 +2,7 @@
 
 @section('title', $quote->quote_number . ' - Quote')
 @section('crm_heading', $quote->quote_number)
-@section('crm_subheading', 'Commercial quote detail with snapshotted pricing, account context, and lifecycle controls.')
+@section('crm_subheading', 'Commercial quote detail with snapshotted pricing, recipient context, and lifecycle controls.')
 
 @section('crm_actions')
     <div class="crm-action-row">
@@ -22,7 +22,7 @@
                 'channel' => $quote->contact?->email ? 'email' : 'app',
                 'recipient_email' => $quote->contact?->email,
                 'recipient_phone' => $quote->contact?->phone,
-                'body' => 'Please find attached quote ' . $quote->quote_number . ' for ' . ($quote->customer?->company_name ?: $quote->lead?->company_name ?: 'your account') . '.',
+                'body' => 'Please find attached quote ' . $quote->quote_number . ' for ' . ($quote->customer?->company_name ?: $quote->lead?->company_name ?: $quote->contact?->name ?: 'your account') . '.',
                 'notes' => $quote->subject ?: null,
             ]) }}" class="btn btn-primary">
                 <i class="bx bx-send"></i> Share quote
@@ -112,6 +112,10 @@
                         <strong>{{ $quote->owner?->name ?: 'Unassigned' }}</strong>
                     </div>
                     <div class="crm-meta-row">
+                        <span>Recipient context</span>
+                        <strong>{{ $quote->customer?->company_name ?: $quote->lead?->company_name ?: ($quote->contact ? 'Direct contact' : 'None') }}</strong>
+                    </div>
+                    <div class="crm-meta-row">
                         <span>Lead</span>
                         <strong>{{ $quote->lead?->company_name ?: 'None' }}</strong>
                     </div>
@@ -138,6 +142,10 @@
                     <div class="crm-meta-row">
                         <span>Currency</span>
                         <strong>{{ $quote->currency_code }} · {{ $quote->currency_symbol }} · {{ ucfirst($quote->currency_position) }}</strong>
+                    </div>
+                    <div class="crm-meta-row">
+                        <span>Tax scope</span>
+                        <strong>{{ $quote->tax_scope === 'document' ? 'Document tax · ' . number_format((float) $quote->document_tax_rate, 2) . '%' : 'Line tax' }}</strong>
                     </div>
                     <div class="crm-meta-row">
                         <span>Document discount</span>
@@ -220,7 +228,7 @@
                                     <td>{{ number_format((float) $item->quantity, 2) }}</td>
                                     <td>{{ $quote->currency_code }} {{ number_format((float) $item->unit_price, 2) }}</td>
                                     <td>{{ $discountTypes[$item->discount_type] ?? ucfirst($item->discount_type) }} · {{ number_format((float) $item->discount_value, 2) }}</td>
-                                    <td>{{ number_format((float) $item->tax_rate, 2) }}% · {{ $quote->currency_code }} {{ number_format((float) $item->tax_amount, 2) }}</td>
+                                    <td>{{ $quote->tax_scope === 'document' ? 'Document' : number_format((float) $item->tax_rate, 2) . '%' }} · {{ $quote->currency_code }} {{ number_format((float) $item->tax_amount, 2) }}</td>
                                     <td>{{ $quote->currency_code }} {{ number_format((float) $item->total_amount, 2) }}</td>
                                 </tr>
                             @endforeach

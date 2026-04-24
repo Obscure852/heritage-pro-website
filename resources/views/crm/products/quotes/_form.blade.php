@@ -4,8 +4,10 @@
     if (! $defaultAccountType) {
         if (($quote->lead_id ?? null) || ($defaultSelections['lead_id'] ?? null)) {
             $defaultAccountType = 'lead';
-        } else {
+        } elseif (($quote->customer_id ?? null) || ($defaultSelections['customer_id'] ?? null)) {
             $defaultAccountType = 'customer';
+        } else {
+            $defaultAccountType = 'contact';
         }
     }
 
@@ -16,9 +18,13 @@
     $selectedRequestId = old('request_id', $quote->request_id ?? $defaultSelections['request_id']);
     $selectedCurrencyId = old('currency_id', $defaultSelections['currency_id']);
     $contactOptions = $contacts->map(function ($contact) {
+        $accountLabel = $contact->customer?->company_name ?: $contact->lead?->company_name;
+
         return [
             'id' => $contact->id,
             'name' => $contact->name,
+            'email' => $contact->email,
+            'label' => trim($contact->name . ($accountLabel ? ' · ' . $accountLabel : '')),
             'lead_id' => $contact->lead_id,
             'customer_id' => $contact->customer_id,
         ];
@@ -39,7 +45,9 @@
                 'name' => $product->name,
                 'description' => $product->description,
                 'unit_label' => $product->default_unit_label,
-                'unit_price' => (float) $product->default_unit_price,
+                'unit_price' => (float) $product->default_unit_price * (1 + ((float) $product->cpi_increase_rate / 100)),
+                'base_unit_price' => (float) $product->default_unit_price,
+                'cpi_increase_rate' => (float) $product->cpi_increase_rate,
                 'tax_rate' => (float) $product->default_tax_rate,
             ],
         ];
@@ -63,7 +71,7 @@
     @endif
 
     <div class="crm-help">
-        Quotes can be linked to exactly one lead or customer, one recipient contact, and an optional sales request. Catalog values are copied into the quote at save time so later product edits do not change historical documents.
+        Quotes can be linked to a lead, a customer renewal account, or sent directly to a recipient contact with an optional sales request. Catalog values are copied into the quote at save time so later product edits do not change historical documents.
     </div>
 
     @if (isset($quote))
@@ -97,6 +105,7 @@
                 <select id="account_type" name="account_type" data-account-type required>
                     <option value="lead" @selected($defaultAccountType === 'lead')>Lead</option>
                     <option value="customer" @selected($defaultAccountType === 'customer')>Customer</option>
+                    <option value="contact" @selected($defaultAccountType === 'contact')>Direct contact</option>
                 </select>
             </div>
             <div class="crm-field" data-account-panel="lead">
@@ -136,6 +145,10 @@
                         <option value="{{ $currency->id }}" @selected((int) $selectedCurrencyId === $currency->id)>{{ $currency->code }} · {{ $currency->name }}</option>
                     @endforeach
                 </select>
+            </div>
+            <div class="crm-field">
+                <label for="document_tax_rate">Document tax rate (%)</label>
+                <input id="document_tax_rate" name="document_tax_rate" type="number" step="0.01" min="0" max="100" value="{{ old('document_tax_rate', number_format((float) ($quote->document_tax_rate ?? $defaultSelections['document_tax_rate'] ?? $settings->default_tax_rate), 2, '.', '')) }}" data-document-tax-rate>
             </div>
             <div class="crm-field">
                 <label for="quote_date">Quote date</label>
@@ -423,6 +436,7 @@
         var contactSelect = form.querySelector('[data-contact-select]');
         var requestSelect = form.querySelector('[data-request-select]');
         var currencySelect = form.querySelector('[data-currency-select]');
+        var documentTaxRate = form.querySelector('[data-document-tax-rate]');
         var documentDiscountType = form.querySelector('[data-document-discount-type]');
         var documentDiscountValue = form.querySelector('[data-document-discount-value]');
         var nextLineIndex = Array.from(lineList.querySelectorAll('[data-quote-line]')).reduce(function (max, line) {
@@ -430,7 +444,15 @@
         }, -1) + 1;
 
         function selectedAccountId() {
-            return accountTypeSelect.value === 'lead' ? leadSelect.value : customerSelect.value;
+            if (accountTypeSelect.value === 'lead') {
+                return leadSelect.value;
+            }
+
+            if (accountTypeSelect.value === 'customer') {
+                return customerSelect.value;
+            }
+
+            return '';
         }
 
         function currentPrecision() {
@@ -511,7 +533,7 @@
             options.forEach(function (option) {
                 var optionNode = document.createElement('option');
                 optionNode.value = option.id;
-                optionNode.textContent = option.label;
+                optionNode.textContent = option.label || option.name;
 
                 if (String(selectedValue || '') === String(option.id)) {
                     optionNode.selected = true;
@@ -530,6 +552,10 @@
 
             var filteredContacts = contacts
                 .filter(function (contact) {
+                    if (accountTypeSelect.value === 'contact') {
+                        return true;
+                    }
+
                     if (!accountId) {
                         return false;
                     }
@@ -541,14 +567,20 @@
                 .map(function (contact) {
                     return {
                         id: contact.id,
-                        label: contact.name
+                        label: contact.label || contact.name
                     };
                 });
 
             repopulateSelect(contactSelect, filteredContacts, 'Select a contact', selectedContact);
 
+            var contactId = accountTypeSelect.value === 'contact' ? contactSelect.value : '';
             var filteredRequests = salesRequests
                 .filter(function (crmRequest) {
+                    if (accountTypeSelect.value === 'contact') {
+                        return contactId
+                            && String(crmRequest.contact_id || '') === String(contactId);
+                    }
+
                     if (!accountId) {
                         return false;
                     }
@@ -583,6 +615,18 @@
             });
         }
 
+        function syncTaxControls() {
+            var useDocumentTax = lineNodes().length > 1;
+
+            lineNodes().forEach(function (line) {
+                var lineTaxRate = line.querySelector('[data-line-tax-rate]');
+
+                if (lineTaxRate) {
+                    lineTaxRate.disabled = useDocumentTax;
+                }
+            });
+        }
+
         function applyProductDefaults(line) {
             var productSelect = line.querySelector('[data-line-product]');
             var product = products[productSelect.value] || null;
@@ -599,6 +643,8 @@
         }
 
         function calculateTotals() {
+            syncTaxControls();
+
             var lines = lineNodes().map(function (line) {
                 var quantity = Number(line.querySelector('[data-line-quantity]').value || 0);
                 var unitPrice = Number(line.querySelector('[data-line-unit-price]').value || 0);
@@ -638,20 +684,36 @@
             var subtotalAmount = 0;
             var taxAmount = 0;
             var totalAmount = 0;
+            var useDocumentTax = lines.length > 1;
+            var documentTaxAmount = 0;
+            var allocatedDocumentTaxes = [];
 
             lines.forEach(function (line, index) {
                 var allocatedDocumentDiscount = allocatedDocumentDiscounts[index] || 0;
                 var totalDiscount = round(line.line_discount_amount + allocatedDocumentDiscount, currentPrecision());
                 var netAmount = round(line.gross_amount - totalDiscount, currentPrecision());
-                var lineTaxAmount = round(netAmount * (line.tax_rate / 100), currentPrecision());
-                var lineTotalAmount = round(netAmount + lineTaxAmount, currentPrecision());
 
+                line.total_discount_amount = totalDiscount;
+                line.net_amount = netAmount;
                 subtotalAmount = round(subtotalAmount + netAmount, currentPrecision());
+            });
+
+            if (useDocumentTax) {
+                documentTaxAmount = round(subtotalAmount * ((Number(documentTaxRate ? documentTaxRate.value : 0) || 0) / 100), currentPrecision());
+                allocatedDocumentTaxes = allocateAmount(lines.map(function (line) { return line.net_amount; }), documentTaxAmount);
+            }
+
+            lines.forEach(function (line, index) {
+                var lineTaxAmount = useDocumentTax
+                    ? (allocatedDocumentTaxes[index] || 0)
+                    : round(line.net_amount * (line.tax_rate / 100), currentPrecision());
+                var lineTotalAmount = round(line.net_amount + lineTaxAmount, currentPrecision());
+
                 taxAmount = round(taxAmount + lineTaxAmount, currentPrecision());
                 totalAmount = round(totalAmount + lineTotalAmount, currentPrecision());
 
                 line.node.querySelector('[data-line-gross]').textContent = formatNumber(line.gross_amount);
-                line.node.querySelector('[data-line-discount]').textContent = formatNumber(totalDiscount);
+                line.node.querySelector('[data-line-discount]').textContent = formatNumber(line.total_discount_amount);
                 line.node.querySelector('[data-line-tax]').textContent = formatNumber(lineTaxAmount);
                 line.node.querySelector('[data-line-total]').textContent = formatNumber(lineTotalAmount);
             });
@@ -729,7 +791,12 @@
 
         leadSelect.addEventListener('change', syncContextSelects);
         customerSelect.addEventListener('change', syncContextSelects);
+        contactSelect.addEventListener('change', syncContextSelects);
         currencySelect.addEventListener('change', calculateTotals);
+
+        if (documentTaxRate) {
+            documentTaxRate.addEventListener('input', calculateTotals);
+        }
 
         if (documentDiscountType) {
             documentDiscountType.addEventListener('change', calculateTotals);
