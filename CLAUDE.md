@@ -4,108 +4,127 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Path
 
-**CRITICAL:** This project is located at:
+This project is located at:
 
 ```
-/Users/thatoobuseng/Sites/Junior
+/Users/thatoobuseng/Sites/Heritage Website
 ```
 
-Always verify you are working in this directory before making any changes. Do not modify files outside of this project path.
+It is a **separate project** from the Heritage Junior school management system at `/Users/thatoobuseng/Sites/Junior`. They share a product name and nothing else — no shared models, routes, or views. Do not modify files outside this project path.
 
 ## Project Overview
 
-This is a Laravel 9.x School Management System for Heritage Junior Secondary School. It handles academics, admissions, assessments, attendance, fees, and administrative functions across multiple school types (Senior, Junior/CJSS, Primary, Reception/Pre-school).
+A Laravel 9.x (PHP 8.0+) application serving two distinct halves from one codebase:
+
+1. **The public Heritage Pro marketing website** — 8 pages plus a demo-request form. Handled entirely by one controller, `PublicWebsiteController`, with content driven from `config/heritage_website.php`.
+2. **The internal Heritage Pro CRM** — the bulk of the code. Customers, leads, contacts, quotes/invoices, calendar, discussions (in-app, email, WhatsApp), staff attendance (including biometric devices), leave management, imports, and settings.
+
+Heritage Pro itself — the school information system being sold — is a different product in a different repository. Nothing here manages learners, grades, or report cards; those appear only as marketing copy and mock UI on the website.
 
 ## Common Commands
 
-### Development Server
 ```bash
-php artisan serve              # Start Laravel development server
-npm run dev                    # Start Vite development server with HMR
+php artisan serve                     # Development server
+php artisan test                      # Full suite (36 test files)
+php artisan test --filter=TestName    # Single test or class
+php artisan migrate                   # Run migrations
+php artisan tinker
 ```
 
-### Building Assets
-```bash
-npm run build                  # Production build
-npm run watch                  # Watch mode for development
-```
+Cache clearing — `view:clear` matters most here, because nearly all CSS lives in compiled Blade templates:
 
-### Database
 ```bash
-php artisan migrate            # Run migrations
-php artisan migrate:fresh --seed  # Reset and seed database
-php artisan tinker             # Interactive PHP shell
-```
-
-### Testing
-```bash
-php artisan test               # Run all tests
-php artisan test --filter=TestName  # Run specific test
-```
-
-### Cache & Maintenance
-```bash
-php artisan cache:clear
-php artisan config:clear
 php artisan view:clear
+php artisan config:clear
 php artisan route:clear
 ```
 
+**Commands that do not work in this repo:**
+- `php artisan migrate:fresh --seed` — there is no `database/seeders` or `database/factories` directory, despite `composer.json` autoloading the namespace. Use `migrate:fresh` alone.
+- `npm run dev` / `npm run build` — see *Asset pipeline* below. There is no build step; do not add one casually.
+
 ## Architecture
 
-### Route Organization
-Routes are modularized in `/routes/` with includes for each feature domain:
-- `assessment/` - Separate files for senior, junior, primary, and reception assessments
-- `finals/` - Final grades, classes, houses, core subjects, external exams
-- `fees/`, `students/`, `staff/`, `academic/`, `attendance/`, etc.
+### Routing
 
-### Controllers by School Type
-Assessment controllers are split by school type in `/app/Http/Controllers/Assessment/`:
-- `SeniorAssessmentController.php`
-- `JuniorAssessmentController.php`
-- `PrimaryAssessmentController.php`
-- `ReceptionAssessmentController.php`
+`routes/web.php` is the whole map and worth reading first. Three zones:
 
-### Views Structure
-Blade templates in `/resources/views/` mirror the controller organization:
-- `assessment/senior/` - Senior school markbooks, report cards, class lists
-- `assessment/junior/` - CJSS markbooks and assessments
-- `assessment/primary/` - Primary school assessments
-- `assessment/shared/` - Shared components like optional subject markbooks
+- **Public website** — a single `Route::controller(PublicWebsiteController::class)` group. `/` plus seven pages resolved through a shared `page` action with a `defaults('page', …)` allowlist, and `POST /book-demo`.
+- **Signed public link** — `crm.calendar.attendees.availability`, the only CRM route reachable without a login (guarded by `signed`).
+- **CRM** — everything under `/crm`, behind `auth` + `crm.access`, then `crm.onboarding`. Split across 15 files in `routes/crm/` (`customers`, `contacts`, `calendar`, `products`, `requests`, `discussions`, `attendance`, `leave`, `users`, `settings`, `integrations`, `workspace`, `dashboard`, `onboarding`, `dev`).
 
-### Key Models
-127 Eloquent models in `/app/Models/`. Key relationships:
-- `Student` - Core student data, linked to classes, tests, sponsors
-- `Klass` - Classes with students and teachers
-- `GradeSubject` - Subjects per grade with associated tests
-- `StudentTest` - Individual student test scores
-- `Term` - Academic terms for assessment periods
+`routes/api.php` exposes biometric attendance endpoints. The ZKTeco ADMS `iclock/*` routes are deliberately outside Sanctum — devices authenticate by serial number plus communication key.
 
-### Services Layer
-Business logic in `/app/Services/` (24 files) handles complex operations like:
-- Report card generation
-- Grade calculations
-- Data exports
+### Module permissions (the central CRM pattern)
 
-### Exports/Imports
-Excel operations via Maatwebsite/Excel in `/app/Exports/` (57 files) and `/app/Imports/`.
+CRM authorization is **config-driven, not policy-driven**. `config/heritage_crm.php` (~820 lines) declares every module with its label, icon, route, route-match patterns, and `default_permissions` per role (`admin`, `finance`, `manager`, `rep`).
 
-## Key Patterns
+`EnsureCrmAccess` middleware resolves the current route name to a module via `CrmModulePermissionService`, works out the required level (`view` / `edit` / `admin`) for the HTTP method, and aborts 403 if the user falls short. Per-user overrides live in `crm_user_module_permissions`; absent an override, the role default applies.
 
-### Assessment Markbooks
-Markbook views (`markbook-*-class-list.blade.php`) use:
-- Sequential `$rowIndex` counter for Tab navigation (not collection keys)
-- `$loop->index` for column indices in nested foreach loops
-- `score-input` class with `data-row` and `data-col` attributes for keyboard navigation
+**Consequence:** adding a CRM route without registering its name in a module's `match` patterns leaves it unguarded by module permissions. Register new routes in `config/heritage_crm.php`, and check `CrmAccessTest` still passes.
 
-### PDF Generation
-Uses `barryvdh/laravel-dompdf` for report cards. PDF templates are in `resources/views/` with `-pdf` suffix.
+### Layers
 
-### Frontend Stack
-- Bootstrap 5 for UI
-- Vite for asset bundling (configured in `vite.config.js`)
-- jQuery for DOM manipulation
-- ApexCharts, DataTables, Sweetalert2 for interactive components
+- **Controllers** — `app/Http/Controllers/Crm/` (34 files), plus `Api/Crm/BiometricController` and the single `PublicWebsiteController`.
+- **Services** — `app/Services/Crm/` (37 files) holds the real business logic: attendance clocking/grid/shift resolution, biometric event processing, commercial document calculation/numbering/PDF/sharing, leave application/approval/balance, discussion delivery, module permissions, calendar, global search.
+- **Models** — 59 in `app/Models/`, nearly all `Crm`-prefixed. The unprefixed ones (`Lead`, `Customer`, `Contact`, `SalesStage`, `Request`-family, `Discussion`-family, `Integration`, `User`) predate the prefix convention.
+- **Form Requests** — `app/Http/Requests/Crm/` plus `BookDemoRequest`.
+- **Jobs** — attendance automation (`MarkAbsenteesJob`, `CloseOvernightRecordsJob`, `ProcessBiometricEventJob`, `SyncHolidayAttendanceJob`).
+- **Console commands** — leave reminders/escalation/balance reset, calendar reminders. Scheduled in `app/Console/Kernel.php`.
+
+### Views
+
+- `resources/views/crm/` — one directory per module, extending `layouts/crm`.
+- `resources/views/website/` — `pages/`, `sections/`, `partials/`, `partials/editorial/`.
+- `resources/views/pdf/crm/` — DomPDF templates for quotes and invoices.
+- `resources/views/layouts/` — the CRM shell is split across `crm.blade.php`, `crm-head-css`, `crm-sidebar`, `crm-topbar`, `crm-styles`, `crm-theme-styles`, `crm-footer`.
+
+### Asset pipeline
+
+**There is no active build step.** `@vite` appears nowhere in the codebase. Understand this before touching styling:
+
+- The CRM loads pre-built vendor CSS/JS as static files from `public/assets/` (a Minia Bootstrap 5 admin template) via `layouts/crm-head-css`.
+- All bespoke CSS lives **inside Blade files**, inlined through `@include` into a `<style>` tag — `layouts/crm-styles` (766 lines), `layouts/crm-theme-styles` (2,238 lines), `layouts/website-base-styles`, and `website/partials/editorial/*-styles`.
+- `package.json` and `vite.config.js` are inherited from the template and are effectively dead. Editing `resources/css/` or `resources/js/` changes nothing that ships.
+
+So: add styles to the relevant Blade style partial and run `php artisan view:clear`. Icons are Boxicons (`bx bx-*`), loaded from `public/assets/css/icons.min.css`.
+
+### Key packages
+
+`composer.json` declares only the Laravel base. In practice the app also depends on **`barryvdh/laravel-dompdf`** (commercial document PDFs) and **`maatwebsite/excel`** (attendance exports, CRM imports) — both present in `composer.lock` and `vendor/`, neither declared in `composer.json`.
+
+`composer validate` reports the lock file as out of sync. **Do not run `composer update`** — it would drop DomPDF and Excel and break PDF generation and imports. If dependencies need touching, add those two packages to `composer.json` first.
+
+## Public Website Specifics
+
+Content lives in `config/heritage_website.php` (~524 lines): nav, per-page hero copy, clients, stats, products, feature rows, modules, deployment highlights, customer cards, team, pricing cards, FAQ, blog articles, contact details, footer columns. Prefer editing config over hardcoding copy into partials.
+
+`POST /book-demo` validates through `BookDemoRequest` (`full_name`, `role`, `institution`, `work_email`, `phone`, `edition`, `learner_band`, optional `notes`), mails `BookDemoInquiry` to `config('mail.demo_recipient')`, and redirects back to `#contact` with `book_demo_success` / `book_demo_error` in the session. Any redesign of the form must keep all eight field names and that anchor.
+
+### Two design systems coexist
+
+| | Homepage (`/`) | The other 7 pages |
+|---|---|---|
+| Layout | `layouts/website-editorial` | `layouts/website-master` |
+| Partials | `website/partials/editorial/` | `website/partials/` |
+| Class prefix | `hp-` | legacy (`nav`, `hero`, `contact`, …) |
+| Type | Source Serif 4 / Archivo / IBM Plex Mono | Inter-based |
+| Palette | cream `#FAFAFD`, navy `#232160`, gold `#C08A3C` | indigo `--brand-indigo-500` |
+| Dark mode | none | `data-theme` toggle + `localStorage` |
+
+This is deliberate: the homepage was rebuilt to a supplied editorial design and the rollout was scoped to that page. Do not "unify" them without being asked. The `precision-*` and `mobile-app-showcase` partials are orphaned remnants of the previous homepage — left on disk, referenced by nothing.
+
+Two content items are flagged in Blade comments and still need the owner's decision: the attributed testimonials in `editorial/testimonials.blade.php`, and per-year vs per-month pricing in `editorial/pricing.blade.php` (which contradicts `config/heritage_website.php`).
+
+## Testing
+
+PHPUnit against **SQLite** (`database/testing.sqlite`, configured in `phpunit.xml`), mail faked to the `array` driver. 36 test files, overwhelmingly `tests/Feature/Crm/`.
+
+There are no model factories. Tests build fixtures by hand — follow the pattern in the neighbouring test rather than reaching for `factory()`.
+
+Ignore `tests/Concerns/` — its seven traits (`EnsuresPdpPhaseTwoSchema`, `EnsuresInvigilationSchema`, `EnsuresPreF3SchoolModeSchema`, `BuildsActivitiesRosterFixtures`, …) are dead copies from the Junior school-SIS repo, referenced by zero tests here and describing tables this project does not have.
+
+When touching CRM routes or permissions, `CrmAccessTest` and `CrmPageRenderTest` are the fastest signal.
 
 ## Coding Standards & Best Practices
 
@@ -114,7 +133,8 @@ Uses `barryvdh/laravel-dompdf` for report cards. PDF templates are in `resources
   - *Correct:* `public function index() {`
   - *Incorrect:* `public function index()` followed by `{` on a new line.
 - **Type Hinting:** Strictly use return types and typed properties where possible (e.g., `public function grade(Student $student): float {`).
-- **Naming:** Follow Laravel naming conventions (camelCase for variables/methods, Snake_case for database columns).
+- **Naming:** Follow Laravel naming conventions (camelCase for variables/methods, snake_case for database columns).
+- **Constructor injection:** Services are resolved through the container with `private readonly` promoted properties — see `EnsureCrmAccess` and the `Crm` controllers.
 
 ### Performance & Optimization
 - **Database Queries:**
@@ -124,73 +144,63 @@ Uses `barryvdh/laravel-dompdf` for report cards. PDF templates are in `resources
 - **Caching:** Cache expensive dashboard queries or static reference data using `Cache::remember`.
 
 ### Robustness & Security
-- **Validation:** Never use `$request->all()`. Use FormRequests or `valdiated()` data for all state-changing operations.
-- **Authorization:** Always check policies (e.g., `$this->authorize('view', $record)`) before returning data.
+- **Validation:** Never use `$request->all()`. Use FormRequests or `validated()` data for all state-changing operations.
+- **Authorization:** CRM access is enforced by module permissions (see above), not policies — register new routes in `config/heritage_crm.php`.
 - **Race Conditions:**
   - **Transactions:** Wrap all multi-step database updates in `DB::transaction(function() { ... })`.
-  - **Locking:** Use `lockForUpdate()` when reading data that will be immediately modified (e.g., allocating a student to a full class) to prevent race conditions.
+  - **Locking:** Use `lockForUpdate()` when reading data that will be immediately modified to prevent race conditions.
 - **Error Handling:** Use `try/catch` blocks for external service calls or file operations. Log errors using `Log::error()` with context.
 
 ### Frontend Considerations
 - **Asset Loading:** Defer non-critical JavaScript.
-- **Feedback:** Always provide user feedback (Toast/SweetAlert) on success or failure of async operations.
+- **Feedback:** Always provide user feedback on success or failure of async operations.
 
-## UI Theming Standards
+## UI Conventions
 
-**CRITICAL:** All pages and buttons MUST follow the established theming patterns. Reference these files for the correct styling:
-- `resources/views/admissions/admission-new.blade.php` - Form pages with save button
-- `resources/views/admissions/index.blade.php` - Index/listing pages
-- `docs/create.blade.php` - Create form pages
-- `docs/edit.blade.php` - Edit form pages
+### CRM pages
 
-### Container & Card Styling
-```css
-.form-container {
-    background: white;
-    border-radius: 3px;
-    padding: 32px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
+CRM views extend `layouts/crm` and populate named sections rather than building their own chrome:
+
+```blade
+@extends('layouts.crm')
+
+@section('title', 'Customers Workspace - Customers')
+@section('crm_heading', 'Customers Workspace')
+@section('crm_subheading', 'Manage converted institutions and keep records tied to their originating lead.')
+
+@section('crm_header_stats')
+    @include('crm.partials.header-stat', ['value' => $count, 'label' => 'Active'])
+@endsection
+
+@section('content')
+    <div class="crm-stack">
+        @include('crm.partials.helper-text', [
+            'title' => 'Customer Directory',
+            'content' => 'Use the filters below to find the account you need.',
+        ])
+
+        <section class="crm-card">
+            <div class="crm-card-title">
+                <div>
+                    <p class="crm-kicker">Filters</p>
+                    <h2>Find customers</h2>
+                </div>
+            </div>
+            {{-- … --}}
+        </section>
+    </div>
+@endsection
 ```
 
-### Index Page Header (Gradient)
-```css
-.header {
-    background: linear-gradient(135deg, #4e73df 0%, #36b9cc 100%);
-    color: white;
-    padding: 28px;
-    border-radius: 3px 3px 0 0;
-}
-```
+Established class vocabulary, defined in `layouts/crm-styles` and `layouts/crm-theme-styles` — reuse these rather than inventing new ones: `crm-stack`, `crm-card`, `crm-card-title`, `crm-kicker`, `crm-field`, `crm-field-grid`, `crm-field-error`, `crm-form`, `crm-filter-form`, `crm-filter-grid`, `crm-table` / `crm-table-wrap` / `crm-table-actions`, `crm-pill`, `crm-metric`, `crm-meta-row`, `crm-action-row`, `crm-empty`, `crm-muted`, `crm-inline`, `crm-tabs`.
 
-### Primary Button Styling
-```css
-.btn-primary {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 3px;
-    font-size: 14px;
-    font-weight: 500;
-    border: none;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
+**Buttons.** Primary actions use `btn btn-primary`; secondary and cancel actions use `btn btn-light crm-btn-light`; table row icons use `btn crm-icon-action` (with `crm-icon-danger` for destructive ones). Reusable partials exist for `crm.partials.view-button`, `crm.partials.delete-button`, and `crm.partials.pager`.
 
-.btn-primary:hover {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-```
+**Save buttons must carry the loading pattern** (~56 instances across the CRM):
 
-### Save Button with Icon and Loading Animation
-**REQUIRED:** All save/submit buttons must use this pattern:
-```html
+```blade
 <button type="submit" class="btn btn-primary btn-loading">
-    <span class="btn-text"><i class="fas fa-save"></i> Save Changes</span>
+    <span class="btn-text"><i class="bx bx-save"></i> Save Changes</span>
     <span class="btn-spinner d-none">
         <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
         Saving...
@@ -198,85 +208,8 @@ Uses `barryvdh/laravel-dompdf` for report cards. PDF templates are in `resources
 </button>
 ```
 
-**Required CSS for loading state:**
-```css
-.btn-loading.loading .btn-text {
-    display: none;
-}
+**Feedback.** Do not hand-roll alerts. Flash `crm_success` or `crm_error` to the session; `crm.partials.flash` renders the toast stack, and also surfaces `$errors` automatically.
 
-.btn-loading.loading .btn-spinner {
-    display: inline-flex !important;
-    align-items: center;
-}
+### Public website
 
-.btn-loading:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-}
-```
-
-**Required JavaScript to trigger loading state on form submit:**
-```javascript
-const submitBtn = form.querySelector('button[type="submit"].btn-loading');
-if (submitBtn) {
-    submitBtn.classList.add('loading');
-    submitBtn.disabled = true;
-}
-```
-
-### Help Text Box
-```css
-.help-text {
-    background: #f8f9fa;
-    padding: 12px;
-    border-left: 4px solid #3b82f6;
-    border-radius: 0 3px 3px 0;
-    margin-bottom: 20px;
-}
-
-.help-text .help-title {
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 4px;
-}
-
-.help-text .help-content {
-    color: #6b7280;
-    font-size: 13px;
-    line-height: 1.4;
-}
-```
-
-### Form Input Focus States
-```css
-.form-control:focus,
-.form-select:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-```
-
-### Section Title
-```css
-.section-title {
-    font-size: 16px;
-    font-weight: 600;
-    margin: 24px 0 16px 0;
-    color: #1f2937;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #e5e7eb;
-}
-```
-
-### Form Actions Layout
-```css
-.form-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end; /* or space-between if back button exists */
-    padding-top: 24px;
-    border-top: 1px solid #f3f4f6;
-    margin-top: 32px;
-}
-```
+The homepage uses `hp-`-prefixed classes with tokens declared in `website/partials/editorial/base-styles`; section styles go in `editorial/home-styles`. The remaining pages use the legacy vocabulary in `layouts/website-base-styles` (`--brand-indigo-500`, `--fg-1/2/3`, `--border-1`, `--shadow-sm`) and must keep working in both light and dark themes.

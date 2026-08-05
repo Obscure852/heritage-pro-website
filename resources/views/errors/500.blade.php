@@ -122,7 +122,7 @@
 
                         <!-- Support Link -->
                         <div class="mt-4">
-                            <a href="mailto:support@heritagepro.co" class="text-muted small">
+                            <a href="mailto:support@heritagepro.net" class="text-muted small">
                                 <i class="fas fa-envelope me-1"></i>
                                 Contact Support
                             </a>

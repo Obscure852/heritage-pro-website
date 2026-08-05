@@ -617,6 +617,7 @@
           }
         }
     </style>
+    @stack('page-styles')
 </head>
 <body>
     @yield('content')
@@ -675,5 +676,6 @@
             });
         }
     </script>
+    @stack('page-scripts')
 </body>
 </html>

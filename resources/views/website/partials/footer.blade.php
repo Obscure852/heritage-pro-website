@@ -27,7 +27,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <div>© 2025 Heritage Pro (Pty) Ltd · Registered in Botswana · Reg. CO-2024/28110</div>
+            <div>© {{ now()->year }} Heritage Pro (Pty) Ltd · Registered in Botswana · Reg. CO-2024/28110</div>
             <div style="display: flex; gap: 20px;">
                 <a href="#">Privacy</a>
                 <a href="#">Terms</a>

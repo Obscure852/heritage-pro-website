@@ -103,7 +103,7 @@
                                 <i class="fas fa-arrow-left me-2"></i>
                                 Go Back
                             </button>
-                            <a href="mailto:support@heritagepro.co" class="btn btn-primary btn-back">
+                            <a href="mailto:support@heritagepro.net" class="btn btn-primary btn-back">
                                 <i class="fas fa-envelope me-2"></i>
                                 Contact Support
                             </a>

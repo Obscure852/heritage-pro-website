@@ -1,5 +1,17 @@
 <?php
 
+$mailFromAddress = env('MAIL_FROM_ADDRESS');
+$mailUsername = env('MAIL_USERNAME');
+
+if (! filter_var($mailFromAddress, FILTER_VALIDATE_EMAIL)) {
+    $mailFromAddress = filter_var($mailUsername, FILTER_VALIDATE_EMAIL)
+        ? $mailUsername
+        : 'no-reply@heritagepro.net';
+}
+
+$mailFromName = env('MAIL_FROM_NAME') ?: env('APP_NAME', 'Heritage School Management System');
+$demoRecipientAddress = env('BOOK_DEMO_TO_ADDRESS');
+
 return [
 
     /*
@@ -84,13 +96,13 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'obscure852@gmail.com'),
-        'name' => env('MAIL_FROM_NAME', 'Heritage School Management System'),
+        'address' => $mailFromAddress,
+        'name' => $mailFromName,
     ],
 
     'demo_recipient' => [
-        'address' => env('BOOK_DEMO_TO_ADDRESS', env('MAIL_FROM_ADDRESS', 'obscure852@gmail.com')),
-        'name' => env('BOOK_DEMO_TO_NAME', env('MAIL_FROM_NAME', 'Heritage School Management System')),
+        'address' => filter_var($demoRecipientAddress, FILTER_VALIDATE_EMAIL) ? $demoRecipientAddress : $mailFromAddress,
+        'name' => env('BOOK_DEMO_TO_NAME') ?: $mailFromName,
     ],
 
     /*

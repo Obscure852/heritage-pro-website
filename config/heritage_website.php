@@ -465,7 +465,7 @@ return [
         'description' => 'See Heritage Pro on your own data. Our team will tailor the walkthrough to your school, import a sample of your records, and answer every question.',
         'details' => [
             ['icon' => 'pin', 'label' => 'Head office', 'value' => 'Plot 50371, CBD · Gaborone, Botswana'],
-            ['icon' => 'mail', 'label' => 'Email', 'value' => 'hello@heritagepro.co'],
+            ['icon' => 'mail', 'label' => 'Email', 'value' => 'support@heritagepro.net'],
             ['icon' => 'phone', 'label' => 'Phone', 'value' => '+267 390 5400'],
         ],
     ],
