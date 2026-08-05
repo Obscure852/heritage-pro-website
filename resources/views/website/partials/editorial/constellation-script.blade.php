@@ -22,18 +22,21 @@
 
             const INK = '35, 33, 96';
             const GOLD = '192, 138, 60';
-            const LINK_RANGE = 132;
+            // Link count grows with the square of node count, so the range comes
+            // down as density goes up — that keeps a legible lattice rather than a
+            // solid mesh.
+            const LINK_RANGE = 118;
             const POINTER_RANGE = 178;
-            const AREA_PER_NODE = 15000;
-            const MIN_NODES = 24;
-            const MAX_NODES = 70;
+            const AREA_PER_NODE = 10000;
+            const MIN_NODES = 34;
+            const MAX_NODES = 110;
 
             // Opacity ceilings — the dials to turn if the field needs to be more or
             // less present. Keep them low enough that the headline still leads.
-            const LINK_ALPHA = 0.2;
-            const POINTER_ALPHA = 0.36;
-            const NODE_ALPHA = 0.38;
-            const ACCENT_ALPHA = 0.62;
+            const LINK_ALPHA = 0.26;
+            const POINTER_ALPHA = 0.42;
+            const NODE_ALPHA = 0.48;
+            const ACCENT_ALPHA = 0.72;
 
             const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
             const pointer = { x: 0, y: 0, active: false, ease: 0 };
@@ -154,7 +157,7 @@
                 for (const node of nodes) {
                     ctx.fillStyle = node.accent ? `rgba(${GOLD}, ${ACCENT_ALPHA})` : `rgba(${INK}, ${NODE_ALPHA})`;
                     ctx.beginPath();
-                    ctx.arc(node.x, node.y, node.accent ? 2.3 : 1.7, 0, Math.PI * 2);
+                    ctx.arc(node.x, node.y, node.accent ? 2.4 : 1.8, 0, Math.PI * 2);
                     ctx.fill();
                 }
             }

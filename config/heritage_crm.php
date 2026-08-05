@@ -455,6 +455,102 @@ return [
         'limit_per_group' => 5,
         'min_query_length' => 2,
     ],
+    'dashboard' => [
+        'cache_seconds' => env('CRM_DASHBOARD_CACHE_SECONDS', 60),
+        'list_limit' => 6,
+        'going_cold_days' => 14,
+        'aging_days' => 7,
+
+        /*
+         * Dashboard widgets, in render order.
+         *
+         * Each entry declares its own visibility. A widget is shown when every rule
+         * it declares passes:
+         *   module  — the viewer needs this CRM module at 'level' (default 'view').
+         *   roles   — the viewer's role must appear in this list.
+         *   setting — the named dashboard flag must be true (see DashboardController).
+         * A widget declaring none of these is visible to everyone who can open the
+         * dashboard. Data is only queried for widgets that survive this filter.
+         *
+         * Set 'enabled' => false to take a widget off the dashboard without deleting it;
+         * flip it back to true (or drop the line) to restore the widget as it was.
+         *
+         * 'size' drives layout: 'full' spans the row, and consecutive 'half' widgets
+         * pair into two-column rows after the invisible ones are dropped.
+         */
+        'widgets' => [
+            'movement' => [
+                'enabled' => false,
+                'label' => 'Movement',
+                'partial' => 'crm.dashboard.partials.movement',
+                'size' => 'full',
+            ],
+            'pressure' => [
+                'label' => 'Workload pressure',
+                'partial' => 'crm.dashboard.partials.pressure',
+                'size' => 'full',
+            ],
+            'commercial' => [
+                'enabled' => false,
+                'label' => 'Pipeline and revenue',
+                'partial' => 'crm.dashboard.partials.commercial',
+                'module' => 'products',
+                'size' => 'full',
+            ],
+            'revenue_trend' => [
+                'enabled' => false,
+                'label' => 'Invoice value by month',
+                'partial' => 'crm.dashboard.partials.revenue-trend',
+                'module' => 'products',
+                'size' => 'half',
+            ],
+            'quote_conversion' => [
+                'enabled' => false,
+                'label' => 'Quote conversion',
+                'partial' => 'crm.dashboard.partials.quote-conversion',
+                'module' => 'products',
+                'size' => 'half',
+            ],
+            'my_day' => [
+                'label' => 'My day',
+                'partial' => 'crm.dashboard.partials.my-day',
+                'size' => 'half',
+            ],
+            'clock' => [
+                'label' => 'Clock in and out',
+                'partial' => 'crm.dashboard.partials.clock',
+                'setting' => 'show_dashboard_clock',
+                'size' => 'half',
+            ],
+            'going_cold' => [
+                'enabled' => false,
+                'label' => 'Going cold',
+                'partial' => 'crm.dashboard.partials.going-cold',
+                'roles' => ['admin', 'manager', 'rep'],
+                'size' => 'half',
+            ],
+            'needs_attention' => [
+                'enabled' => false,
+                'label' => 'Needs attention',
+                'partial' => 'crm.dashboard.partials.needs-attention',
+                'size' => 'half',
+            ],
+            'team_today' => [
+                'enabled' => false,
+                'label' => 'Team today',
+                'partial' => 'crm.dashboard.partials.team-today',
+                'module' => 'attendance',
+                'size' => 'half',
+            ],
+            'leave' => [
+                'enabled' => false,
+                'label' => 'Leave',
+                'partial' => 'crm.dashboard.partials.leave',
+                'module' => 'leave',
+                'size' => 'half',
+            ],
+        ],
+    ],
     'presence' => [
         'online_window_minutes' => 3,
         'launcher_poll_seconds' => 10,

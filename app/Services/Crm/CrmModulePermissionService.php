@@ -44,17 +44,13 @@ class CrmModulePermissionService
             return $this->defaultPermissionLevelForRole($user->role, $moduleKey);
         }
 
-        $relationValue = $user->relationLoaded('modulePermissions')
-            ? $user->modulePermissions->firstWhere('module_key', $moduleKey)?->permission_level
-            : null;
+        // Load the whole permission set once per user rather than querying per module.
+        // Every CRM page checks access for each module and child entry, so the previous
+        // per-call lookup cost ~73 identical queries on a single render.
+        $user->loadMissing('modulePermissions');
 
-        if (is_string($relationValue) && $relationValue !== '') {
-            return $relationValue;
-        }
-
-        $storedValue = $user->modulePermissions()
-            ->where('module_key', $moduleKey)
-            ->value('permission_level');
+        $storedValue = $user->modulePermissions
+            ->firstWhere('module_key', $moduleKey)?->permission_level;
 
         if (is_string($storedValue) && $storedValue !== '') {
             return $storedValue;

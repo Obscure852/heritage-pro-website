@@ -99,7 +99,7 @@ class LoginController extends Controller
         $message = 'Too many login attempts. Please try again in ' . $seconds . ' seconds.';
 
         return redirect()->back()
-            ->withInput($request->only($this->username(), 'remember'))
+            ->withInput($request->only($this->username()))
             ->withErrors([$this->username() => $message]);
     }
 
@@ -136,7 +136,7 @@ class LoginController extends Controller
         }
 
         return redirect()->back()
-            ->withInput($request->only($this->username(), 'remember'))
+            ->withInput($request->only($this->username()))
             ->withErrors($errors);
     }
 

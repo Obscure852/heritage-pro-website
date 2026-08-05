@@ -6,6 +6,7 @@ use App\Models\Lead;
 use App\Models\User;
 use App\Services\Crm\CrmModulePermissionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -85,6 +86,41 @@ class CrmAccessTest extends TestCase
         $this->assertDatabaseMissing('leads', [
             'id' => $lead->id,
         ]);
+    }
+
+    public function test_module_permissions_are_loaded_once_per_request(): void
+    {
+        $admin = $this->createUser();
+
+        $permissionQueries = 0;
+        DB::listen(function ($query) use (&$permissionQueries) {
+            if (str_contains($query->sql, 'crm_user_module_permissions')) {
+                $permissionQueries++;
+            }
+        });
+
+        $this->actingAs($admin)
+            ->get(route('crm.dashboard'))
+            ->assertOk();
+
+        $this->assertLessThanOrEqual(
+            1,
+            $permissionQueries,
+            'The sidebar, launcher, and access middleware should share one module permission lookup.'
+        );
+    }
+
+    public function test_stored_module_permission_overrides_the_role_default(): void
+    {
+        $rep = $this->createUser(['role' => 'rep']);
+        $service = app(CrmModulePermissionService::class);
+
+        $this->assertSame('edit', $service->effectivePermissionLevel($rep, 'customers'));
+
+        // Re-syncing must invalidate the permissions already loaded onto this instance.
+        $service->syncPermissions($rep, ['customers' => 'view']);
+
+        $this->assertSame('view', $service->effectivePermissionLevel($rep, 'customers'));
     }
 
     private function createUser(array $attributes = []): User

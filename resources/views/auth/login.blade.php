@@ -1,8 +1,13 @@
 @extends('layouts.auth')
 
 @section('title', 'Sign In')
+
+{{-- The heading and descriptive copy are dropped from the panel so the sign-in
+     card matches the height of the password reset card; the h1 stays in the
+     document for assistive technology. --}}
 @section('auth_heading', 'Sign in to the CRM')
-@section('auth_copy', 'Use your staff email address and password to access the CRM workspace.')
+@section('auth_hide_heading', '1')
+
 @section('auth_media_heading', 'Secure CRM access')
 @section('auth_media_copy', 'One staff sign-in for the CRM dashboard, commercial workspace, team directory, requests, and customer activity.')
 
@@ -21,7 +26,12 @@
         </div>
 
         <div class="auth-field">
-            <label for="password">Password <span class="auth-required">*</span></label>
+            <div class="auth-field-header">
+                <label for="password">Password <span class="auth-required">*</span></label>
+                @if (Route::has('password.request'))
+                    <a class="auth-field-link" href="{{ route('password.request') }}">Reset password</a>
+                @endif
+            </div>
             <div class="auth-input-shell">
                 <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" placeholder="Enter your password" required autocomplete="current-password">
                 <button
@@ -49,11 +59,6 @@
             @enderror
         </div>
 
-        <label class="auth-check" for="remember">
-            <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-            <span>Keep me signed in on this device</span>
-        </label>
-
         <div class="auth-link-stack auth-link-stack-centered">
             <button type="submit" class="auth-submit btn-loading">
                 <span class="btn-text">Sign in</span>
@@ -62,12 +67,6 @@
                     Signing in...
                 </span>
             </button>
-
-            @if (Route::has('password.request'))
-                <a class="auth-link" href="{{ route('password.request') }}">Reset password</a>
-            @endif
-
-            <p class="auth-meta">Password reset is the self-service path for first-time password creation and password recovery.</p>
         </div>
     </form>
 @endsection

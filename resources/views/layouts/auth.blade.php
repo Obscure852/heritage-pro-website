@@ -19,6 +19,8 @@
             --auth-border: #E3E3EC;
             --auth-surface: #FFFFFF;
             --auth-surface-soft: #F7F7FB;
+            --auth-blue: #2563EB;
+            --auth-blue-dark: #1D4ED8;
             --auth-gold: #C08A3C;
             --auth-gold-ink: #96631E;
             --auth-hairline: #EBEBF3;
@@ -26,11 +28,25 @@
             --auth-sans: Archivo, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             --auth-stage-padding: clamp(16px, 2.4vw, 32px);
             --auth-shell-width: 980px;
-            --auth-shell-min-height: 460px;
+            /* Sits just above the tallest panel content (reset ≈ 475px) so the
+               sign-in and reset cards resolve to an identical height. */
+            --auth-shell-min-height: 480px;
         }
 
         * {
             box-sizing: border-box;
+        }
+
+        .auth-visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            padding: 0;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
         }
 
         body {
@@ -351,6 +367,35 @@
             color: var(--auth-gold);
         }
 
+        /* Label on the left, an inline helper link (e.g. reset password) on the
+           right, sharing the same baseline above the input. */
+        .auth-field-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .auth-field-header label {
+            margin-bottom: 6px;
+        }
+
+        .auth-field-link {
+            margin-bottom: 6px;
+            color: var(--auth-blue);
+            font-size: 12px;
+            font-weight: 500;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: color 0.18s ease, border-color 0.18s ease;
+        }
+
+        .auth-field-link:hover {
+            color: var(--auth-blue-dark);
+            text-decoration: none;
+            border-bottom-color: var(--auth-blue-dark);
+        }
+
         .auth-field .form-control,
         .auth-field .form-select {
             min-height: 44px;
@@ -446,25 +491,6 @@
             color: #A4243B;
             font-size: 12.5px;
             line-height: 1.5;
-        }
-
-        .auth-check {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--auth-muted);
-            font-size: 13.5px;
-            cursor: pointer;
-        }
-
-        .auth-check .form-check-input {
-            margin: 0;
-            border-color: var(--auth-border);
-        }
-
-        .auth-check .form-check-input:checked {
-            background-color: var(--auth-primary);
-            border-color: var(--auth-primary);
         }
 
         .auth-submit {
@@ -991,6 +1017,7 @@
         $companyLogoUrl = $crmBrandingSettings?->company_logo_url ?: asset('assets/images/heritage-pro-logo.jpg');
         $loginImageUrl = $crmBrandingSettings?->login_image_url ?: asset('assets/images/login-page-image.jpg');
         $hideAuthMedia = trim((string) $__env->yieldContent('auth_hide_media')) === '1';
+        $hideAuthHeading = trim((string) $__env->yieldContent('auth_hide_heading')) === '1';
     @endphp
     <div class="auth-stage">
         <div class="auth-shell{{ $hideAuthMedia ? ' auth-shell-no-media' : '' }}">
@@ -1022,8 +1049,14 @@
                     @endif
 
                     <p class="auth-kicker">@yield('auth_kicker', 'Secure Access')</p>
-                    <h1 class="auth-heading">@yield('auth_heading')</h1>
-                    <p class="auth-copy">@yield('auth_copy')</p>
+
+                    {{-- Screens that only need the fields hide the heading visually
+                         while keeping it in the document outline. --}}
+                    <h1 @class(['auth-heading', 'auth-visually-hidden' => $hideAuthHeading])>@yield('auth_heading')</h1>
+
+                    @hasSection('auth_copy')
+                        <p class="auth-copy">@yield('auth_copy')</p>
+                    @endif
 
                     @hasSection('auth_helper')
                         @yield('auth_helper')
