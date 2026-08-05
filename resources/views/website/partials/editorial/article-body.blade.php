@@ -1,9 +1,10 @@
-{{-- Renders a config-defined block array. Supported types: heading, paragraph, list, pull. --}}
+{{-- Renders a config-defined block array. Supported types: heading, paragraph,
+     list, pull. Pass anchors => true to give headings ids for a contents index. --}}
 <div class="hp-prose">
     @foreach ($blocks as $block)
         @switch($block['type'])
             @case('heading')
-                <h2>{{ $block['text'] }}</h2>
+                <h2 @if ($anchors ?? false) id="{{ \Illuminate\Support\Str::slug($block['text']) }}" @endif>{{ $block['text'] }}</h2>
                 @break
 
             @case('list')

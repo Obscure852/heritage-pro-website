@@ -14,6 +14,7 @@ Route::controller(PublicWebsiteController::class)->group(function () {
     Route::get('/about', 'page')->defaults('page', 'about')->name('website.about');
     Route::get('/team', 'page')->defaults('page', 'team')->name('website.team');
     Route::get('/faq', 'page')->defaults('page', 'faq')->name('website.faq');
+    Route::get('/prospectus', 'prospectus')->name('website.prospectus');
     Route::get('/journal', 'journal')->name('website.journal');
     Route::get('/journal/{slug}', 'journalArticle')->name('website.journal.article');
     Route::post('/book-demo', 'bookDemo')->name('website.book-demo');

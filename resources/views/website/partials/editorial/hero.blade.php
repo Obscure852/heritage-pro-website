@@ -17,7 +17,7 @@
         <p class="hp-hero__lead">One record for every learner. Admissions, attendance, assessment, finance and reporting run on the same system — so the numbers you report to your board are the numbers you can defend.</p>
         <div class="hp-hero__actions">
             <a href="#demo" class="hp-btn hp-btn--solid">Book a 30-minute demo</a>
-            <a href="{{ route('website.products') }}" class="hp-btn hp-btn--outline">Read the prospectus</a>
+            <a href="{{ route('website.prospectus') }}" class="hp-btn hp-btn--outline">Read the prospectus</a>
         </div>
     </div>
 

@@ -31,6 +31,7 @@
         <nav class="hp-footer__col" aria-label="Company">
             <p class="hp-label">Company</p>
             <a href="{{ route('website.about') }}">About</a>
+            <a href="{{ route('website.prospectus') }}">Prospectus</a>
             <a href="{{ $home }}#resellers">Resellers</a>
             <a href="{{ $home }}#team">Team</a>
             <a href="{{ route('website.journal') }}">Journal</a>

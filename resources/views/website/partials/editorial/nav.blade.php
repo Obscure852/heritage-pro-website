@@ -5,7 +5,10 @@
 @endphp
 <header class="hp-nav hp-band">
     <div class="hp-nav__group">
-        <a href="{{ $home }}" class="hp-nav__brand">Heritage&nbsp;Pro</a>
+        <a href="{{ $home }}" class="hp-nav__brand">
+            <img src="{{ asset('assets/images/heritage-pro-logo.svg') }}" alt="" width="30" height="30">
+            <span>Heritage&nbsp;Pro</span>
+        </a>
         <nav class="hp-nav__links" aria-label="Primary">
             <a href="{{ $home }}#capabilities">Platform</a>
             <a href="{{ $home }}#editions">Institutions</a>

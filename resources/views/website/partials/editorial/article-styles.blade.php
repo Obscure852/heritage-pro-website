@@ -68,6 +68,69 @@
     object-fit: cover;
 }
 
+/* ── Contents index (prospectus) ───────────────────────────────── */
+
+.hp-contents {
+    max-width: 40rem;
+    margin: 48px auto 0;
+    padding: 26px 30px 28px;
+    background: var(--hp-tint);
+    border-radius: 6px;
+}
+
+.hp-contents__label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--hp-muted-3);
+}
+
+.hp-contents__list {
+    counter-reset: hp-contents-count;
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.hp-contents__list li {
+    counter-increment: hp-contents-count;
+    padding: 9px 0;
+    border-top: 1px solid #DCDCE8;
+}
+
+.hp-contents__list li:first-child {
+    border-top: 0;
+    padding-top: 0;
+}
+
+.hp-contents__list a {
+    display: flex;
+    gap: 14px;
+    font-size: 15px;
+    line-height: 1.45;
+    color: var(--hp-ink);
+}
+
+.hp-contents__list a::before {
+    content: counter(hp-contents-count, upper-roman) '.';
+    /* Fixed column so numerals up to VIII/IX keep the titles flush. */
+    flex: 0 0 3.4em;
+    font-family: var(--hp-mono);
+    font-size: 11.5px;
+    line-height: 1.75;
+    color: var(--hp-gold);
+}
+
+.hp-contents__list a:hover {
+    color: var(--hp-navy);
+}
+
+/* Anchor targets clear the top of the viewport rather than butting against it. */
+.hp-prose h2[id] {
+    scroll-margin-top: 28px;
+}
+
 /* ── Prose ─────────────────────────────────────────────────────── */
 
 .hp-prose {

@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $pageTitle ?? config('heritage_website.meta.default_title') }}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('assets/images/heritage-pro-logo.svg') }}">
+    <link rel="apple-touch-icon" href="{{ asset('assets/images/heritage-pro-logo.jpg') }}">
     <script>
         (() => {
             try {

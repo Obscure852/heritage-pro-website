@@ -20,11 +20,20 @@
 }
 
 .hp-nav__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
     font-family: var(--hp-serif);
     font-size: 21px;
     font-weight: 600;
     letter-spacing: -0.015em;
     white-space: nowrap;
+}
+
+.hp-nav__brand img {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 auto;
 }
 
 .hp-nav__links {

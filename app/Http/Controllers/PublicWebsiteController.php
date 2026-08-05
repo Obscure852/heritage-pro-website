@@ -24,6 +24,19 @@ class PublicWebsiteController extends Controller
         return $this->renderPage($page);
     }
 
+    public function prospectus(): View
+    {
+        $prospectus = config('heritage_prospectus');
+
+        return view('website.pages.prospectus', [
+            'page' => 'prospectus',
+            'pageTitle' => $prospectus['meta']['title'],
+            'site' => config('heritage_website'),
+            'meta' => $prospectus['meta'],
+            'body' => $prospectus['body'],
+        ]);
+    }
+
     public function journal(): View
     {
         $journal = config('heritage_journal');
