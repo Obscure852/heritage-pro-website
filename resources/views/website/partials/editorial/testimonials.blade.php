@@ -1,7 +1,8 @@
 {{--
-    NOTE: the quotes and attributions below came with the supplied homepage design.
-    Confirm each speaker has approved the wording and their institution's name before
-    this page goes live, or swap them for testimonials you hold on file.
+    NOTE: the speakers and institutions below are real Heritage Pro clients, but the
+    QUOTE WORDING is still the placeholder copy that came with the homepage design —
+    nobody named here has said these words. Replace each quote with what the person
+    actually told you, or get their sign-off on this wording, before relying on it.
 --}}
 <section id="voices" class="hp-section hp-band hp-voices">
     <p class="hp-eyebrow">IV. Institutions</p>
@@ -12,8 +13,8 @@
         <figcaption class="hp-cite">
             <span class="hp-cite__avatar" aria-hidden="true"></span>
             <span class="hp-cite__meta">
-                <span class="hp-cite__name">N. Phiri</span>
-                <span class="hp-cite__role">Group Bursar, Rainbow Schools</span>
+                <span class="hp-cite__name">Tsaone Motswaledi</span>
+                <span class="hp-cite__role">Human Resources, Gaborone College of Culinary Arts</span>
             </span>
         </figcaption>
     </figure>
@@ -21,11 +22,11 @@
     <div class="hp-grid-2 hp-voices__grid">
         <figure class="hp-pullquote">
             <blockquote><p>“Reporting used to take three weeks of evenings. This term it took a morning, and the numbers reconciled first time.”</p></blockquote>
-            <figcaption><strong>B. Kgosidintsi</strong><span> · Head of School, Legae Academy</span></figcaption>
+            <figcaption><strong>Mr. Mhotsha</strong><span> · Head of School, Francistown Senior Secondary School</span></figcaption>
         </figure>
         <figure class="hp-pullquote">
             <blockquote><p>“Registration week is no longer a crisis. Prerequisites are enforced by the system, so my office handles exceptions only.”</p></blockquote>
-            <figcaption><strong>Dr. M. Owusu</strong><span> · Registrar, Botho University</span></figcaption>
+            <figcaption><strong>Tiroyamodimo Stanley Keabetswe</strong><span> · IT Manager, Institute of Health Sciences</span></figcaption>
         </figure>
     </div>
 </section>

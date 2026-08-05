@@ -3,6 +3,8 @@
     $address = $detail('pin');
     $email = $detail('mail');
     $phone = $detail('phone');
+    // Homepage section anchors, absolute so the footer works on /journal too.
+    $home = route('website.home');
 @endphp
 <footer class="hp-footer hp-band">
     <div class="hp-footer__grid">
@@ -12,26 +14,26 @@
         </div>
         <nav class="hp-footer__col" aria-label="Platform">
             <p class="hp-label">Platform</p>
-            <a href="#capabilities">Student information</a>
-            <a href="#capabilities">Assessment</a>
-            <a href="#modules">Finance</a>
-            <a href="#modules">Learning</a>
-            <a href="#capabilities">Tertiary</a>
+            <a href="{{ $home }}#capabilities">Student information</a>
+            <a href="{{ $home }}#capabilities">Assessment</a>
+            <a href="{{ $home }}#modules">Finance</a>
+            <a href="{{ $home }}#modules">Learning</a>
+            <a href="{{ $home }}#capabilities">Tertiary</a>
         </nav>
         <nav class="hp-footer__col" aria-label="Institutions">
             <p class="hp-label">Institutions</p>
-            <a href="#editions">Junior schools</a>
-            <a href="#editions">Senior schools</a>
-            <a href="#editions">Colleges</a>
+            <a href="{{ $home }}#editions">Junior schools</a>
+            <a href="{{ $home }}#editions">Senior schools</a>
+            <a href="{{ $home }}#editions">Colleges</a>
             <a href="{{ route('website.customers') }}">School groups</a>
             <a href="{{ route('website.customers') }}">Ministries</a>
         </nav>
         <nav class="hp-footer__col" aria-label="Company">
             <p class="hp-label">Company</p>
             <a href="{{ route('website.about') }}">About</a>
-            <a href="#resellers">Resellers</a>
-            <a href="#team">Team</a>
-            <a href="{{ route('website.customers') }}">Case studies</a>
+            <a href="{{ $home }}#resellers">Resellers</a>
+            <a href="{{ $home }}#team">Team</a>
+            <a href="{{ route('website.journal') }}">Journal</a>
             <a href="{{ route('website.faq') }}">FAQ</a>
             <a href="#demo">Contact</a>
         </nav>

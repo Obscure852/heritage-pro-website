@@ -1,14 +1,19 @@
+@php
+    // Section anchors live on the homepage, so they are absolute — the nav is
+    // shared with /journal and its article pages.
+    $home = route('website.home');
+@endphp
 <header class="hp-nav hp-band">
     <div class="hp-nav__group">
-        <a href="{{ route('website.home') }}" class="hp-nav__brand">Heritage&nbsp;Pro</a>
+        <a href="{{ $home }}" class="hp-nav__brand">Heritage&nbsp;Pro</a>
         <nav class="hp-nav__links" aria-label="Primary">
-            <a href="#capabilities">Platform</a>
-            <a href="#editions">Institutions</a>
-            <a href="#modules">Modules</a>
+            <a href="{{ $home }}#capabilities">Platform</a>
+            <a href="{{ $home }}#editions">Institutions</a>
+            <a href="{{ $home }}#modules">Modules</a>
             <a href="{{ route('website.pricing') }}">Pricing</a>
-            <a href="#resellers">Resellers</a>
-            <a href="#team">Team</a>
-            <a href="#journal">Journal</a>
+            <a href="{{ $home }}#resellers">Resellers</a>
+            <a href="{{ $home }}#team">Team</a>
+            <a href="{{ route('website.journal') }}" @class(['is-current' => ($page ?? null) === 'journal'])>Journal</a>
         </nav>
     </div>
     <div class="hp-nav__actions">

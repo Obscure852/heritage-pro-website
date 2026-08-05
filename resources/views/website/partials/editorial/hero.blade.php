@@ -8,13 +8,17 @@
         ['label' => 'Y12', 'height' => 104, 'current' => false],
     ];
 @endphp
-<section class="hp-hero hp-band">
-    <p class="hp-rule-label">Established for institutions</p>
-    <h1 class="hp-h1">{{ $hero['title'] }}</h1>
-    <p class="hp-hero__lead">One record for every learner. Admissions, attendance, assessment, finance and reporting run on the same system — so the numbers you report to your board are the numbers you can defend.</p>
-    <div class="hp-hero__actions">
-        <a href="#demo" class="hp-btn hp-btn--solid">Book a 30-minute demo</a>
-        <a href="{{ route('website.products') }}" class="hp-btn hp-btn--outline">Read the prospectus</a>
+<section class="hp-hero hp-band" data-constellation-host>
+    <canvas class="hp-hero__field" data-constellation aria-hidden="true"></canvas>
+
+    <div class="hp-hero__content">
+        <p class="hp-rule-label">Established for institutions</p>
+        <h1 class="hp-h1">{{ $hero['title'] }}</h1>
+        <p class="hp-hero__lead">One record for every learner. Admissions, attendance, assessment, finance and reporting run on the same system — so the numbers you report to your board are the numbers you can defend.</p>
+        <div class="hp-hero__actions">
+            <a href="#demo" class="hp-btn hp-btn--solid">Book a 30-minute demo</a>
+            <a href="{{ route('website.products') }}" class="hp-btn hp-btn--outline">Read the prospectus</a>
+        </div>
     </div>
 
     <div class="hp-hero__stage">
@@ -73,3 +77,5 @@
         </figure>
     </div>
 </section>
+
+@include('website.partials.editorial.constellation-script')

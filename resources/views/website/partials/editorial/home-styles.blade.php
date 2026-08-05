@@ -41,6 +41,11 @@
     white-space: nowrap;
 }
 
+.hp-nav__links a.is-current {
+    color: var(--hp-navy);
+    font-weight: 600;
+}
+
 .hp-nav__actions {
     display: flex;
     align-items: center;
@@ -91,9 +96,28 @@
 /* ── Hero ──────────────────────────────────────────────────────── */
 
 .hp-hero {
+    position: relative;
     padding-top: var(--hp-section-gap);
     text-align: center;
     border-bottom: 1px solid var(--hp-line);
+    overflow: hidden;
+}
+
+/* Constellation canvas sits behind the copy; the stage's own background
+   covers the lower half of it, so the field reads as a top-of-page texture. */
+.hp-hero__field {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.hp-hero__content,
+.hp-hero__stage {
+    position: relative;
+    z-index: 1;
 }
 
 .hp-hero__actions {
@@ -347,15 +371,105 @@
     color: var(--hp-muted-3);
 }
 
-.hp-logos__row {
+/* Single-line marquee. The viewport bleeds past the section gutter to the full
+   page width and fades at both edges, so names enter and leave rather than
+   being clipped. */
+.hp-logos__viewport {
+    position: relative;
+    margin: 18px calc(var(--hp-gutter) * -1) 0;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%);
+}
+
+.hp-logos__track {
     display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 16px 44px;
-    margin-top: 16px;
+    width: max-content;
+    animation: hp-logos-scroll 38s linear infinite;
+}
+
+.hp-logos__viewport:hover .hp-logos__track,
+.hp-logos__viewport:focus-within .hp-logos__track {
+    animation-play-state: paused;
+}
+
+.hp-logos__set {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.hp-logos__item {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.hp-logos__name {
     font-family: var(--hp-serif);
     font-size: 17px;
+    line-height: 1.4;
     color: var(--hp-muted);
+    transition: color 0.2s ease;
+}
+
+.hp-logos__item:hover .hp-logos__name {
+    color: var(--hp-navy);
+}
+
+.hp-logos__sep {
+    flex: 0 0 auto;
+    width: 4px;
+    height: 4px;
+    margin: 0 32px;
+    border-radius: 999px;
+    background: var(--hp-gold-rule);
+    opacity: 0.5;
+}
+
+@keyframes hp-logos-scroll {
+    from {
+        transform: translate3d(0, 0, 0);
+    }
+
+    to {
+        transform: translate3d(-25%, 0, 0);
+    }
+}
+
+/* No motion: drop the duplicates and show one static, scrollable row. */
+@media (prefers-reduced-motion: reduce) {
+    .hp-logos__viewport {
+        overflow-x: auto;
+        -webkit-mask-image: none;
+        mask-image: none;
+    }
+
+    .hp-logos__track {
+        width: 100%;
+        justify-content: center;
+        animation: none;
+    }
+
+    .hp-logos__set[aria-hidden='true'] {
+        display: none;
+    }
+
+    .hp-logos__item:last-child .hp-logos__sep {
+        display: none;
+    }
+}
+
+@media (max-width: 760px) {
+    .hp-logos__name {
+        font-size: 15.5px;
+    }
+
+    .hp-logos__sep {
+        margin: 0 22px;
+    }
 }
 
 /* ── Editions ──────────────────────────────────────────────────── */

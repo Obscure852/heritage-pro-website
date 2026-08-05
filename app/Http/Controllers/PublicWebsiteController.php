@@ -24,6 +24,38 @@ class PublicWebsiteController extends Controller
         return $this->renderPage($page);
     }
 
+    public function journal(): View
+    {
+        $journal = config('heritage_journal');
+
+        return view('website.pages.journal', [
+            'page' => 'journal',
+            'pageTitle' => $journal['meta']['title'],
+            'site' => config('heritage_website'),
+            'journal' => $journal['meta'],
+            'articles' => $journal['articles'],
+        ]);
+    }
+
+    public function journalArticle(string $slug): View
+    {
+        $articles = config('heritage_journal.articles');
+        $article = collect($articles)->firstWhere('slug', $slug);
+
+        abort_if($article === null, 404);
+
+        return view('website.pages.journal-article', [
+            'page' => 'journal',
+            'pageTitle' => $article['title'] . ' — Heritage Pro',
+            'site' => config('heritage_website'),
+            'article' => $article,
+            'moreArticles' => collect($articles)
+                ->reject(fn (array $candidate) => $candidate['slug'] === $slug)
+                ->take(2)
+                ->all(),
+        ]);
+    }
+
     public function bookDemo(BookDemoRequest $request): RedirectResponse
     {
         $submission = $request->validated();

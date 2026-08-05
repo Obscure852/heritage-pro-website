@@ -19,7 +19,7 @@
             ],
         ],
         [
-            'context' => 'College · Maun',
+            'context' => 'College · Francistown',
             'title' => 'Semester registration with clean prerequisites.',
             'body' => '2,400 students self-register online. Credit rules, caps and clearance holds are enforced before a place is confirmed.',
             'metrics' => [
@@ -35,7 +35,6 @@
             <p class="hp-eyebrow">V. In the field</p>
             <h2 class="hp-h2 hp-h2--sm">A few live Heritage Pro deployments.</h2>
         </div>
-        <a href="{{ route('website.customers') }}" class="hp-link">All case studies</a>
     </div>
     <div class="hp-grid-3 hp-cases">
         @foreach ($cases as $case)

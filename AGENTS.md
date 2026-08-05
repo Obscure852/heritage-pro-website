@@ -16,7 +16,7 @@ It is a **separate project** from the Heritage Junior school management system a
 
 A Laravel 9.x (PHP 8.0+) application serving two distinct halves from one codebase:
 
-1. **The public Heritage Pro marketing website** — 8 pages plus a demo-request form. Handled entirely by one controller, `PublicWebsiteController`, with content driven from `config/heritage_website.php`.
+1. **The public Heritage Pro marketing website** — 8 pages, a journal (index plus article pages), and a demo-request form. Handled entirely by one controller, `PublicWebsiteController`, with content driven from `config/heritage_website.php` and `config/heritage_journal.php`.
 2. **The internal Heritage Pro CRM** — the bulk of the code. Customers, leads, contacts, quotes/invoices, calendar, discussions (in-app, email, WhatsApp), staff attendance (including biometric devices), leave management, imports, and settings.
 
 Heritage Pro itself — the school information system being sold — is a different product in a different repository. Nothing here manages learners, grades, or report cards; those appear only as marketing copy and mock UI on the website.
@@ -49,7 +49,7 @@ php artisan route:clear
 
 `routes/web.php` is the whole map and worth reading first. Three zones:
 
-- **Public website** — a single `Route::controller(PublicWebsiteController::class)` group. `/` plus seven pages resolved through a shared `page` action with a `defaults('page', …)` allowlist, and `POST /book-demo`.
+- **Public website** — a single `Route::controller(PublicWebsiteController::class)` group. `/` plus seven pages resolved through a shared `page` action with a `defaults('page', …)` allowlist, `/journal` and `/journal/{slug}`, and `POST /book-demo`.
 - **Signed public link** — `crm.calendar.attendees.availability`, the only CRM route reachable without a login (guarded by `signed`).
 - **CRM** — everything under `/crm`, behind `auth` + `crm.access`, then `crm.onboarding`. Split across 15 files in `routes/crm/` (`customers`, `contacts`, `calendar`, `products`, `requests`, `discussions`, `attendance`, `leave`, `users`, `settings`, `integrations`, `workspace`, `dashboard`, `onboarding`, `dev`).
 
@@ -98,6 +98,12 @@ So: add styles to the relevant Blade style partial and run `php artisan view:cle
 ## Public Website Specifics
 
 Content lives in `config/heritage_website.php` (~524 lines): nav, per-page hero copy, clients, stats, products, feature rows, modules, deployment highlights, customer cards, team, pricing cards, FAQ, blog articles, contact details, footer columns. Prefer editing config over hardcoding copy into partials.
+
+### The journal
+
+`config/heritage_journal.php` holds the full text of every article. Bodies are **block arrays**, not HTML — `heading`, `paragraph`, `list` (optionally `ordered`) and `pull` — rendered by `editorial/article-body`, so markup stays in the template. Articles are newest-first: the homepage shows the first three, `/journal` lists them all, `/journal/{slug}` renders one and 404s on an unknown slug. Add an article by appending an entry with a unique `slug`; no route or view changes are needed. `PublicWebsiteJournalTest` asserts every block of every article reaches the page.
+
+### The demo form
 
 `POST /book-demo` validates through `BookDemoRequest` (`full_name`, `role`, `institution`, `work_email`, `phone`, `edition`, `learner_band`, optional `notes`), mails `BookDemoInquiry` to `config('mail.demo_recipient')`, and redirects back to `#contact` with `book_demo_success` / `book_demo_error` in the session. Any redesign of the form must keep all eight field names and that anchor.
 
