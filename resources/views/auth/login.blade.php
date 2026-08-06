@@ -2,11 +2,12 @@
 
 @section('title', 'Sign In')
 
-{{-- The heading and descriptive copy are dropped from the panel so the sign-in
-     card matches the height of the password reset card; the h1 stays in the
-     document for assistive technology. --}}
+{{-- The heading is dropped from the panel so the sign-in card matches the height
+     of the password reset card; the h1 stays in the document for assistive
+     technology. --}}
 @section('auth_heading', 'Sign in to the CRM')
 @section('auth_hide_heading', '1')
+@section('auth_copy', 'Sign in with the staff email address your administrator registered. Access is role-based, so you will see the modules your position allows.')
 
 @section('auth_media_heading', 'Secure CRM access')
 @section('auth_media_copy', 'One staff sign-in for the CRM dashboard, commercial workspace, team directory, requests, and customer activity.')
