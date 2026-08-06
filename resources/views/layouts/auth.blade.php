@@ -21,6 +21,10 @@
             --auth-surface-soft: #F7F7FB;
             --auth-blue: #2563EB;
             --auth-blue-dark: #1D4ED8;
+            /* Primary action colour, kept separate from --auth-primary so the
+               button can be retuned without moving focus rings or link colour. */
+            --auth-action: #4254C6;
+            --auth-action-dark: #3746AB;
             --auth-gold: #C08A3C;
             --auth-gold-ink: #96631E;
             --auth-hairline: #EBEBF3;
@@ -500,8 +504,8 @@
             padding: 11px 24px;
             border: 0;
             border-radius: 999px;
-            background: var(--auth-primary);
-            color: #FAFAFD;
+            background: var(--auth-action);
+            color: #FFFFFF;
             font-size: 14.5px;
             font-weight: 600;
             letter-spacing: 0.005em;
@@ -512,8 +516,8 @@
         }
 
         .auth-submit:hover {
-            background: var(--auth-primary-dark);
-            color: #FAFAFD;
+            background: var(--auth-action-dark);
+            color: #FFFFFF;
         }
 
         .auth-submit:disabled {
