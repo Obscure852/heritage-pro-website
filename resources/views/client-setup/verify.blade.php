@@ -49,6 +49,7 @@
                                 pattern="[0-9]*"
                                 maxlength="1"
                                 class="crm-otp-input"
+                                placeholder="0"
                                 data-otp-digit
                                 data-otp-index="{{ $digit - 1 }}"
                                 aria-label="Digit {{ $digit }}"

@@ -524,7 +524,7 @@ class ClientSetupController extends Controller
             if ($nextStage) {
                 return redirect()
                     ->route('client-setup.stage', ['token' => $token, 'stage' => $nextStage])
-                    ->with('client_setup_success', 'Stage saved.');
+                    ->with('client_setup_success', 'Stage saved. You can safely leave and return later.');
             }
         }
 

@@ -1,7 +1,7 @@
 <header class="nav">
     <div class="container nav-inner">
         <a href="{{ route('website.home') }}" class="nav-logo">
-            <img src="{{ asset('assets/images/heritage-pro-logo.jpg') }}" alt="">
+            <span class="nav-logo-mark" aria-hidden="true"><img src="{{ asset('assets/images/heritage-logo.png') }}" alt=""></span>
             <span>Heritage <b>Pro</b></span>
         </a>
         <nav class="nav-links">

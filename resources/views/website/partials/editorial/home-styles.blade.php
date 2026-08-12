@@ -30,10 +30,22 @@
     white-space: nowrap;
 }
 
-.hp-nav__brand img {
+.hp-nav__brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
     width: 30px;
     height: 30px;
     flex: 0 0 auto;
+    border-radius: 4px;
+}
+
+.hp-nav__brand-mark img {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: contain;
 }
 
 .hp-nav__links {

@@ -24,7 +24,7 @@
             @csrf
             <div class="crm-field">
                 <label for="resume-email">Invitation email</label>
-                <input id="resume-email" name="email" type="email" value="{{ old('email') }}" autocomplete="email" class="form-control" required autofocus>
+                <input id="resume-email" name="email" type="email" value="{{ old('email') }}" autocomplete="email" class="form-control" placeholder="e.g. administrator@school.org" required autofocus>
             </div>
             <button type="submit" class="btn btn-primary btn-loading">
                 <span class="btn-text"><i class="bx bx-link"></i> Send resume link</span>

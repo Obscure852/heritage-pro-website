@@ -9,6 +9,7 @@
     @include('layouts.crm-head-css')
     <style>
         body.crm-wizard-body {
+            --crm-wizard-control-radius: 4px;
             min-height: 100vh;
             margin: 0;
             background:
@@ -33,11 +34,19 @@
         .crm-wizard-brand-mark {
             width: 42px;
             height: 42px;
-            display: block;
-            border-radius: 12px;
-            object-fit: cover;
-            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 4px;
             box-shadow: 0 12px 26px rgba(36, 59, 122, .2);
+        }
+
+        .crm-wizard-brand-mark img {
+            width: 100%;
+            height: 100%;
+            max-width: none;
+            object-fit: contain;
         }
 
         .crm-wizard-brand-copy strong,
@@ -189,6 +198,11 @@
             margin: 0;
             color: #172033;
             font-size: 17px;
+        }
+
+        .crm-wizard-stage-panel-header h2[data-wizard-main-heading]:focus {
+            outline: none;
+            box-shadow: none;
         }
 
         .crm-wizard-rail-count {
@@ -640,6 +654,133 @@
             margin-top: 2px;
             padding: 0;
             accent-color: #4f46b5;
+        }
+
+        .crm-wizard-field .form-control::placeholder,
+        .crm-wizard-field .form-select option:first-child {
+            color: #64748b;
+            opacity: 1;
+        }
+
+        .crm-wizard-requirement-label {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .crm-wizard-info-tip {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            margin-left: 5px;
+            color: #4f46b5;
+            cursor: help;
+            vertical-align: middle;
+        }
+
+        .crm-wizard-info-tip > i {
+            font-size: 15px;
+        }
+
+        .crm-wizard-info-popover {
+            position: absolute;
+            z-index: 30;
+            top: calc(100% + 8px);
+            left: 0;
+            display: grid;
+            gap: 4px;
+            width: min(330px, calc(100vw - 48px));
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: var(--crm-wizard-control-radius);
+            background: #fff;
+            box-shadow: 0 4px 8px rgba(15, 23, 42, .14);
+            color: #334155;
+            font-size: 11px;
+            font-weight: 500;
+            line-height: 1.45;
+            opacity: 0;
+            pointer-events: none;
+            visibility: hidden;
+            transform: translateY(-3px);
+            transition: opacity .16s ease, transform .16s ease, visibility .16s ease;
+        }
+
+        .crm-wizard-info-popover strong {
+            margin-bottom: 3px;
+            color: #172033;
+            font-size: 12px;
+        }
+
+        .crm-wizard-info-tip:hover .crm-wizard-info-popover,
+        .crm-wizard-info-tip:focus .crm-wizard-info-popover {
+            opacity: 1;
+            pointer-events: auto;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        [data-wizard-form] .form-control,
+        [data-wizard-form] .form-select,
+        [data-wizard-form] .form-check-input,
+        [data-wizard-form] .btn,
+        [data-wizard-form] .crm-wizard-repeatable,
+        [data-wizard-form] .crm-wizard-repeatable-row,
+        [data-wizard-form] .crm-wizard-repeatable-card,
+        [data-wizard-form] .crm-wizard-collapsible-field,
+        [data-wizard-form] .crm-wizard-file-upload,
+        [data-wizard-form] .crm-wizard-attachment-list li {
+            border-radius: var(--crm-wizard-control-radius);
+        }
+
+        .crm-wizard-collapsible-field {
+            grid-column: 1 / -1;
+            border: 1px solid #dfe5ef;
+            border-radius: 13px;
+            background: #fbfcff;
+        }
+
+        .crm-wizard-collapsible-summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+            cursor: pointer;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 800;
+            list-style: none;
+        }
+
+        .crm-wizard-collapsible-summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .crm-wizard-collapsible-summary::after {
+            content: '+';
+            color: #4f46b5;
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .crm-wizard-collapsible-field[open] .crm-wizard-collapsible-summary::after {
+            content: '−';
+        }
+
+        .crm-wizard-collapsible-badge {
+            margin-left: auto;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .crm-wizard-collapsible-body {
+            padding: 0 16px 16px;
+        }
+
+        .crm-wizard-collapsible-body .crm-field {
+            margin: 0;
         }
 
         .crm-verification-card {
@@ -1156,7 +1297,7 @@
 <body class="crm-wizard-body">
     <main class="crm-wizard-shell">
         <div class="crm-wizard-brand" aria-label="Heritage Pro client setup">
-            <img src="{{ asset('assets/images/heritage-pro-logo.jpg') }}" alt="" aria-hidden="true" class="crm-wizard-brand-mark">
+            <span class="crm-wizard-brand-mark" aria-hidden="true"><img src="{{ asset('assets/images/heritage-logo.png') }}" alt=""></span>
             <span class="crm-wizard-brand-copy">
                 <strong>Heritage Pro</strong>
                 <span>Client setup</span>
@@ -1196,6 +1337,15 @@
     <script>
         document.querySelectorAll('form').forEach(function (form) {
             var submitting = false;
+            var actionInput = form.querySelector('[data-wizard-action-input]');
+
+            form.querySelectorAll('[data-wizard-submit-action]').forEach(function (submitButton) {
+                submitButton.addEventListener('click', function () {
+                    if (actionInput) {
+                        actionInput.value = submitButton.dataset.wizardSubmitAction || 'save';
+                    }
+                });
+            });
 
             form.addEventListener('input', function () {
                 form.dataset.dirty = 'true';
@@ -1208,6 +1358,10 @@
             form.addEventListener('submit', function (event) {
                 submitting = true;
                 var button = event.submitter || form.querySelector('.btn-loading');
+
+                if (actionInput && event.submitter?.dataset.wizardSubmitAction) {
+                    actionInput.value = event.submitter.dataset.wizardSubmitAction;
+                }
 
                 if (! button) {
                     return;

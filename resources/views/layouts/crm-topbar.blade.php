@@ -3,7 +3,7 @@
     $moduleRegistry = app(\App\Services\Crm\CrmModuleRegistry::class);
     $launcherModules = $moduleRegistry->launcherModulesFor($crmUser);
     $companyName = $crmBrandingSettings?->company_name ?: 'Heritage Pro';
-    $companyLogoUrl = $crmBrandingSettings?->company_logo_url ?: asset('assets/images/heritage-pro-logo.jpg');
+    $companyLogoUrl = $crmBrandingSettings?->company_logo_url ?: asset('assets/images/heritage-logo.png');
     $userInitials = collect(preg_split('/\s+/', trim($crmUser->name)) ?: [])
         ->filter()
         ->take(2)

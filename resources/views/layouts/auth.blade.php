@@ -1018,7 +1018,7 @@
     <body>
     @php
         $companyName = $crmBrandingSettings?->company_name ?: config('app.name', 'Heritage Pro');
-        $companyLogoUrl = $crmBrandingSettings?->company_logo_url ?: asset('assets/images/heritage-pro-logo.jpg');
+        $companyLogoUrl = $crmBrandingSettings?->company_logo_url ?: asset('assets/images/heritage-logo.png');
         $loginImageUrl = $crmBrandingSettings?->login_image_url ?: asset('assets/images/login-page-image.jpg');
         $hideAuthMedia = trim((string) $__env->yieldContent('auth_hide_media')) === '1';
         $hideAuthHeading = trim((string) $__env->yieldContent('auth_hide_heading')) === '1';

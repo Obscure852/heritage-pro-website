@@ -12,7 +12,7 @@
 <body>
     @php
         $companyName = $crmBrandingSettings?->company_name ?: config('app.name', 'Laravel');
-        $companyLogoUrl = $crmBrandingSettings?->company_logo_url ?: asset('assets/images/heritage-pro-logo.jpg');
+        $companyLogoUrl = $crmBrandingSettings?->company_logo_url ?: asset('assets/images/heritage-logo.png');
     @endphp
     <div id="app">
         <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">

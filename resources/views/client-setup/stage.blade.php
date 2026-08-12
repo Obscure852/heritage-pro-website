@@ -196,10 +196,12 @@
                     @else
                         <div class="crm-field">
                             <label for="payload_json">Stage information</label>
-                            <textarea id="payload_json" name="payload_json" rows="14" class="form-control" aria-describedby="payload_json_help" required>{{ old('payload_json', json_encode($stagePayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) }}</textarea>
+                            <textarea id="payload_json" name="payload_json" rows="14" class="form-control" placeholder="Enter the stage information as a JSON object" aria-describedby="payload_json_help" required>{{ old('payload_json', json_encode($stagePayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) }}</textarea>
                             <small id="payload_json_help" class="crm-muted">This temporary foundation editor preserves the stage payload while the structured stage schema is completed.</small>
                         </div>
                     @endif
+
+                    <input type="hidden" name="action" value="save" data-wizard-action-input>
 
                     <div class="crm-field-grid">
                         <div class="crm-field">
@@ -223,15 +225,15 @@
                         @endif
 
                         <div class="crm-wizard-form-actions-right">
-                            <button type="submit" name="action" value="exit" class="btn btn-light crm-btn-light btn-loading">
+                            <button type="submit" data-wizard-submit-action="exit" class="btn btn-light crm-btn-light btn-loading">
                                 <span class="btn-text"><i class="bx bx-log-out"></i> Save and exit</span>
                                 <span class="btn-spinner d-none"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...</span>
                             </button>
-                            <button type="submit" name="action" value="save" class="btn btn-light crm-btn-light btn-loading">
+                            <button type="submit" data-wizard-submit-action="save" class="btn btn-light crm-btn-light btn-loading">
                                 <span class="btn-text"><i class="bx bx-save"></i> Save progress</span>
                                 <span class="btn-spinner d-none"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...</span>
                             </button>
-                            <button type="submit" name="action" value="continue" class="btn btn-primary btn-loading">
+                            <button type="submit" data-wizard-submit-action="continue" class="btn btn-primary btn-loading">
                                 <span class="btn-text">Save and continue <i class="bx bx-right-arrow-alt"></i></span>
                                 <span class="btn-spinner d-none"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...</span>
                             </button>

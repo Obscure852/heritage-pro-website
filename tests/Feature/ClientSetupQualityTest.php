@@ -36,6 +36,136 @@ class ClientSetupQualityTest extends TestCase
             ->assertSee('syncConditionalFields');
     }
 
+    public function test_campus_structure_variation_is_optional_and_collapsible(): void
+    {
+        $invitation = $this->createVerifiedInvitation();
+
+        CrmClientSetupStageProgress::query()->create([
+            'submission_id' => $invitation['submission']->id,
+            'stage_key' => 'scope',
+            'status' => 'complete',
+            'completed_at' => now(),
+            'last_saved_at' => now(),
+        ]);
+
+        $this->get(route('client-setup.stage', [
+            'token' => $invitation['raw_token'],
+            'stage' => 'institution',
+        ]))
+            ->assertOk()
+            ->assertSee('data-collapsible-field', false)
+            ->assertSee('Does the academic structure vary by campus?')
+            ->assertSee('>(Optional)</span>', false)
+            ->assertSee('Yes, the academic structure varies by campus')
+            ->assertSee('data-conditional-field', false)
+            ->assertSee('data-repeatable-label="Academic periods"', false)
+            ->assertSee('data-repeatable-required="false"', false)
+            ->assertDontSee('Academic periods 1')
+            ->assertSee('Markbook lock rule <span class="crm-wizard-requirement-label">(Optional)</span>', false)
+            ->assertSee('placeholder="e.g. REG-2026-001"', false)
+            ->assertSee('placeholder="e.g. Faculty → department → programme → level → semester → module"', false)
+            ->assertSee('>Choose academic year pattern</option>', false);
+    }
+
+    public function test_responsible_contacts_explain_the_required_academic_lead(): void
+    {
+        $invitation = $this->createVerifiedInvitation();
+
+        CrmClientSetupStageProgress::query()->create([
+            'submission_id' => $invitation['submission']->id,
+            'stage_key' => 'scope',
+            'status' => 'complete',
+            'completed_at' => now(),
+            'last_saved_at' => now(),
+        ]);
+
+        $this->get(route('client-setup.stage', [
+            'token' => $invitation['raw_token'],
+            'stage' => 'institution',
+        ]))
+            ->assertOk()
+            ->assertSee('Responsible contacts')
+            ->assertSee('Required: include at least one contact with the role Academic lead.');
+    }
+
+    public function test_nqf_level_has_an_accessible_ncqf_info_popover(): void
+    {
+        $invitation = $this->createVerifiedInvitation();
+
+        foreach (['scope', 'institution'] as $stageKey) {
+            CrmClientSetupStageProgress::query()->create([
+                'submission_id' => $invitation['submission']->id,
+                'stage_key' => $stageKey,
+                'status' => 'complete',
+                'completed_at' => now(),
+                'last_saved_at' => now(),
+            ]);
+        }
+
+        $this->get(route('client-setup.stage', [
+            'token' => $invitation['raw_token'],
+            'stage' => 'programmes',
+        ]))
+            ->assertOk()
+            ->assertSee('More information about NQF level', false)
+            ->assertSee('Botswana NCQF guide', false)
+            ->assertSee('Certificate III — Level 3', false)
+            ->assertSee('Diploma — Level 6', false)
+            ->assertSee('Bachelor’s degree — Level 7', false)
+            ->assertSee('role="tooltip"', false)
+            ->assertSee('Faculty', false)
+            ->assertDontSee('Faculty/school owner', false)
+            ->assertSee('Programme purpose and outcomes')
+            ->assertSee('(Optional)')
+            ->assertSee('placeholder="e.g. January and August"', false)
+            ->assertSee('placeholder="e.g. minimum of 30 points"', false)
+            ->assertSee('placeholder="e.g. 120 credits required for graduation"', false)
+            ->assertSee('List the months or dates when students can start this programme', false);
+    }
+
+    public function test_curriculum_scope_and_handoff_is_optional_and_collapsible(): void
+    {
+        $invitation = $this->createVerifiedInvitation();
+
+        foreach (['scope', 'institution', 'programmes'] as $stageKey) {
+            CrmClientSetupStageProgress::query()->create([
+                'submission_id' => $invitation['submission']->id,
+                'stage_key' => $stageKey,
+                'status' => 'complete',
+                'completed_at' => now(),
+                'last_saved_at' => now(),
+            ]);
+        }
+
+        $this->get(route('client-setup.stage', [
+            'token' => $invitation['raw_token'],
+            'stage' => 'curriculum',
+        ]))
+            ->assertOk()
+            ->assertSee('data-collapsible-field', false)
+            ->assertSee('Curriculum scope and handoff')
+            ->assertSee('(Optional)')
+            ->assertSee('Curriculum configuration is in scope for this implementation.')
+            ->assertSee('If curriculum is out of scope, explain the implementation handoff or migration plan.')
+            ->assertSee('data-repeatable-label="Curriculum versions"', false)
+            ->assertSee('data-repeatable-required="false"', false);
+    }
+
+    public function test_resume_and_verification_inputs_explain_expected_values(): void
+    {
+        $this->get(route('client-setup.resume'))
+            ->assertOk()
+            ->assertSee('placeholder="e.g. administrator@school.org"', false);
+
+        $invitation = $this->createInvitation();
+        $this->post(route('client-setup.verification-code', ['token' => $invitation['raw_token']]));
+
+        $this->get(route('client-setup.entry', ['token' => $invitation['raw_token']]))
+            ->assertOk()
+            ->assertSee('placeholder="0"', false)
+            ->assertSee('aria-label="Digit 1"', false);
+    }
+
     public function test_wizard_exposes_accessible_stage_context_and_repeatable_controls(): void
     {
         $invitation = $this->createVerifiedInvitation();
@@ -59,6 +189,29 @@ class ClientSetupQualityTest extends TestCase
             ->assertSee('data-repeatable-row-heading')
             ->assertSee('aria-required="true"', false)
             ->assertSee('updateRepeatableCollection');
+    }
+
+    public function test_wizard_form_elements_use_the_input_radius(): void
+    {
+        $invitation = $this->createVerifiedInvitation();
+
+        CrmClientSetupStageProgress::query()->create([
+            'submission_id' => $invitation['submission']->id,
+            'stage_key' => 'scope',
+            'status' => 'complete',
+            'completed_at' => now(),
+            'last_saved_at' => now(),
+        ]);
+
+        $this->get(route('client-setup.stage', [
+            'token' => $invitation['raw_token'],
+            'stage' => 'institution',
+        ]))
+            ->assertOk()
+            ->assertSee('--crm-wizard-control-radius: 4px', false)
+            ->assertSee('[data-wizard-form] .form-control', false)
+            ->assertSee('[data-wizard-form] .crm-wizard-repeatable-card', false)
+            ->assertSee('border-radius: var(--crm-wizard-control-radius)', false);
     }
 
     public function test_public_users_cannot_open_crm_client_setup_routes(): void

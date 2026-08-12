@@ -933,7 +933,8 @@ p.lead { font-size: 17px; color: var(--fg-3); line-height: 1.55; }
 }
 .nav-inner { display: flex; align-items: center; gap: 40px; padding: 18px 0; }
 .nav-logo { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 17px; font-weight: 800; color: var(--fg-1); }
-.nav-logo img { width: 32px; height: 32px; }
+.nav-logo-mark { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 4px; flex: 0 0 auto; }
+.nav-logo-mark img { width: 100%; height: 100%; max-width: none; object-fit: contain; }
 .nav-logo b { color: var(--brand-indigo-500); }
 .nav-links { display: flex; align-items: center; gap: 28px; margin-left: 12px; }
 .nav-links a { color: var(--fg-2); font-size: 13px; font-weight: 500; }

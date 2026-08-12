@@ -26,6 +26,8 @@ class ClientSetupWizardShellTest extends TestCase
             ->assertSee('Configuration stages')
             ->assertSee('Academic readiness')
             ->assertSee('Save and continue')
+            ->assertSee('data-wizard-action-input', false)
+            ->assertSee('data-wizard-submit-action="continue"', false)
             ->assertSee('Jump to stage')
             ->assertSee('Finance and integrations');
     }
@@ -65,17 +67,61 @@ class ClientSetupWizardShellTest extends TestCase
             'token' => $invitation['raw_token'],
             'stage' => 'scope',
         ]), [
-            'payload_json' => json_encode(['institution_legal_name' => 'Synthetic College']),
+            'data' => [
+                'institution_legal_name' => 'Synthetic College',
+                'institution_common_name' => 'Synthetic College',
+                'prepared_by_name' => 'Synthetic Client',
+                'prepared_by_position' => 'Implementation lead',
+                'submission_date' => now()->toDateString(),
+                'target_go_live' => now()->addMonth()->format('Y-m'),
+                'authorized_submitter_confirmed' => '1',
+                'privacy_requirements_acknowledged' => '1',
+            ],
             'status' => 'in_progress',
             'action' => 'continue',
         ])->assertRedirect(route('client-setup.stage', [
             'token' => $invitation['raw_token'],
             'stage' => 'institution',
-        ]));
+        ]))->assertSessionHas(
+            'client_setup_success',
+            'Stage saved. You can safely leave and return later.'
+        );
 
         $this->assertDatabaseHas('crm_client_setup_stage_progress', [
             'stage_key' => 'scope',
             'status' => 'complete',
+        ]);
+    }
+
+    public function test_save_progress_stays_on_the_current_stage_and_shows_the_save_confirmation(): void
+    {
+        Mail::fake();
+        $invitation = $this->createInvitation();
+        $this->verifyInvitation($invitation);
+
+        $this->patch(route('client-setup.stage.save', [
+            'token' => $invitation['raw_token'],
+            'stage' => 'scope',
+        ]), [
+            'payload_json' => json_encode(['institution_legal_name' => 'Synthetic College']),
+            'status' => 'in_progress',
+            'action' => 'save',
+        ])->assertRedirect(route('client-setup.stage', [
+            'token' => $invitation['raw_token'],
+            'stage' => 'scope',
+        ]))->assertSessionHas(
+            'client_setup_success',
+            'Stage saved. You can safely leave and return later.'
+        );
+
+        $this->get(route('client-setup.stage', [
+            'token' => $invitation['raw_token'],
+            'stage' => 'scope',
+        ]))->assertOk()->assertSee('Stage saved. You can safely leave and return later.');
+
+        $this->assertDatabaseHas('crm_client_setup_stage_progress', [
+            'stage_key' => 'scope',
+            'status' => 'in_progress',
         ]);
     }
 
