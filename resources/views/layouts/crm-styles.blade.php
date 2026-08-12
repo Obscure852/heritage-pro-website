@@ -399,6 +399,13 @@ a {
 
 .crm-table-wrap {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+}
+
+.crm-table-wrap:focus-visible {
+    outline: 2px solid var(--brand-indigo-500, #4e73df);
+    outline-offset: 4px;
 }
 
 .crm-table {

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\PublicWebsiteController;
+use App\Http\Controllers\ClientSetupController;
 use App\Http\Controllers\Crm\CalendarAvailabilityController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +20,58 @@ Route::controller(PublicWebsiteController::class)->group(function () {
     Route::get('/journal/{slug}', 'journalArticle')->name('website.journal.article');
     Route::post('/book-demo', 'bookDemo')->name('website.book-demo');
 });
+
+Route::controller(ClientSetupController::class)
+    ->prefix('setup')
+    ->name('client-setup.')
+    ->group(function () {
+        Route::get('/resume', 'resume')->name('resume');
+        Route::post('/resume', 'requestResumeLink')
+            ->middleware('throttle:client-setup-resume')
+            ->name('resume.request');
+        Route::get('/{token}', 'entry')
+            ->middleware('throttle:client-setup-entry')
+            ->where('token', '[A-Fa-f0-9]{64}')
+            ->name('entry');
+        Route::get('/{token}/exit', 'exit')
+            ->where('token', '[A-Fa-f0-9]{64}')
+            ->name('exit');
+        Route::post('/{token}/submit-academic', 'submitAcademic')
+            ->where('token', '[A-Fa-f0-9]{64}')
+            ->name('academic-submit');
+        Route::get('/{token}/academic-submitted', 'academicSubmitted')
+            ->where('token', '[A-Fa-f0-9]{64}')
+            ->name('academic-submitted');
+        Route::post('/{token}/supplemental-complete', 'completeSupplemental')
+            ->where('token', '[A-Fa-f0-9]{64}')
+            ->name('supplemental-complete');
+        Route::post('/{token}/attachments', 'uploadAttachment')
+            ->where('token', '[A-Fa-f0-9]{64}')
+            ->name('attachment-upload');
+        Route::get('/{token}/migration/template/{kind}', 'downloadMigrationTemplate')
+            ->where(['token' => '[A-Fa-f0-9]{64}', 'kind' => 'staff|students'])
+            ->name('migration-template.download');
+        Route::post('/{token}/migration/upload', 'uploadMigrationTemplate')
+            ->where('token', '[A-Fa-f0-9]{64}')
+            ->name('migration-upload');
+        Route::post('/{token}/change-requests/{changeRequest}/respond', 'respondToChangeRequest')
+            ->where('token', '[A-Fa-f0-9]{64}')
+            ->name('change-request.respond');
+        Route::post('/{token}/verification-code', 'requestCode')
+            ->middleware('throttle:client-setup-code')
+            ->where('token', '[A-Fa-f0-9]{64}')
+            ->name('verification-code');
+        Route::post('/{token}/verify', 'verify')
+            ->middleware('throttle:client-setup-verify')
+            ->where('token', '[A-Fa-f0-9]{64}')
+            ->name('verify');
+        Route::get('/{token}/stage/{stage}', 'stage')
+            ->where(['token' => '[A-Fa-f0-9]{64}', 'stage' => '[a-z0-9][a-z0-9_-]{0,79}'])
+            ->name('stage');
+        Route::patch('/{token}/stage/{stage}', 'saveStage')
+            ->where(['token' => '[A-Fa-f0-9]{64}', 'stage' => '[a-z0-9][a-z0-9_-]{0,79}'])
+            ->name('stage.save');
+    });
 
 Route::get('/sign-in', fn () => redirect()->route('login'))->name('website.sign-in');
 Route::get('/crm/calendar/availability/{crmCalendarEventAttendee}/{response}', CalendarAvailabilityController::class)
@@ -49,6 +102,7 @@ Route::prefix('crm')->middleware(['auth', 'crm.access'])->name('crm.')->group(fu
             require base_path('routes/crm/calendar.php');
             require base_path('routes/crm/products.php');
             require base_path('routes/crm/requests.php');
+            require base_path('routes/crm/client_setup.php');
             require base_path('routes/crm/dev.php');
             require base_path('routes/crm/discussions.php');
             require base_path('routes/crm/integrations.php');

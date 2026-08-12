@@ -3,7 +3,7 @@
         <div class="footer-top">
             <div class="footer-brand">
                 <a href="{{ route('website.home') }}" class="nav-logo">
-                    <img src="{{ asset('assets/images/heritage-pro-logo.svg') }}" alt="">
+                    <img src="{{ asset('assets/images/heritage-pro-logo.jpg') }}" alt="">
                     <span>Heritage <b>Pro</b></span>
                 </a>
                 <p>{{ $site['footer']['description'] }}</p>

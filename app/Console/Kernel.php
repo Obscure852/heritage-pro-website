@@ -21,6 +21,9 @@ class Kernel extends ConsoleKernel {
 
         // CRM calendar reminders
         $schedule->command('crm:calendar-reminders')->everyMinute()->withoutOverlapping();
+
+        // Client setup reminders and failed email retries
+        $schedule->command('client-setup:reminders')->hourly()->withoutOverlapping();
     }
 
     protected function commands() {

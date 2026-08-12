@@ -6,7 +6,7 @@
 <header class="hp-nav hp-band">
     <div class="hp-nav__group">
         <a href="{{ $home }}" class="hp-nav__brand">
-            <img src="{{ asset('assets/images/heritage-pro-logo.svg') }}" alt="" width="30" height="30">
+            <img src="{{ asset('assets/images/heritage-pro-logo.jpg') }}" alt="" width="30" height="30">
             <span>Heritage&nbsp;Pro</span>
         </a>
         <nav class="hp-nav__links" aria-label="Primary">

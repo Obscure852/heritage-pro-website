@@ -7,12 +7,12 @@
 @section('crm_actions')
     <div class="crm-action-row">
         <a href="{{ route('crm.customers.edit', $customer) }}" class="btn btn-secondary">
-            <i class="fas fa-edit"></i> Edit customer
+            <i class="fas fa-edit"></i> Edit
         </a>
         @include('crm.partials.delete-button', [
             'action' => route('crm.customers.destroy', $customer),
             'message' => 'Are you sure you want to permanently delete this customer?',
-            'label' => 'Delete customer',
+            'label' => 'Delete',
         ])
     </div>
 @endsection

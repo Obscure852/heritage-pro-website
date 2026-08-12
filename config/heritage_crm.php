@@ -405,6 +405,53 @@ return [
                 ],
             ],
         ],
+        'client_setup' => [
+            'label' => 'Client Setup',
+            'caption' => 'Institution onboarding reviews',
+            'icon' => 'bx bx-slider-alt',
+            'route' => 'crm.client-setup.index',
+            'match' => ['crm.client-setup.*'],
+            'default_permissions' => [
+                'admin' => 'admin',
+                'manager' => 'edit',
+                'rep' => 'view',
+            ],
+            'route_permissions' => [
+                [
+                    'match' => [
+                        'crm.client-setup.index',
+                        'crm.client-setup.show',
+                        'crm.client-setup.print',
+                        'crm.client-setup.migration-uploads.validation-report',
+                        'crm.client-setup.revisions.compare',
+                        'crm.client-setup.attachment.download',
+                    ],
+                    'level' => 'view',
+                ],
+                [
+                    'match' => [
+                        'crm.client-setup.create',
+                        'crm.client-setup.store',
+                        'crm.client-setup.resend',
+                        'crm.client-setup.assignment',
+                        'crm.client-setup.status',
+                        'crm.client-setup.notes.store',
+                        'crm.client-setup.change-requests.store',
+                        'crm.client-setup.change-requests.resolve',
+                        'crm.client-setup.migration-uploads.approve',
+                    ],
+                    'level' => 'edit',
+                ],
+                [
+                    'match' => ['crm.client-setup.destroy'],
+                    'level' => 'admin',
+                ],
+                [
+                    'match' => ['crm.client-setup.migration-uploads.import'],
+                    'level' => 'admin',
+                ],
+            ],
+        ],
         'settings' => [
             'label' => 'Settings',
             'caption' => 'Pipeline rules',

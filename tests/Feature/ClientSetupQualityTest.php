@@ -1,0 +1,305 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Mail\ClientSetupInvitationMail;
+use App\Models\CrmClientSetupEvent;
+use App\Models\CrmClientSetupStageProgress;
+use App\Models\CrmClientSetupSubmission;
+use App\Models\User;
+use App\Services\ClientSetup\ClientSetupAccessService;
+use App\Services\ClientSetup\ClientSetupAttachmentService;
+use App\Services\ClientSetup\ClientSetupInvitationService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+use LogicException;
+use Tests\TestCase;
+
+class ClientSetupQualityTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_conditional_fields_are_rendered_with_progressive_disclosure_metadata(): void
+    {
+        $invitation = $this->createVerifiedInvitation();
+
+        $this->get(route('client-setup.stage', [
+            'token' => $invitation['raw_token'],
+            'stage' => 'finance',
+        ]))
+            ->assertOk()
+            ->assertSee('data-conditional-field')
+            ->assertSee('client_setup_finance_deferred_owner')
+            ->assertSee('syncConditionalFields');
+    }
+
+    public function test_wizard_exposes_accessible_stage_context_and_repeatable_controls(): void
+    {
+        $invitation = $this->createVerifiedInvitation();
+
+        CrmClientSetupStageProgress::query()->create([
+            'submission_id' => $invitation['submission']->id,
+            'stage_key' => 'scope',
+            'status' => 'complete',
+            'completed_at' => now(),
+            'last_saved_at' => now(),
+        ]);
+
+        $this->get(route('client-setup.stage', [
+            'token' => $invitation['raw_token'],
+            'stage' => 'institution',
+        ]))
+            ->assertOk()
+            ->assertSee('data-wizard-main-heading')
+            ->assertSee('data-wizard-announcement')
+            ->assertSee('aria-label="Academic setup progress"', false)
+            ->assertSee('data-repeatable-row-heading')
+            ->assertSee('aria-required="true"', false)
+            ->assertSee('updateRepeatableCollection');
+    }
+
+    public function test_public_users_cannot_open_crm_client_setup_routes(): void
+    {
+        $this->get(route('crm.client-setup.index'))
+            ->assertRedirect(route('login'));
+    }
+
+    public function test_crm_client_setup_tables_expose_keyboard_scroll_regions(): void
+    {
+        $admin = $this->createUser();
+        $invitation = $this->createInvitation(['assigned_to_id' => $admin->id]);
+
+        $this->actingAs($admin)
+            ->get(route('crm.client-setup.index'))
+            ->assertOk()
+            ->assertSee('role="region" aria-label="Client setup submission inbox" tabindex="0"', false)
+            ->assertSee('title="Delete client setup"', false);
+
+        $this->actingAs($admin)
+            ->get(route('crm.client-setup.show', $invitation['submission']))
+            ->assertOk()
+            ->assertSee('role="region" aria-label="Optional implementation scope" tabindex="0"', false)
+            ->assertSee('class="btn btn-light crm-btn-light crm-review-control-button"', false)
+            ->assertSee('class="btn btn-primary crm-review-control-button"', false)
+            ->assertSee('data-bs-target="#crm-client-setup-note-modal"', false)
+            ->assertSee('data-bs-target="#crm-client-setup-change-modal"', false)
+            ->assertSee('id="crm-client-setup-note-modal"', false)
+            ->assertSee('id="crm-client-setup-change-modal"', false)
+            ->assertSee('class="crm-modal-form"', false)
+            ->assertSee('aria-label="Delete"', false)
+            ->assertSee('bx-trash');
+    }
+
+    public function test_crm_submission_data_is_grouped_into_wizard_category_tabs(): void
+    {
+        $admin = $this->createUser();
+        $invitation = $this->createInvitation(['assigned_to_id' => $admin->id]);
+        $invitation['submission']->forceFill([
+            'payload' => [
+                'scope' => [
+                    'institution_legal_name' => 'Tabbed College',
+                    'prepared_by_name' => 'Review Client',
+                ],
+                'institution' => [
+                    'registration_number' => 'REG-001',
+                ],
+            ],
+            'completed_stages' => ['scope'],
+        ])->save();
+        $invitation['submission']->stageProgress()->create([
+            'stage_key' => 'scope',
+            'status' => 'complete',
+            'completed_at' => now(),
+            'last_saved_at' => now(),
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->get(route('crm.client-setup.show', $invitation['submission']));
+
+        $response->assertOk()
+            ->assertSee('Wizard categories')
+            ->assertSee('Institution data')
+            ->assertSee('role="tablist" aria-label="Institution data categories"', false)
+            ->assertSee('id="submission-tab-scope"', false)
+            ->assertSee('id="submission-panel-institution"', false)
+            ->assertSee('Tabbed College')
+            ->assertSee('REG-001')
+            ->assertSee('data-submission-tab')
+            ->assertSee('activateTab');
+
+        $this->assertSame(11, substr_count($response->getContent(), 'role="tab"'));
+    }
+
+    public function test_client_setup_audit_events_cannot_be_updated(): void
+    {
+        $invitation = $this->createInvitation();
+        $event = $invitation['submission']->events()->create([
+            'invitation_id' => $invitation['invitation']->id,
+            'actor_type' => 'client',
+            'event_type' => 'quality_probe',
+            'metadata' => ['source' => 'test'],
+            'occurred_at' => now(),
+        ]);
+
+        $this->expectException(LogicException::class);
+        $event->event_type = 'tampered';
+        $event->save();
+
+        $this->assertSame('quality_probe', $event->fresh()->event_type);
+    }
+
+    public function test_client_setup_audit_events_cannot_be_deleted(): void
+    {
+        $invitation = $this->createInvitation();
+        $event = $invitation['submission']->events()->create([
+            'invitation_id' => $invitation['invitation']->id,
+            'actor_type' => 'client',
+            'event_type' => 'quality_probe',
+            'metadata' => ['source' => 'test'],
+            'occurred_at' => now(),
+        ]);
+
+        $this->expectException(LogicException::class);
+        $event->delete();
+
+        $this->assertInstanceOf(CrmClientSetupEvent::class, $event->fresh());
+    }
+
+    public function test_unassigned_crm_representatives_cannot_open_another_submission(): void
+    {
+        $rep = $this->createUser(['role' => 'rep']);
+        $owner = $this->createUser(['role' => 'admin']);
+        $submission = CrmClientSetupSubmission::query()->create([
+            'assigned_to_id' => $owner->id,
+            'schema_version' => '1.0',
+            'status' => 'draft',
+            'academic_status' => 'not_started',
+            'payload' => [],
+            'completed_stages' => [],
+            'last_activity_at' => now(),
+        ]);
+
+        $this->actingAs($rep)
+            ->get(route('crm.client-setup.show', $submission))
+            ->assertForbidden();
+    }
+
+    public function test_pending_private_attachments_cannot_be_downloaded(): void
+    {
+        Mail::fake();
+        Storage::fake('documents');
+        $admin = $this->createUser();
+        $invitation = $this->createInvitation(['assigned_to_id' => $admin->id]);
+        $attachment = app(ClientSetupAttachmentService::class)->store(
+            $invitation['submission'],
+            $invitation['invitation'],
+            UploadedFile::fake()->create('private-policy.pdf', 20, 'application/pdf'),
+            'policy',
+            'required'
+        );
+
+        $this->actingAs($admin)
+            ->get(route('crm.client-setup.attachment.download', [
+                'submission' => $invitation['submission'],
+                'attachment' => $attachment,
+            ]))
+            ->assertStatus(423);
+
+        $other = $this->createInvitation(['assigned_to_id' => $admin->id]);
+        $this->actingAs($admin)
+            ->get(route('crm.client-setup.attachment.download', [
+                'submission' => $other['submission'],
+                'attachment' => $attachment,
+            ]))
+            ->assertNotFound();
+    }
+
+    public function test_invalid_upload_types_are_rejected_before_private_storage(): void
+    {
+        Mail::fake();
+        Storage::fake('documents');
+        $invitation = $this->createVerifiedInvitation();
+
+        $this->from(route('client-setup.stage', [
+            'token' => $invitation['raw_token'],
+            'stage' => 'evidence_signoff',
+        ]))->post(route('client-setup.attachment-upload', [
+            'token' => $invitation['raw_token'],
+        ]), [
+            'category' => 'malware sample',
+            'requirement' => 'optional',
+            'attachment' => UploadedFile::fake()->create('payload.exe', 10, 'application/x-msdownload'),
+        ])->assertRedirect()
+            ->assertSessionHasErrors('attachment');
+
+        $this->assertDatabaseCount('crm_client_setup_attachments', 0);
+    }
+
+    public function test_verification_code_rate_limit_is_active(): void
+    {
+        Mail::fake();
+        $invitation = $this->createInvitation();
+
+        for ($attempt = 1; $attempt <= 5; $attempt++) {
+            $this->post(route('client-setup.verification-code', [
+                'token' => $invitation['raw_token'],
+            ]));
+        }
+
+        $this->post(route('client-setup.verification-code', [
+            'token' => $invitation['raw_token'],
+        ]))->assertStatus(429);
+    }
+
+    public function test_invitation_email_subject_and_persisted_log_do_not_contain_raw_token(): void
+    {
+        Mail::fake();
+        $invitation = $this->createInvitation();
+
+        app(ClientSetupInvitationService::class)->sendInvitation(
+            $invitation['invitation'],
+            $invitation['raw_token']
+        );
+
+        Mail::assertSent(ClientSetupInvitationMail::class, function (ClientSetupInvitationMail $mail) use ($invitation): bool {
+            return ! str_contains($mail->subject, $invitation['raw_token']);
+        });
+
+        $notificationPayload = \App\Models\CrmClientSetupNotification::query()
+            ->where('event_key', 'invitation_sent')
+            ->firstOrFail()
+            ->payload;
+
+        $this->assertStringNotContainsString($invitation['raw_token'], json_encode($notificationPayload));
+    }
+
+    private function createVerifiedInvitation(): array
+    {
+        $invitation = $this->createInvitation();
+        app(ClientSetupAccessService::class)->markVerified($invitation['invitation']);
+
+        return $invitation;
+    }
+
+    private function createInvitation(array $attributes = []): array
+    {
+        return app(ClientSetupInvitationService::class)->create(array_merge([
+            'email' => 'quality-' . uniqid() . '@example.com',
+            'contact_name' => 'Quality Client',
+        ], $attributes));
+    }
+
+    private function createUser(array $attributes = []): User
+    {
+        return User::query()->create(array_merge([
+            'name' => 'Quality User',
+            'email' => 'quality-user-' . uniqid() . '@example.com',
+            'password' => Hash::make('password123'),
+            'role' => 'admin',
+            'active' => true,
+        ], $attributes));
+    }
+}
