@@ -59,6 +59,8 @@ class ClientSetupQualityTest extends TestCase
         ]))
             ->assertOk()
             ->assertSee('data-collapsible-field', false)
+            ->assertSee('Mandate, specialization and target population <span class="crm-wizard-requirement-label">(Optional)</span>', false)
+            ->assertSee('More information about Mandate, specialization and target population', false)
             ->assertSee('Does the academic structure vary by campus?')
             ->assertSee('>(Optional)</span>', false)
             ->assertSee('Yes, the academic structure varies by campus')
@@ -66,9 +68,13 @@ class ClientSetupQualityTest extends TestCase
             ->assertSee('data-repeatable-label="Academic periods"', false)
             ->assertSee('data-repeatable-required="false"', false)
             ->assertDontSee('Academic periods 1')
+            ->assertDontSee('Academic structure description')
             ->assertSee('Markbook lock rule <span class="crm-wizard-requirement-label">(Optional)</span>', false)
+            ->assertSee('More information about Markbook lock rule', false)
             ->assertSee('placeholder="e.g. REG-2026-001"', false)
-            ->assertSee('placeholder="e.g. Faculty → department → programme → level → semester → module"', false)
+            ->assertSee('More information about Academic year pattern', false)
+            ->assertSee('More information about Academic year naming', false)
+            ->assertSee('More information about Primary intakes', false)
             ->assertSee('>Choose academic year pattern</option>', false);
     }
 

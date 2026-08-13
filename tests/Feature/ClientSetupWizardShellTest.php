@@ -29,7 +29,9 @@ class ClientSetupWizardShellTest extends TestCase
             ->assertSee('data-wizard-action-input', false)
             ->assertSee('data-wizard-submit-action="continue"', false)
             ->assertSee('Jump to stage')
-            ->assertDontSee('Finance and integrations');
+            ->assertDontSee('Finance and integrations')
+            ->assertSee('placeholder="Enter the legal institution name"', false)
+            ->assertSee('placeholder="Enter your full name"', false);
     }
 
     public function test_verification_flow_reveals_one_code_step_at_a_time(): void

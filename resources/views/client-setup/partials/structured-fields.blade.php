@@ -38,14 +38,13 @@
         $fieldErrorId = $fieldId . '_error';
         $describedBy = implode(' ', array_filter([$helpId, $fieldErrors !== [] ? $fieldErrorId : null]));
         $placeholderExamples = [
-            'institution_legal_name' => 'e.g. Gaborone College',
-            'institution_common_name' => 'e.g. Gaborone College',
-            'prepared_by_name' => 'e.g. Tsaone Obuseng',
+            'institution_legal_name' => 'Enter the legal institution name',
+            'institution_common_name' => 'Enter the trading/common name',
+            'prepared_by_name' => 'Enter your full name',
             'prepared_by_position' => 'e.g. Registrar',
             'registration_number' => 'e.g. REG-2026-001',
             'accreditation_body' => 'e.g. BQA',
             'provider_number' => 'e.g. P12345',
-            'academic_structure' => 'e.g. Faculty → department → programme → level → semester → module',
             'academic_year_naming' => 'e.g. 2026 or 2026/2027',
             'primary_intakes' => 'e.g. January and August',
             'active_intakes' => 'e.g. January and August',
