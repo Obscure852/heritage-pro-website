@@ -75,7 +75,7 @@ class ClientSetupMigrationTest extends TestCase
         app(\App\Services\ClientSetup\ClientSetupDraftService::class)->saveStage(
             $invitation['invitation'],
             'migration',
-            ['migration_scope' => ['no_migration'], 'migration_datasets' => [], 'migration_data_quality_issues' => ''],
+            ['migration_scope' => ['no_migration']],
             'complete'
         );
         app(\App\Services\ClientSetup\ClientSetupDraftService::class)->saveStage(
@@ -84,19 +84,6 @@ class ClientSetupMigrationTest extends TestCase
             ['integration_scope' => ['none'], 'integrations' => [], 'user_roles' => [], 'access_controls' => ''],
             'complete'
         );
-        app(\App\Services\ClientSetup\ClientSetupDraftService::class)->saveStage(
-            $invitation['invitation'],
-            'finance',
-            [
-                'finance_scope_decision' => 'defer',
-                'finance_deferred_owner' => 'Implementation team',
-                'finance_deferred_date' => '2026-12',
-                'finance_capabilities' => [],
-                'finance_registration_result_rules' => '',
-            ],
-            'complete'
-        );
-
         $result = $service->complete($submission->fresh(['stageProgress']), $invitation['invitation']);
         $completedAt = $result->completed_at;
 
@@ -125,8 +112,6 @@ class ClientSetupMigrationTest extends TestCase
         $draftService = app(\App\Services\ClientSetup\ClientSetupDraftService::class);
         $draftService->saveStage($invitation['invitation'], 'migration', [
             'migration_scope' => ['no_migration'],
-            'migration_datasets' => [],
-            'migration_data_quality_issues' => '',
         ], 'complete');
         $draftService->saveStage($invitation['invitation'], 'integrations_access', [
             'integration_scope' => ['none'],
@@ -134,14 +119,6 @@ class ClientSetupMigrationTest extends TestCase
             'user_roles' => [],
             'access_controls' => '',
         ], 'complete');
-        $draftService->saveStage($invitation['invitation'], 'finance', [
-            'finance_scope_decision' => 'defer',
-            'finance_deferred_owner' => 'Implementation team',
-            'finance_deferred_date' => '2026-12',
-            'finance_capabilities' => [],
-            'finance_registration_result_rules' => '',
-        ], 'complete');
-
         $route = route('client-setup.supplemental-complete', ['token' => $invitation['raw_token']]);
         $this->post($route)->assertRedirect();
         $firstCounts = CrmClientSetupNotification::query()

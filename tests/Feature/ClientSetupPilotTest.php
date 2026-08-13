@@ -56,6 +56,18 @@ class ClientSetupPilotTest extends TestCase
             );
         }
 
+        foreach ([
+            'Result slip' => 'pilot-result-slip.pdf',
+            'Transcript' => 'pilot-transcript.pdf',
+        ] as $category => $filename) {
+            $this->post(route('client-setup.attachment-upload', ['token' => $invitation['raw_token']]), [
+                'category' => $category,
+                'requirement' => 'required',
+                'return_stage' => 'results_lifecycle',
+                'attachment' => UploadedFile::fake()->create($filename, 20, 'application/pdf'),
+            ])->assertRedirect();
+        }
+
         $this->post(route('client-setup.academic-submit', ['token' => $invitation['raw_token']]))
             ->assertRedirect(route('client-setup.academic-submitted', ['token' => $invitation['raw_token']]));
 
@@ -69,8 +81,6 @@ class ClientSetupPilotTest extends TestCase
 
         $draftService->saveStage($invitation['invitation'], 'migration', [
             'migration_scope' => ['no_migration'],
-            'migration_datasets' => [],
-            'migration_data_quality_issues' => '',
         ], 'complete');
         $draftService->saveStage($invitation['invitation'], 'integrations_access', [
             'integration_scope' => ['none'],
@@ -78,14 +88,6 @@ class ClientSetupPilotTest extends TestCase
             'user_roles' => [],
             'access_controls' => '',
         ], 'complete');
-        $draftService->saveStage($invitation['invitation'], 'finance', [
-            'finance_scope_decision' => 'defer',
-            'finance_deferred_owner' => 'Implementation team',
-            'finance_deferred_date' => '2026-12',
-            'finance_capabilities' => [],
-            'finance_registration_result_rules' => '',
-        ], 'complete');
-
         $this->post(route('client-setup.supplemental-complete', ['token' => $invitation['raw_token']]))
             ->assertRedirect();
 

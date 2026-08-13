@@ -52,12 +52,16 @@ class ClientSetupAcademicService
             }
 
             $result = $this->validateStage($stage['key'], $payload[$stage['key']] ?? []);
+            $stageErrors = array_values(array_unique(array_merge(
+                $result['errors'],
+                $this->requiredAttachmentErrors($submission, $stage['key'])
+            )));
             $stageProgress = $progress->get($stage['key']);
             $stageComplete = $stageProgress?->status === 'complete';
 
-            if (! $stageComplete || $result['errors'] !== []) {
+            if (! $stageComplete || $stageErrors !== []) {
                 $missingStages[] = $stage['key'];
-                foreach ($result['errors'] as $error) {
+                foreach ($stageErrors as $error) {
                     $missingFields[] = [
                         'stage' => $stage['key'],
                         'label' => $stage['label'],
@@ -68,17 +72,13 @@ class ClientSetupAcademicService
 
             $summary[$stage['key']] = [
                 'label' => $stage['label'],
-                'complete' => $stageComplete && $result['errors'] === [],
+                'complete' => $stageComplete && $stageErrors === [],
                 'status' => $stageProgress?->status ?: 'not_started',
-                'errors' => $result['errors'],
+                'errors' => $stageErrors,
             ];
         }
 
         $warnings = [];
-
-        if (($payload['finance']['finance_scope_decision'] ?? null) === null) {
-            $warnings[] = 'Finance scope has not been configured; it will not block academic submission.';
-        }
 
         if (($payload['integrations_access']['integration_scope'] ?? null) === null) {
             $warnings[] = 'Integrations and access requirements are still outstanding; they will not block academic submission.';
@@ -124,6 +124,30 @@ class ClientSetupAcademicService
         }
 
         return false;
+    }
+
+    private function requiredAttachmentErrors(CrmClientSetupSubmission $submission, string $stageKey): array
+    {
+        $requiredCategories = config("client_setup.required_stage_attachments.{$stageKey}", []);
+
+        if ($requiredCategories === []) {
+            return [];
+        }
+
+        $attachments = $submission->relationLoaded('attachments')
+            ? $submission->attachments
+            : $submission->attachments()->get(['category']);
+        $uploadedCategories = $attachments
+            ->pluck('category')
+            ->map(static fn ($category): string => strtolower(trim((string) $category)))
+            ->all();
+
+        return array_values(array_filter(array_map(
+            static fn (string $category): ?string => in_array(strtolower($category), $uploadedCategories, true)
+                ? null
+                : $category . ' attachment is required before completing this stage.',
+            $requiredCategories
+        )));
     }
 
     private function normalizeFields(array $fields, array $payload): array

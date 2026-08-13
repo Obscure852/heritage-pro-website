@@ -25,9 +25,9 @@
             <p class="crm-kicker">Still available</p>
             <h2 id="supplemental-heading">Supplemental setup</h2>
         </div>
-        <p>Migration, integrations and finance remain open so they can be completed without changing the submitted academic revision.</p>
+        <p>Migration and integrations remain open so they can be completed without changing the submitted academic revision.</p>
         <div class="crm-action-row">
-            @foreach (['migration' => 'Migration', 'integrations_access' => 'Integrations and access', 'finance' => 'Finance'] as $stageKey => $label)
+            @foreach (['migration' => 'Migration', 'integrations_access' => 'Integrations and access'] as $stageKey => $label)
                 <a href="{{ route('client-setup.stage', ['token' => request()->route('token'), 'stage' => $stageKey]) }}" class="btn btn-light crm-btn-light">{{ $label }}</a>
             @endforeach
         </div>

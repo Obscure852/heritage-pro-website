@@ -16,6 +16,7 @@ class ClientSetupAttachmentUploadRequest extends FormRequest
         return [
             'category' => ['required', 'string', 'max:100'],
             'requirement' => ['nullable', 'in:required,optional,if_migrating,if_applicable'],
+            'return_stage' => ['nullable', 'in:results_lifecycle,evidence_signoff'],
             'attachment' => ['required', 'file', 'mimes:pdf,doc,docx,xls,xlsx,csv,png,jpg,jpeg', 'max:20480'],
         ];
     }

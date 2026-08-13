@@ -14,6 +14,9 @@ return [
         'in_progress',
         'complete',
     ],
+    'required_stage_attachments' => [
+        'results_lifecycle' => ['Result slip', 'Transcript'],
+    ],
     'template_version' => '1.0',
     'migration_upload_max_kb' => 20480,
     'release' => [
@@ -177,6 +180,7 @@ return [
             'help' => [
                 'List the information that must appear on official result documents.',
                 'Describe holds, corrections, approvals and verification requirements.',
+                'Upload a current result slip and transcript example before completing this stage.',
             ],
         ],
         [
@@ -206,21 +210,8 @@ return [
             ],
         ],
         [
-            'key' => 'finance',
-            'number' => 9,
-            'label' => 'Finance and integrations',
-            'short_label' => 'Finance and integrations',
-            'description' => 'Capture finance scope and integration needs without blocking academic submission.',
-            'required_for_academic' => false,
-            'optional' => true,
-            'help' => [
-                'Choose defer when finance discovery will happen after academic setup.',
-                'List only integrations that are in the agreed implementation scope.',
-            ],
-        ],
-        [
             'key' => 'evidence_signoff',
-            'number' => 10,
+            'number' => 9,
             'label' => 'Evidence and sign-off',
             'short_label' => 'Evidence and sign-off',
             'description' => 'Attach supporting evidence, confirm the submission and record final implementation conditions.',

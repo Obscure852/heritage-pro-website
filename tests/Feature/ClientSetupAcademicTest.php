@@ -7,6 +7,7 @@ use App\Models\CrmClientSetupNotification;
 use App\Models\CrmClientSetupStageProgress;
 use App\Services\ClientSetup\ClientSetupAccessService;
 use App\Services\ClientSetup\ClientSetupAcademicService;
+use App\Services\ClientSetup\ClientSetupAttachmentService;
 use App\Services\ClientSetup\ClientSetupDraftService;
 use App\Services\ClientSetup\ClientSetupInvitationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -63,6 +64,7 @@ class ClientSetupAcademicTest extends TestCase
     public function test_complete_academic_payload_can_be_submitted_and_freezes_academic_stages(): void
     {
         Mail::fake();
+        Storage::fake('documents');
         $invitation = $this->createVerifiedInvitation();
         $draftService = app(ClientSetupDraftService::class);
 
@@ -72,6 +74,20 @@ class ClientSetupAcademicTest extends TestCase
                 $stage['key'],
                 $this->validStagePayload($stage['key']),
                 'complete'
+            );
+        }
+
+        $attachmentService = app(ClientSetupAttachmentService::class);
+        foreach ([
+            'Result slip' => 'result-slip.pdf',
+            'Transcript' => 'transcript.pdf',
+        ] as $category => $filename) {
+            $attachmentService->store(
+                $invitation['submission'],
+                $invitation['invitation'],
+                UploadedFile::fake()->create($filename, 20, 'application/pdf'),
+                $category,
+                'required'
             );
         }
 

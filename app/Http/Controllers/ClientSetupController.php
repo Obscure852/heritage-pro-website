@@ -257,7 +257,7 @@ class ClientSetupController extends Controller
         }
 
         return redirect()
-            ->route('client-setup.stage', ['token' => $token, 'stage' => 'evidence_signoff'])
+            ->route('client-setup.stage', ['token' => $token, 'stage' => $validated['return_stage'] ?? 'evidence_signoff'])
             ->with('client_setup_success', 'Attachment uploaded and queued for security scanning.');
     }
 
@@ -482,6 +482,22 @@ class ClientSetupController extends Controller
         $validationErrors = $validation['errors'];
         $validationErrorDetails = $validation['error_details'] ?? [];
         $stageStatus = $action === 'continue' ? 'complete' : $validated['status'];
+
+        if ($stage === 'results_lifecycle' && $stageStatus === 'complete') {
+            $submission = $this->draftService->forInvitation($invitation);
+            $uploadedCategories = $submission->attachments
+                ->pluck('category')
+                ->map(static fn ($category): string => strtolower(trim((string) $category)))
+                ->all();
+
+            foreach (config('client_setup.required_stage_attachments.results_lifecycle', []) as $requiredCategory) {
+                if (! in_array(strtolower($requiredCategory), $uploadedCategories, true)) {
+                    $message = $requiredCategory . ' attachment is required before completing this stage.';
+                    $validationErrors[] = $message;
+                    $validationErrorDetails[] = ['path' => null, 'message' => $message];
+                }
+            }
+        }
 
         if ($validationErrors !== [] && $stageStatus === 'complete') {
             $stageStatus = 'in_progress';

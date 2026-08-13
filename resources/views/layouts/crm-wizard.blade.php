@@ -470,6 +470,48 @@
             flex-wrap: wrap;
         }
 
+        /* Keep every wizard action on the same icon baseline, including its loading state. */
+        .crm-wizard-body .btn-text,
+        .crm-wizard-body .btn-spinner {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            line-height: 1;
+        }
+
+        .crm-wizard-body .btn > i,
+        .crm-wizard-body .btn-text > i,
+        .crm-wizard-body .btn-spinner > i {
+            display: inline-flex;
+            flex: 0 0 auto;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .crm-wizard-body .btn-spinner .spinner-border {
+            margin-right: 0 !important;
+        }
+
+        .crm-wizard-body .crm-wizard-remove-row {
+            display: inline-flex;
+            width: 36px;
+            min-width: 36px;
+            height: 36px;
+            padding: 0;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .crm-wizard-body .crm-wizard-remove-row > i {
+            display: block;
+            margin: 0;
+            font-size: 16px;
+            line-height: 1;
+        }
+
         .crm-wizard-saved-summary {
             align-items: flex-start;
             margin-top: 16px;
@@ -662,6 +704,23 @@
             opacity: 1;
         }
 
+        /* Make single-select controls visibly read as dropdowns in the wizard theme. */
+        .crm-wizard-body select.form-select:not([multiple]) {
+            appearance: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+            padding-right: 40px;
+            background-color: #fff;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M3 6l5 5 5-5' stroke='%2364758b' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-position: right 12px center;
+            background-repeat: no-repeat;
+            background-size: 16px 16px;
+        }
+
+        .crm-wizard-body select.form-select:not([multiple]):focus {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M3 6l5 5 5-5' stroke='%234f46b5' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        }
+
         .crm-wizard-requirement-label {
             color: #64748b;
             font-size: 11px;
@@ -776,10 +835,14 @@
         }
 
         .crm-wizard-collapsible-body {
+            display: grid;
+            gap: 18px;
             padding: 0 16px 16px;
         }
 
         .crm-wizard-collapsible-body .crm-field {
+            display: grid;
+            gap: 10px;
             margin: 0;
         }
 
@@ -1014,10 +1077,156 @@
         }
 
         .crm-wizard-file-upload {
+            display: grid;
+            gap: 9px;
             padding: 16px;
-            border: 1px dashed #b9c2d0;
-            border-radius: 12px;
-            background: #fbfcff;
+            border: 1px solid #dbe2ee;
+            border-radius: 14px;
+            background: linear-gradient(145deg, #fbfcff, #f7f9fd);
+            transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+        }
+
+        .crm-wizard-stage-content.has-stage-attachments {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .crm-wizard-stage-content.has-stage-attachments > form.crm-form {
+            display: contents;
+        }
+
+        .crm-wizard-stage-content.has-stage-attachments > form.crm-form > .crm-wizard-structured-fields {
+            order: 1;
+        }
+
+        .crm-wizard-stage-content.has-stage-attachments > .crm-wizard-attachment-panel {
+            order: 2;
+        }
+
+        .crm-wizard-stage-content.has-stage-attachments > form.crm-form > .crm-field-grid {
+            order: 3;
+        }
+
+        .crm-wizard-stage-content.has-stage-attachments > form.crm-form > .crm-wizard-form-actions {
+            order: 4;
+        }
+
+        .crm-wizard-file-upload:focus-within,
+        .crm-wizard-file-upload.is-dragover {
+            border-color: #7167d8;
+            background: #f8f7ff;
+            box-shadow: 0 0 0 3px rgba(79, 70, 181, .1);
+        }
+
+        .crm-wizard-file-input {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            clip-path: inset(50%);
+            white-space: nowrap;
+        }
+
+        .crm-wizard-file-dropzone {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-height: 66px;
+            margin: 0;
+            padding: 12px 14px;
+            border: 1px dashed #aeb9cc;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .72);
+            color: #334155;
+            cursor: pointer;
+            transition: border-color .2s ease, background .2s ease, transform .2s ease;
+        }
+
+        .crm-wizard-file-dropzone:hover {
+            border-color: #7167d8;
+            background: #fff;
+        }
+
+        .crm-wizard-file-dropzone:active {
+            transform: translateY(1px);
+        }
+
+        .crm-wizard-file-dropzone-icon {
+            display: inline-flex;
+            flex: 0 0 auto;
+            width: 38px;
+            height: 38px;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: #ecebff;
+            color: #4f46b5;
+            font-size: 20px;
+        }
+
+        .crm-wizard-file-dropzone-copy {
+            display: grid;
+            gap: 2px;
+            min-width: 0;
+        }
+
+        .crm-wizard-file-dropzone-copy strong {
+            color: #27324a;
+            font-size: 12px;
+        }
+
+        .crm-wizard-file-dropzone-copy small {
+            color: #71809a;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .crm-wizard-file-browse {
+            margin-left: auto;
+            padding: 7px 10px;
+            border: 1px solid #d6d9f6;
+            border-radius: 7px;
+            background: #fff;
+            color: #4f46b5;
+            font-size: 11px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .crm-wizard-file-name {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            min-width: 0;
+            color: #71809a;
+            font-size: 11px;
+        }
+
+        .crm-wizard-file-name::before {
+            content: "\f15b";
+            color: #94a3b8;
+            font-family: 'boxicons';
+            font-size: 16px;
+        }
+
+        .crm-wizard-file-upload.has-file .crm-wizard-file-name {
+            color: #334155;
+            font-weight: 700;
+        }
+
+        .crm-wizard-file-upload.has-file .crm-wizard-file-name::before {
+            color: #1f9d68;
+        }
+
+        .crm-wizard-file-upload.needs-upload {
+            border-color: #f0ad4e;
+            background: #fffaf0;
+            box-shadow: 0 0 0 3px rgba(240, 173, 78, .12);
+        }
+
+        .crm-wizard-file-upload.needs-upload .crm-wizard-file-name {
+            color: #9a5b08;
         }
 
         .crm-wizard-attachment-panel {
@@ -1026,6 +1235,81 @@
             margin-top: 18px;
             padding-top: 18px;
             border-top: 1px solid #e7ebf3;
+        }
+
+        .crm-migration-template-download {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            min-height: 68px;
+            margin-bottom: 14px;
+            padding: 12px 14px;
+            border: 1px solid #dbe2ee;
+            border-radius: 12px;
+            background: #f8faff;
+            color: #1f2937;
+            text-decoration: none;
+            transition: border-color .18s ease, background-color .18s ease, transform .18s ease;
+        }
+
+        .crm-migration-template-download:hover {
+            border-color: #7167d8;
+            background: #f5f4ff;
+            color: #312e81;
+            transform: translateY(-1px);
+        }
+
+        .crm-migration-template-download:focus-visible {
+            outline: 3px solid rgba(79, 70, 181, .2);
+            outline-offset: 2px;
+            border-color: #4f46b5;
+        }
+
+        .crm-migration-template-download-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 38px;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: #ebe9ff;
+            color: #4f46b5;
+            font-size: 19px;
+        }
+
+        .crm-migration-template-download-copy {
+            display: grid;
+            min-width: 0;
+            gap: 3px;
+            line-height: 1.25;
+        }
+
+        .crm-migration-template-download-copy strong {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .crm-migration-template-download-copy small {
+            color: #64748b;
+            font-size: 11px;
+        }
+
+        .crm-migration-template-download-arrow {
+            margin-left: auto;
+            color: #7167d8;
+            font-size: 20px;
+        }
+
+        .crm-migration-template-download:hover .crm-migration-template-download-icon {
+            background: #dedcff;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .crm-migration-template-download {
+                transition: none;
+            }
         }
 
         .crm-wizard-attachment-list {
@@ -1078,6 +1362,11 @@
             color: #334155;
             font-size: 13px;
             font-weight: 700;
+        }
+
+        .crm-wizard-file-upload > label.crm-wizard-file-dropzone {
+            display: flex;
+            margin-bottom: 0;
         }
 
         .crm-wizard-exit-panel {
@@ -1235,6 +1524,15 @@
                 padding: 14px;
             }
 
+            .crm-wizard-file-dropzone {
+                align-items: flex-start;
+                flex-wrap: wrap;
+            }
+
+            .crm-wizard-file-browse {
+                margin-left: 50px;
+            }
+
             .crm-wizard-repeatable-card {
                 padding: 12px;
             }
@@ -1335,8 +1633,11 @@
     </main>
     @stack('scripts')
     <script>
+        window.crmWizardNavigationAllowed = false;
+
         document.querySelectorAll('form').forEach(function (form) {
             var submitting = false;
+            var isWizardForm = form.matches('[data-wizard-form]');
             var actionInput = form.querySelector('[data-wizard-action-input]');
 
             form.querySelectorAll('[data-wizard-submit-action]').forEach(function (submitButton) {
@@ -1347,15 +1648,33 @@
                 });
             });
 
-            form.addEventListener('input', function () {
-                form.dataset.dirty = 'true';
-            });
+            if (isWizardForm) {
+                form.addEventListener('input', function () {
+                    form.dataset.dirty = 'true';
+                });
 
-            form.addEventListener('change', function () {
-                form.dataset.dirty = 'true';
-            });
+                form.addEventListener('change', function () {
+                    form.dataset.dirty = 'true';
+                });
+            }
 
             form.addEventListener('submit', function (event) {
+                var pendingUpload = isWizardForm
+                    ? document.querySelector('[data-attachment-upload-form] [data-file-input]')
+                    : null;
+
+                if (pendingUpload?.files?.length) {
+                    event.preventDefault();
+                    pendingUpload.closest('[data-file-upload]')?.classList.add('needs-upload');
+                    pendingUpload.closest('[data-attachment-upload-form]')?.querySelector('button[type="submit"]')?.focus();
+                    announceWizard('Upload the selected attachment before continuing.');
+                    return;
+                }
+
+                if (! isWizardForm) {
+                    window.crmWizardNavigationAllowed = true;
+                }
+
                 submitting = true;
                 var button = event.submitter || form.querySelector('.btn-loading');
 
@@ -1374,12 +1693,60 @@
                 button.querySelector('.btn-spinner')?.classList.remove('d-none');
             });
 
-            window.addEventListener('beforeunload', function (event) {
-                if (form.dataset.dirty === 'true' && ! submitting) {
+            if (isWizardForm) {
+                window.addEventListener('beforeunload', function (event) {
+                    if (form.dataset.dirty === 'true' && ! submitting && ! window.crmWizardNavigationAllowed) {
+                        event.preventDefault();
+                        event.returnValue = '';
+                    }
+                });
+            }
+        });
+
+        document.querySelectorAll('[data-file-upload]').forEach(function (upload) {
+            var input = upload.querySelector('[data-file-input]');
+            var dropzone = upload.querySelector('[data-file-dropzone]');
+            var fileName = upload.querySelector('[data-file-name]');
+
+            if (! input || ! dropzone || ! fileName) {
+                return;
+            }
+
+            function updateFileName() {
+                var hasFile = input.files && input.files.length > 0;
+                upload.classList.toggle('has-file', hasFile);
+                fileName.textContent = hasFile
+                    ? input.files.length === 1
+                        ? input.files[0].name
+                        : input.files.length + ' files selected'
+                    : 'No file selected';
+            }
+
+            ['dragenter', 'dragover'].forEach(function (eventName) {
+                dropzone.addEventListener(eventName, function (event) {
                     event.preventDefault();
-                    event.returnValue = '';
-                }
+                    upload.classList.add('is-dragover');
+                });
             });
+
+            ['dragleave', 'drop'].forEach(function (eventName) {
+                dropzone.addEventListener(eventName, function (event) {
+                    event.preventDefault();
+                    upload.classList.remove('is-dragover');
+                });
+            });
+
+            dropzone.addEventListener('drop', function (event) {
+                if (! event.dataTransfer?.files?.length) {
+                    return;
+                }
+
+                input.files = event.dataTransfer.files;
+                updateFileName();
+            });
+
+            input.addEventListener('change', updateFileName);
+            updateFileName();
         });
 
         document.querySelector('[data-wizard-stage-selector]')?.addEventListener('change', function (event) {

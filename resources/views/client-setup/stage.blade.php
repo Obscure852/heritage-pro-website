@@ -181,6 +181,7 @@
                         </div>
                     </div>
                 @else
+                <div class="crm-wizard-stage-content @if (in_array($stage, ['results_lifecycle', 'migration', 'evidence_signoff'], true)) has-stage-attachments @endif">
                 <form method="POST" action="{{ route('client-setup.stage.save', ['token' => request()->route('token'), 'stage' => $stage]) }}" class="crm-form" data-wizard-form>
                     @csrf
                     @method('PATCH')
@@ -226,11 +227,11 @@
 
                         <div class="crm-wizard-form-actions-right">
                             <button type="submit" data-wizard-submit-action="exit" class="btn btn-light crm-btn-light btn-loading">
-                                <span class="btn-text"><i class="bx bx-log-out"></i> Save and exit</span>
+                                <span class="btn-text"><i class="fas fa-save" aria-hidden="true"></i> Save and exit</span>
                                 <span class="btn-spinner d-none"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...</span>
                             </button>
-                            <button type="submit" data-wizard-submit-action="save" class="btn btn-light crm-btn-light btn-loading">
-                                <span class="btn-text"><i class="bx bx-save"></i> Save progress</span>
+                            <button type="submit" data-wizard-submit-action="save" class="btn btn-primary btn-loading">
+                                <span class="btn-text"><i class="fas fa-save" aria-hidden="true"></i> Save progress</span>
                                 <span class="btn-spinner d-none"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...</span>
                             </button>
                             <button type="submit" data-wizard-submit-action="continue" class="btn btn-primary btn-loading">
@@ -240,6 +241,57 @@
                         </div>
                     </div>
                 </form>
+                @endif
+
+                @if ($stage === 'results_lifecycle' && ! $academicLocked)
+                    <section class="crm-wizard-attachment-panel" aria-labelledby="results-documents-heading">
+                        <div class="crm-wizard-stage-panel-header">
+                            <div>
+                                <p class="crm-kicker">Required supporting documents</p>
+                                <h2 id="results-documents-heading">Attach result slip and transcript</h2>
+                                <p>Choose a current example or approved template, then click its Upload button. Both attachments must be uploaded before this stage can be completed.</p>
+                            </div>
+                        </div>
+
+                        <div class="crm-field-grid">
+                            @foreach ([
+                                ['category' => 'Result slip', 'id' => 'result_slip_attachment', 'label' => 'Result slip attachment', 'help' => 'Upload the current approved result slip template or an example PDF.'],
+                                ['category' => 'Transcript', 'id' => 'transcript_attachment', 'label' => 'Transcript attachment', 'help' => 'Upload the current approved transcript template or an example PDF.'],
+                            ] as $document)
+                                @php($attachment = $submission->attachments->firstWhere('category', $document['category']))
+                                <div class="crm-card" style="margin:0">
+                                    <div class="crm-card-title">
+                                        <div>
+                                            <p class="crm-kicker">Required attachment</p>
+                                            <h3>{{ $document['category'] }}</h3>
+                                        </div>
+                                    </div>
+                                    @if ($attachment)
+                                        <div class="crm-meta-list" style="margin-bottom:1rem">
+                                            <div class="crm-meta-row"><span>Uploaded</span><strong>{{ $attachment->original_name }}</strong></div>
+                                        </div>
+                                    @endif
+                                    <form method="POST" action="{{ route('client-setup.attachment-upload', ['token' => request()->route('token')]) }}" enctype="multipart/form-data" class="crm-form" data-attachment-upload-form>
+                                        @csrf
+                                        <input type="hidden" name="category" value="{{ $document['category'] }}">
+                                        <input type="hidden" name="requirement" value="required">
+                                        <input type="hidden" name="return_stage" value="results_lifecycle">
+                                        @include('client-setup.partials.file-upload', [
+                                            'id' => $document['id'],
+                                            'name' => 'attachment',
+                                            'label' => $document['label'],
+                                            'accept' => '.pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg',
+                                            'help' => $document['help'],
+                                        ])
+                                        <button type="submit" class="btn btn-primary btn-loading">
+                                            <span class="btn-text"><i class="bx bx-upload"></i> Upload {{ strtolower($document['category']) }}</span>
+                                            <span class="btn-spinner d-none"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Uploading...</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            @endforeach
+                        </div>
+                    </section>
                 @endif
 
                 @if ($stage === 'migration')
@@ -257,17 +309,25 @@
                                 <div class="crm-card" style="margin:0">
                                     <div class="crm-card-title"><div><p class="crm-kicker">Migration template</p><h3>{{ $label }}</h3></div></div>
                                     <p class="crm-muted">Includes a clean data sheet and an Instructions/Data Dictionary sheet.</p>
-                                    <div class="crm-action-row">
-                                        <a href="{{ route('client-setup.migration-template.download', ['token' => request()->route('token'), 'kind' => $kind]) }}" class="btn btn-light crm-btn-light"><i class="bx bx-download"></i> Download template</a>
-                                    </div>
+                                    <a href="{{ route('client-setup.migration-template.download', ['token' => request()->route('token'), 'kind' => $kind]) }}" class="crm-migration-template-download">
+                                        <span class="crm-migration-template-download-icon" aria-hidden="true"><i class="bx bx-download"></i></span>
+                                        <span class="crm-migration-template-download-copy">
+                                            <strong>Download template</strong>
+                                            <small>Get the clean {{ strtolower($label) }} workbook</small>
+                                        </span>
+                                        <i class="bx bx-right-arrow-alt crm-migration-template-download-arrow" aria-hidden="true"></i>
+                                    </a>
                                     <form method="POST" action="{{ route('client-setup.migration-upload', ['token' => request()->route('token')]) }}" enctype="multipart/form-data" class="crm-form">
                                         @csrf
                                         <input type="hidden" name="kind" value="{{ $kind }}">
-                                        <div class="crm-field">
-                                            <label for="migration_file_{{ $kind }}">Upload completed workbook</label>
-                                            <input id="migration_file_{{ $kind }}" name="file" type="file" accept=".xlsx,.xls,.csv" required>
-                                            <small class="crm-muted">XLSX, XLS or CSV up to {{ number_format(config('client_setup.migration_upload_max_kb') / 1024, 0) }} MB.</small>
-                                        </div>
+                                        @include('client-setup.partials.file-upload', [
+                                            'id' => 'migration_file_' . $kind,
+                                            'name' => 'file',
+                                            'label' => 'Upload completed workbook',
+                                            'accept' => '.xlsx,.xls,.csv',
+                                            'required' => true,
+                                            'help' => 'XLSX, XLS or CSV up to ' . number_format(config('client_setup.migration_upload_max_kb') / 1024, 0) . ' MB.',
+                                        ])
                                         <button type="submit" class="btn btn-primary btn-loading"><span class="btn-text"><i class="bx bx-upload"></i> Validate upload</span><span class="btn-spinner d-none">Validating...</span></button>
                                     </form>
                                     @if ($latestUpload)
@@ -314,7 +374,7 @@
                             </ul>
                         @endif
 
-                        <form method="POST" action="{{ route('client-setup.attachment-upload', ['token' => request()->route('token')]) }}" enctype="multipart/form-data" class="crm-form" data-wizard-form>
+                        <form method="POST" action="{{ route('client-setup.attachment-upload', ['token' => request()->route('token')]) }}" enctype="multipart/form-data" class="crm-form">
                             @csrf
                             <div class="crm-field-grid">
                                 <div class="crm-field">
@@ -347,6 +407,7 @@
                         </form>
                     </section>
                 @endif
+                </div>
             </section>
 
             <section class="crm-wizard-saved-summary" aria-labelledby="saved-summary-heading">

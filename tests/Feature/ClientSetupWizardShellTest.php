@@ -29,7 +29,7 @@ class ClientSetupWizardShellTest extends TestCase
             ->assertSee('data-wizard-action-input', false)
             ->assertSee('data-wizard-submit-action="continue"', false)
             ->assertSee('Jump to stage')
-            ->assertSee('Finance and integrations');
+            ->assertDontSee('Finance and integrations');
     }
 
     public function test_verification_flow_reveals_one_code_step_at_a_time(): void
@@ -142,7 +142,7 @@ class ClientSetupWizardShellTest extends TestCase
         $this->get(route('client-setup.stage', [
             'token' => $invitation['raw_token'],
             'stage' => 'finance',
-        ]))->assertOk()->assertSee('Finance and integrations');
+        ]))->assertNotFound();
     }
 
     public function test_save_and_exit_forgets_the_verified_session(): void

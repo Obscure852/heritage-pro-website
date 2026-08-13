@@ -106,10 +106,6 @@ class ClientSetupSupplementalService
 
     private function isExplicitlyDeferred(string $stageKey, array $payload): bool
     {
-        if ($stageKey === 'finance') {
-            return ($payload['finance_scope_decision'] ?? null) === 'defer';
-        }
-
         if ($stageKey === 'migration') {
             $scope = $payload['migration_scope'] ?? [];
             return is_array($scope) && in_array('no_migration', $scope, true) && count(array_diff($scope, ['no_migration'])) === 0;

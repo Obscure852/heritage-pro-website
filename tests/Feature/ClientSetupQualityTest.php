@@ -22,7 +22,7 @@ class ClientSetupQualityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_conditional_fields_are_rendered_with_progressive_disclosure_metadata(): void
+    public function test_finance_and_integrations_stage_is_removed_from_the_wizard(): void
     {
         $invitation = $this->createVerifiedInvitation();
 
@@ -30,10 +30,15 @@ class ClientSetupQualityTest extends TestCase
             'token' => $invitation['raw_token'],
             'stage' => 'finance',
         ]))
+            ->assertNotFound();
+
+        $this->get(route('client-setup.stage', [
+            'token' => $invitation['raw_token'],
+            'stage' => 'scope',
+        ]))
             ->assertOk()
-            ->assertSee('data-conditional-field')
-            ->assertSee('client_setup_finance_deferred_owner')
-            ->assertSee('syncConditionalFields');
+            ->assertDontSee('Finance and integrations')
+            ->assertDontSee('finance_scope_decision');
     }
 
     public function test_campus_structure_variation_is_optional_and_collapsible(): void
@@ -149,6 +154,159 @@ class ClientSetupQualityTest extends TestCase
             ->assertSee('If curriculum is out of scope, explain the implementation handoff or migration plan.')
             ->assertSee('data-repeatable-label="Curriculum versions"', false)
             ->assertSee('data-repeatable-required="false"', false);
+    }
+
+    public function test_assessment_rules_are_optional_collapsible_and_explained(): void
+    {
+        $invitation = $this->createVerifiedInvitation();
+
+        foreach (['scope', 'institution', 'programmes', 'curriculum'] as $stageKey) {
+            CrmClientSetupStageProgress::query()->create([
+                'submission_id' => $invitation['submission']->id,
+                'stage_key' => $stageKey,
+                'status' => 'complete',
+                'completed_at' => now(),
+                'last_saved_at' => now(),
+            ]);
+        }
+
+        $this->get(route('client-setup.stage', [
+            'token' => $invitation['raw_token'],
+            'stage' => 'assessment',
+        ]))
+            ->assertOk()
+            ->assertSee('Assessment components')
+            ->assertSee('Assessment and GPA rules')
+            ->assertSee('GPA inclusion/exclusion rules')
+            ->assertSee('>(Optional)</span>', false)
+            ->assertSee('What is an examination sub-minimum?', false)
+            ->assertSee('What is the attendance threshold?', false)
+            ->assertSee('What is official result approval?', false)
+            ->assertSee('What is GPA calculation timing?', false)
+            ->assertSee('What is the GPA rounding method?', false)
+            ->assertSee('What is the GPA method?', false)
+            ->assertSee('What are GPA inclusion/exclusion rules?', false)
+            ->assertSee('data-repeatable-required="false"', false);
+    }
+
+    public function test_progression_rules_are_optional_collapsible_and_explained(): void
+    {
+        $invitation = $this->createVerifiedInvitation();
+
+        foreach (['scope', 'institution', 'programmes', 'curriculum', 'assessment'] as $stageKey) {
+            CrmClientSetupStageProgress::query()->create([
+                'submission_id' => $invitation['submission']->id,
+                'stage_key' => $stageKey,
+                'status' => 'complete',
+                'completed_at' => now(),
+                'last_saved_at' => now(),
+            ]);
+        }
+
+        $this->get(route('client-setup.stage', [
+            'token' => $invitation['raw_token'],
+            'stage' => 'progression',
+        ]))
+            ->assertOk()
+            ->assertSee('Progression decision matrix')
+            ->assertSee('data-repeatable-required="false"', false)
+            ->assertSee('Progression, retakes and graduation rules')
+            ->assertSee('What is the condition or trigger?', false)
+            ->assertSee('What is rule precedence?', false)
+            ->assertSee('What are graduation gates?', false)
+            ->assertSee('What are the additional conditions?', false)
+            ->assertSee('>(Optional)</span>', false);
+    }
+
+    public function test_results_lifecycle_configuration_is_optional_collapsible_and_explained(): void
+    {
+        $invitation = $this->createVerifiedInvitation();
+
+        foreach (['scope', 'institution', 'programmes', 'curriculum', 'assessment', 'progression'] as $stageKey) {
+            CrmClientSetupStageProgress::query()->create([
+                'submission_id' => $invitation['submission']->id,
+                'stage_key' => $stageKey,
+                'status' => 'complete',
+                'completed_at' => now(),
+                'last_saved_at' => now(),
+            ]);
+        }
+
+        $this->get(route('client-setup.stage', [
+            'token' => $invitation['raw_token'],
+            'stage' => 'results_lifecycle',
+        ]))
+            ->assertOk()
+            ->assertSee('Result-slip details')
+            ->assertSee('Transcript details')
+            ->assertSee('Document and student lifecycle rules')
+            ->assertSee('What should appear on a result slip?', false)
+            ->assertSee('What should appear on a transcript?', false)
+            ->assertSee('How should duplicates be detected?', false)
+            ->assertSee('>(Optional)</span>', false)
+            ->assertSee('Attach result slip and transcript')
+            ->assertSee('Both attachments must be uploaded before this stage can be completed.');
+    }
+
+    public function test_results_lifecycle_requires_result_slip_and_transcript_attachments_before_completion(): void
+    {
+        Mail::fake();
+        Storage::fake('documents');
+        $invitation = $this->createVerifiedInvitation();
+
+        $this->from(route('client-setup.stage', [
+            'token' => $invitation['raw_token'],
+            'stage' => 'results_lifecycle',
+        ]))->patch(route('client-setup.stage.save', [
+            'token' => $invitation['raw_token'],
+            'stage' => 'results_lifecycle',
+        ]), [
+            'payload_json' => '{}',
+            'status' => 'in_progress',
+            'action' => 'continue',
+        ])->assertRedirect(route('client-setup.stage', [
+            'token' => $invitation['raw_token'],
+            'stage' => 'results_lifecycle',
+        ]))->assertSessionHas('client_setup_error', 'Please complete the highlighted requirements before continuing.');
+
+        $progress = CrmClientSetupStageProgress::query()
+            ->where('submission_id', $invitation['submission']->id)
+            ->where('stage_key', 'results_lifecycle')
+            ->firstOrFail();
+
+        $this->assertSame('in_progress', $progress->status);
+        $this->assertContains('Result slip attachment is required before completing this stage.', $progress->validation_errors);
+        $this->assertContains('Transcript attachment is required before completing this stage.', $progress->validation_errors);
+
+        foreach ([
+            'Result slip' => 'result-slip.pdf',
+            'Transcript' => 'transcript.pdf',
+        ] as $category => $filename) {
+            $this->post(route('client-setup.attachment-upload', ['token' => $invitation['raw_token']]), [
+                'category' => $category,
+                'requirement' => 'required',
+                'return_stage' => 'results_lifecycle',
+                'attachment' => UploadedFile::fake()->create($filename, 20, 'application/pdf'),
+            ])->assertRedirect(route('client-setup.stage', [
+                'token' => $invitation['raw_token'],
+                'stage' => 'results_lifecycle',
+            ]));
+        }
+
+        $this->patch(route('client-setup.stage.save', [
+            'token' => $invitation['raw_token'],
+            'stage' => 'results_lifecycle',
+        ]), [
+            'payload_json' => '{}',
+            'status' => 'in_progress',
+            'action' => 'continue',
+        ]);
+
+        $this->assertDatabaseHas('crm_client_setup_stage_progress', [
+            'submission_id' => $invitation['submission']->id,
+            'stage_key' => 'results_lifecycle',
+            'status' => 'complete',
+        ]);
     }
 
     public function test_resume_and_verification_inputs_explain_expected_values(): void
@@ -283,7 +441,7 @@ class ClientSetupQualityTest extends TestCase
             ->assertSee('data-submission-tab')
             ->assertSee('activateTab');
 
-        $this->assertSame(11, substr_count($response->getContent(), 'role="tab"'));
+        $this->assertSame(10, substr_count($response->getContent(), 'role="tab"'));
     }
 
     public function test_client_setup_audit_events_cannot_be_updated(): void
